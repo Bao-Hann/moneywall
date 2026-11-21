@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f6f50">
+  <meta name="description" content="Một góc nhỏ để hiểu tiền của bạn. Ghi thu chi, đặt mục tiêu và xây nền tài chính vững vàng, ngay trên laptop.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Vững Tài Chính · Tiền rõ ràng, sống nhẹ nhàng</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js" defer onerror="window.chartLoadFailed=true"></script>
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Đến nội dung chính</a>
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="Vững Tài Chính, trang tổng quan">
+      <span class="brand-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M8 28V18h6v10m6 0V11h6v17m6 0V6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="m8 12 11-6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span>vững<span class="brand-sub">TÀI CHÍNH</span></span>
+    </a>
+    <div class="nav-caption">GÓC TÀI CHÍNH CỦA BẠN</div>
+    <nav class="main-nav" aria-label="Điều hướng chính">
+      <a href="#overview" data-tab="overview" class="nav-link active"><span data-icon="grid"></span><span>Tổng quan</span></a>
+      <a href="#transactions" data-tab="transactions" class="nav-link"><span data-icon="wallet"></span><span>Sổ thu chi</span></a>
+      <a href="#analysis" data-tab="analysis" class="nav-link"><span data-icon="chart"></span><span>Phân tích</span><span class="nav-count" id="nav-alert-count" hidden></span></a>
+      <a href="#planning" data-tab="planning" class="nav-link"><span data-icon="layers"></span><span>Nợ & Quỹ dự phòng</span></a>
+      <a href="#settings" data-tab="settings" class="nav-link"><span data-icon="settings"></span><span>Sao lưu & Cài đặt</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note"><span data-icon="sprout"></span><strong>Mỗi ngày một chút,<br>vững vàng hơn một bước.</strong><p>Những lựa chọn nhỏ hôm nay tạo nên sự an tâm ngày mai.</p></div>
+      <button class="theme-button" id="theme-toggle"><span data-icon="moon"></span><span>Giao diện tối</span></button>
+      <div class="local-status"><span data-icon="shield"></span>Dữ liệu riêng, lưu trên máy bạn</div>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="topbar"><div class="breadcrumb">Không gian cá nhân <span>/</span> <strong id="breadcrumb-title">Tổng quan</strong></div><div class="topbar-right"><span class="date-label" id="today-label"></span><span class="avatar" aria-label="Tài khoản cá nhân">B</span></div></header>
+    <main id="main" tabindex="-1">
+      <div id="storage-warning" class="banner warning" role="status" hidden></div>
+      <div id="chart-warning" class="banner" hidden>Biểu đồ chưa tải được. Bạn vẫn có thể ghi thu chi và xem mọi chỉ số. Kết nối mạng rồi tải lại để xem biểu đồ.</div>
+      <div id="app-content"><div class="loading-state">Đang mở góc tài chính của bạn…</div></div>
+    </main>
+    <footer class="page-footer"><span>Vững Tài Chính</span><span>Tiền rõ ràng. Sống nhẹ nhàng.</span></footer>
+  </div>
+
+  <dialog id="transaction-dialog" class="form-dialog" aria-labelledby="transaction-dialog-title">
+    <form id="transaction-form" method="dialog">
+      <div class="dialog-header"><div><span class="eyebrow">THÊM MỘT CHÚT RÕ RÀNG</span><h2 id="transaction-dialog-title">Ghi một giao dịch</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+      <input type="hidden" name="id">
+      <div class="type-switch" role="group" aria-label="Loại giao dịch"><button type="button" data-tx-type="expense" class="selected">Khoản chi</button><button type="button" data-tx-type="income">Khoản thu</button></div>
+      <input type="hidden" name="type" value="expense">
+      <label class="amount-field">Số tiền <span class="required">*</span><span class="amount-input"><input name="amount" inputmode="numeric" type="number" min="1" max="9000000000000" step="1" placeholder="0" required><span>₫</span></span></label>
+      <div class="quick-amounts" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="30000">30.000</button><button type="button" data-amount="50000">50.000</button><button type="button" data-amount="100000">100.000</button><button type="button" data-amount="200000">200.000</button><button type="button" data-amount="500000">500.000</button></div>
+      <div class="form-grid"><label>Nhóm chi tiêu<select name="group" id="tx-group"><option value="needs">Thiết yếu</option><option value="wants">Mong muốn</option><option value="savings_debt">Tiết kiệm & Trả nợ</option></select></label><label>Danh mục<select name="category" id="tx-category"></select></label></div>
+      <div class="form-grid"><label>Ngày giao dịch<input name="date" type="date" required></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Đây là hóa đơn cố định</label></div>
+      <label>Ghi chú <span class="optional">(không bắt buộc)</span><input name="note" maxlength="1000" placeholder="Khoản này dành cho điều gì?"></label>
+      <p class="form-error" role="alert" id="transaction-error" hidden></p>
+      <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu giao dịch</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="bill-dialog" class="form-dialog" aria-labelledby="bill-dialog-title"><form id="bill-form" method="dialog">
+    <div class="dialog-header"><h2 id="bill-dialog-title">Hóa đơn cố định</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <input type="hidden" name="id"><label>Tên hóa đơn<input name="name" maxlength="200" required placeholder="Ví dụ: Tiền thuê nhà"></label>
+    <div class="form-grid"><label>Số tiền mỗi tháng (₫)<input name="amount" type="number" min="1" max="9000000000000" step="1" required></label><label>Ngày đến hạn<input name="dueDay" type="number" min="1" max="31" required value="1"></label></div>
+    <div class="form-grid"><label>Nhóm<select name="group"><option value="needs">Thiết yếu</option><option value="wants">Mong muốn</option></select></label><label>Danh mục<select name="category"></select></label></div>
+    <label class="checkbox-label"><input type="checkbox" name="active" checked>Tính vào kế hoạch chi tiêu hằng tháng</label>
+    <p class="form-error" role="alert" id="bill-error" hidden></p><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Hủy</button><button class="button primary" type="submit">Lưu hóa đơn</button></div>
+  </form></dialog>
+
+  <dialog id="debt-dialog" class="form-dialog" aria-labelledby="debt-dialog-title"><form id="debt-form" method="dialog">
+    <div class="dialog-header"><h2 id="debt-dialog-title">Khoản nợ</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <input type="hidden" name="id"><label>Tên khoản nợ<input name="name" maxlength="200" required placeholder="Ví dụ: Thẻ tín dụng"></label>
+    <label>Số dư nợ hiện tại (₫)<input name="principal" type="number" min="0" max="9000000000000" step="1" required></label>
+    <div class="form-grid"><label>Lãi suất (%/năm)<input name="apr" type="number" min="0" max="1000" step="0.01" required></label><label>Trả tối thiểu/tháng (₫)<input name="minMonthlyPayment" type="number" min="0" max="9000000000000" step="1" required></label></div>
+    <p class="helper-text">Các khoản nợ có lãi trên 10%/năm sẽ được ưu tiên trong chiến lược trả nợ.</p>
+    <p class="form-error" role="alert" id="debt-error" hidden></p><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Hủy</button><button class="button primary" type="submit">Lưu khoản nợ</button></div>
+  </form></dialog>
+
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><span class="confirm-icon" data-icon="shield"></span><h2 id="confirm-title">Xác nhận thay đổi</h2><p id="confirm-description"></p><div class="dialog-actions"><button class="button secondary" value="cancel">Giữ nguyên</button><button class="button primary" value="confirm" id="confirm-button">Xác nhận</button></div></form></dialog>
+  <dialog id="install-dialog" class="confirm-dialog" aria-labelledby="install-title"><form method="dialog"><h2 id="install-title">Mở nhanh ngay trên máy bạn</h2><p>Trên Chrome hoặc Edge, mở menu trình duyệt → Truyền, lưu và chia sẻ → Cài đặt trang dưới dạng ứng dụng. Khi đã cài, bạn có thể ghim ứng dụng lên thanh tác vụ.</p><p>Trên iPhone: Chia sẻ → Thêm vào Màn hình chính. Cách này giúp giảm nguy cơ dữ liệu bị dọn khi lâu không dùng; sao lưu JSON vẫn là cách bảo vệ chắc chắn hơn.</p><button class="button primary">Đã hiểu</button></form></dialog>
+  <input type="file" id="restore-file" accept=".json,application/json" hidden>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><div class="banner warning">Hãy bật JavaScript để ghi thu chi và lưu dữ liệu trên máy.</div></noscript>
+</body>
+</html>

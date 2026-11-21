@@ -1,0 +1,37 @@
+# Bảng kiểm chứng — Vững Tài Chính
+
+Ngày kiểm tra: 21/11/2026. Bộ kiểm tra tự động: `npm test`, **30/30 đạt**, không cần cài thư viện.
+
+| Yêu cầu | Kết quả | Bằng chứng |
+| --- | --- | --- |
+| GitHub Pages tại thư mục con | Đạt cấu trúc | `.nojekyll` rỗng; HTML, mô-đun, biểu tượng, manifest và Service Worker dùng đường dẫn tương đối; `start_url` và `scope` là `./` |
+| Sáu mô-đun định lượng | Đạt kiểm tra | Thu nhập và độ lệch chuẩn mẫu; 4 tầng dự báo; cảnh báo bất thường, PSI và tăng chi mong muốn; FHI và 5 cấp; hạn mức chi; kế hoạch cắt giảm có giới hạn |
+| Các biên dễ sai | Đạt kiểm tra | Chưa có dữ liệu, ít tháng thu nhập, chia 0, MAD/IQR bằng 0, ngày cuối tháng, khoảng trống tháng, giao dịch tương lai, thanh toán một phần và hóa đơn trùng danh mục |
+| Lưu trữ và sao lưu | Đạt triển khai và kiểm tra hợp đồng dữ liệu | IndexedDB gồm đủ 4 kho; tự yêu cầu `navigator.storage.persist()`; kiểm tra `persisted()`; dữ liệu tạm khi bị chặn; JSON kiểm tra phiên bản, kiểu và ID trùng; thay thế tất cả kho trong một giao dịch ghi |
+| Excel có tiếng Việt | Đạt kiểm tra | CSV có ký tự đầu UTF-8 BOM `\uFEFF`, dấu phẩy/dấu nháy/xuống dòng được bao đúng, vô hiệu hóa ô có thể bị hiểu là công thức |
+| Dữ liệu mẫu | Đạt kiểm tra | Sáu tháng đầy đủ và phần tháng hiện tại; thử tại ngày 1, 5, 15, 21 và 30 đều kích hoạt cảnh báo, PSI, tăng chi mong muốn, cấp 3 và cắt giảm |
+| Giao diện laptop | Đã thử trực tiếp trên Chrome | Đủ 5 mục; ghi thu nhập, sửa số tiền, tìm ghi chú có tiếng Việt, thêm hóa đơn/nợ, cập nhật quỹ; dữ liệu còn sau tải lại |
+| Ghi chú an toàn | Đạt kiểm tra tự động và trực tiếp | Chuỗi `<img src=x onerror=alert(1)>` hiển thị thành chữ trong bảng, không được tạo thành phần tử hình ảnh |
+| Biểu đồ | Đạt triển khai | Các biểu đồ cột, thanh ngang, vòng tròn và đường; hủy đối tượng cũ trước khi vẽ lại; có thông báo khi Chart.js không tải được |
+| Hoạt động ngoại tuyến | Đã triển khai | Service Worker lưu bộ tệp nội bộ và Chart.js; nội bộ ưu tiên mạng, thư viện ngoài ưu tiên bộ đệm. Việc tải lần đầu và quyền lưu trữ do trình duyệt quyết định |
+
+## Kết quả mẫu cố định để đối chiếu
+
+Với mốc ngày 21/11/2026 và dữ liệu do `createSeedData()` tạo:
+
+| Chỉ số | Giá trị |
+| --- | --- |
+| FHI | 74/100 |
+| Cấp ưu tiên | 3 — xóa nợ lãi suất cao |
+| Giao dịch bất thường | 2 |
+| Hiệu ứng ngày lương PSI | Khoảng 1,64 lần |
+| Tăng tỷ trọng chi mong muốn | Khoảng 27,69 điểm phần trăm |
+| Hạn mức hôm nay | 211.500 ₫ |
+| Danh mục đề xuất cắt giảm | 2 |
+
+## Giới hạn kiểm chứng
+
+- Kết quả các phép tính được kiểm tra độc lập bằng các ca xác định trong `tests/finance-engine.test.js`.
+- Việc chuyển đổi qua JSON và trường hợp khôi phục sai không làm thay đổi dữ liệu cũ đã được kiểm tra tự động; quyền lưu bền vững phụ thuộc từng trình duyệt.
+- Không có đồng bộ giữa máy hoặc tài khoản; bản sao JSON là cách chuyển dữ liệu được hỗ trợ.
+- Dự báo và điểm FHI tuân theo các quy tắc trong bản yêu cầu của ứng dụng, không khẳng định là một mô hình dự báo đã được thẩm định ngoài thực tế.

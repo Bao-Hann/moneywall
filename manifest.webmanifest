@@ -1,0 +1,13 @@
+{
+  "id": "./",
+  "name": "Vững Tài Chính",
+  "short_name": "Vững",
+  "description": "Tiền rõ ràng. Sống nhẹ nhàng.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f6",
+  "theme_color": "#0f6f50",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

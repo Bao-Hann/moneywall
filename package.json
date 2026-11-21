@@ -1,0 +1,7 @@
+{
+  "name": "vung-tai-chinh",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test tests/*.test.js" },
+  "description": "Sổ thu chi cá nhân tiếng Việt, không cần máy chủ hay bước biên dịch"
+}
