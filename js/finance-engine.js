@@ -6,7 +6,7 @@ export const CATEGORIES = Object.freeze({
   savings_debt: ['Nạp quỹ dự phòng', 'Trả nợ gốc/lãi', 'Đầu tư dài hạn'],
 });
 export const GROUP_LABELS = { income: 'Thu nhập', needs: 'Thiết yếu', wants: 'Mong muốn', savings_debt: 'Tiết kiệm & Trả nợ' };
-export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null };
+export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null, openingBalances: {} };
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 export const sum = (xs) => xs.reduce((a, x) => a + x, 0);
 export const avg = (xs) => xs.length ? sum(xs) / xs.length : 0;
@@ -23,6 +23,13 @@ export function localDate(date = new Date()) {
 }
 export function monthKeys(date, count) {
   return Array.from({ length: count }, (_, i) => localDate(new Date(date.getFullYear(), date.getMonth() - count + i + 1, 1)).slice(0, 7));
+}
+export function cashBalanceForMonth(data, month, today = localDate()) {
+  const opening = data.profile.openingBalances?.[month];
+  const transactions = data.transactions.filter((t) => t.date.startsWith(month) && t.date <= today);
+  const income = sum(transactions.filter((t) => t.type === 'income').map((t) => t.amount));
+  const expense = sum(transactions.filter((t) => t.type === 'expense').map((t) => t.amount));
+  return { month, configured: !!opening, bank: opening?.bank ?? null, cash: opening?.cash ?? null, opening: opening ? opening.bank + opening.cash : null, income, expense, available: opening ? opening.bank + opening.cash + income - expense : null };
 }
 export function aggregateMonths(transactions, date = new Date()) {
   const months = new Map();

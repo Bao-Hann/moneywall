@@ -123,9 +123,9 @@ async function handleAction(action, id) {
         let receipt;
         const ok = await mutation(async () => { receipt = await appendTransactions(records, options); });
         if (ok) {
-          state.filters = { month: records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
+          state.filters = { month: options.openingBalance?.month || records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
           state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
-          toast(`Đã nhập ${receipt.imported} giao dịch${receipt.skipped ? `, bỏ qua ${receipt.skipped} khoản đã có` : ''}. Dữ liệu cũ được giữ nguyên.`);
+          toast(`${receipt.imported ? `Đã nhập ${receipt.imported} giao dịch` : 'Không thêm giao dịch trùng'}${receipt.skipped ? `, bỏ qua ${receipt.skipped} khoản đã có` : ''}${options.openingBalance ? '. Đã lưu tiền đầu tháng để tính số dư' : '. Dữ liệu cũ được giữ nguyên'}.`);
         }
         return ok;
       },
@@ -198,9 +198,12 @@ document.addEventListener('submit', async (event) => {
   const form = event.target;
   // Named form controls can shadow native properties (including an input named "id").
   const formId = form.getAttribute('id');
-  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form'].includes(formId)) return;
+  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form', 'opening-balance-form'].includes(formId)) return;
   event.preventDefault();
   const values = new FormData(form), value = (key) => String(values.get(key) ?? ''), amount = (key) => Math.round(Number(value(key)));
+  if (formId === 'opening-balance-form') {
+    await mutation(() => putRecord('profile', { ...state.data.profile, openingBalances: { ...(state.data.profile.openingBalances || {}), [value('month')]: { bank: amount('bank'), cash: amount('cash') } } }), 'Đã lưu tiền có sẵn đầu tháng, tách riêng với thu nhập mới.'); return;
+  }
   if (formId === 'profile-form') {
     await mutation(() => putRecord('profile', { ...state.data.profile, liquidSavings: amount('liquidSavings'), paydayDay: amount('paydayDay'), incomeModeOverride: value('incomeModeOverride') }), 'Đã cập nhật quỹ dự phòng và kế hoạch.'); return;
   }
@@ -228,7 +231,15 @@ document.getElementById('restore-file').addEventListener('change', async (event)
 });
 window.addEventListener('hashchange', navigate);
 window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.data && !document.querySelector('dialog[open]') && !state.busy) refresh().catch((e) => toast(e.message, true)); });
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !state.data || document.querySelector('dialog[open]') || state.busy) return;
+  try {
+    const fresh = await readData();
+    if (JSON.stringify(fresh) === JSON.stringify(state.data) && state.analysis?.today === localDate()) return;
+    if (document.querySelector('dialog[open]') || state.busy || document.activeElement?.matches('input, textarea, select')) return;
+    state.data = fresh; state.storage = await storageStatus(); render();
+  } catch (error) { toast(error.message, true); }
+});
 async function boot() {
   fillIcons();
   document.getElementById('today-label').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

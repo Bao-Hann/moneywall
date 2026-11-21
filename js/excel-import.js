@@ -132,6 +132,19 @@ export function suggestedGroup(category) {
   if (/(tietkiem|trano|dautu)/.test(label)) return 'savings_debt';
   return 'needs';
 }
+export function detectOpeningBalance(sheet, multiplier = 1) {
+  let bank = null, cash = null;
+  for (const row of sheet.rows.slice(0, 40)) for (let c = 0; c < row.length - 1; c++) {
+    const label = normalizeLabel(val(row[c]));
+    if (!['tknh', 'taikhoannganhang', 'nganhang', 'tienmat'].includes(label)) continue;
+    try {
+      const amount = parseMoney(row[c + 1], multiplier).amount;
+      if (amount < 0) continue;
+      if (label === 'tienmat') cash = amount; else bank = amount;
+    } catch { /* An ambiguous or missing balance is left for manual entry. */ }
+  }
+  return bank !== null && cash !== null ? { bank, cash } : null;
+}
 export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {} } = {}) {
   if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };
   if (mapping.date === mapping.amount) return { rows: [], errors: [{ row: headerRow + 1, message: 'Cột ngày và cột số tiền phải khác nhau.' }], skipped: 0, categories: [] };

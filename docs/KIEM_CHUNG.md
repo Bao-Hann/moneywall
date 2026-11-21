@@ -1,6 +1,6 @@
 # Bảng kiểm chứng — Vững Tài Chính
 
-Ngày kiểm tra: 21/11/2026. Bộ kiểm tra tự động: `npm test`, **45/45 đạt**, không cần cài thư viện.
+Ngày kiểm tra: 21/11/2026. Bộ kiểm tra tự động: `npm test`, **51/51 đạt**, không cần cài thư viện.
 
 | Yêu cầu | Kết quả | Bằng chứng |
 | --- | --- | --- |
@@ -43,3 +43,9 @@ Với mốc ngày 21/11/2026 và dữ liệu do `createSeedData()` tạo:
 Giao diện cho xem trước, chọn trang/cột/đơn vị, bỏ chọn từng dòng, đánh dấu hóa đơn, phân nhóm danh mục và xác nhận nhập. Sổ theo ngày tách tổng thu, tổng chi và chênh lệch. Thư viện SheetJS 0.20.3 được đóng gói tại chỗ kèm giấy phép Apache 2.0.
 
 Đã thử trên Chrome: đọc một tệp Excel mẫu thành ba giao dịch, xem trước, xác nhận nhập và giữ nguyên các khoản cũ; đọc lại cùng tệp cho kết quả không có khoản mới khi bật bỏ trùng. Đã thử tắt bỏ trùng để kiểm tra bản xem trước cập nhật lại đúng tổng.
+
+## Tiền đầu tháng
+
+Có sáu kiểm tra bổ sung cho số dư: nhận riêng ô ngân hàng/tiền mặt; loại quỹ dự phòng khỏi tiền đang dùng; không tính giao dịch tương lai; ghi giao dịch và số dư đầu kỳ trong cùng một lần lưu, giữ các cài đặt khác; hủy toàn bộ khi số dư không hợp lệ; chấp nhận tệp JSON cũ chưa có trường mới.
+
+Đã thử trên Chrome nhập lại tệp mẫu khi toàn bộ giao dịch bị nhận trùng, chỉ chọn lưu số dư đầu tháng. Số giao dịch và tổng thu giữ nguyên; tiền còn lại tăng đúng số tiền đầu kỳ.

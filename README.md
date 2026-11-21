@@ -22,7 +22,7 @@ Mở **Sổ thu chi → Nhập Excel** hoặc **Sao lưu & Cài đặt → Chọ
 2. Kiểm tra cách ghi tiền: âm là chi/dương là thu, tất cả là chi, hoặc tất cả là thu. Có thể đổi đơn vị từ nghìn/triệu đồng sang đồng.
 3. Xem trước tổng thu, tổng chi và từng khoản. Ngày trong ô gộp được nhận tự động; ô ngày bỏ trống ngoài vùng gộp chỉ được lấy ngày dòng trước khi bạn bật tùy chọn đó.
 4. Giữ nguyên danh mục từ Excel, chọn lại nhóm Thiết yếu/Mong muốn/Tiết kiệm nếu cần, đánh dấu hóa đơn cố định và bỏ chọn khoản không muốn nhập.
-5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch; không xóa sổ, thay hồ sơ, tự nhập số dư hay tạo khoản nợ.
+5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch, không xóa sổ hay tự tạo khoản nợ. Nếu chọn lưu tiền đầu tháng, ứng dụng lưu riêng số dư của tháng đó.
 
 Một bảng có hai cột cùng tên “Danh mục” được hiểu là tên khoản ở cột đầu, phân loại ở cột cuối. Cột tổng ngày và các ô số dư bên cạnh không được nhập lại thành giao dịch. Các phép cộng/trừ/nhân/chia đơn giản trong ô số tiền được tính bằng bộ phân tích giới hạn; công thức khác chỉ dùng kết quả số đã lưu trong tệp, có lưu ý ở bản xem trước. Ứng dụng không chạy mã hoặc hàm từ tệp Excel.
 
@@ -31,6 +31,14 @@ Các dòng lỗi phải được sửa trong tệp, hoặc bạn chủ động c
 Sổ thu chi có hai cách xem: **Theo từng ngày** và **Bảng tất cả khoản**. Theo từng ngày hiển thị tổng thu, tổng chi và chênh lệch riêng, cộng từ từng giao dịch để tránh lỗi vùng tính tổng trong bảng tính.
 
 Thư viện đọc Excel được đóng gói trong `vendor/`, không cần gọi dịch vụ để xử lý tệp. Xem [thông tin giấy phép](./vendor/NOTICE.md). Không đưa sổ Excel cá nhân hoặc dữ liệu thật vào kho GitHub.
+
+## Tiền có sẵn đầu tháng và số tiền còn lại
+
+Sổ thu chi có phần **Tiền còn lại trong tháng**. Điền tiền ngân hàng và tiền mặt ở đầu tháng rồi lưu, hoặc trong phần nhập Excel chọn **Lưu cả tiền có sẵn đầu tháng** khi ứng dụng nhận được hai ô ngân hàng và tiền mặt riêng.
+
+Công thức: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Các khoản thu mới − Các khoản chi đã ghi**. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, không tự coi là thu nhập và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
+
+Không thể tách chính xác số dư ngân hàng hiện tại và tiền mặt hiện tại nếu giao dịch chưa ghi phương thức thanh toán; ứng dụng chỉ hiển thị tổng hai nguồn tiền sau thu chi. Không tự chuyển số cuối tháng sang đầu tháng kế tiếp khi chưa đối chiếu; bạn có thể cập nhật riêng từng tháng. Tệp JSON cũ vẫn khôi phục được khi chưa có trường số dư đầu tháng.
 
 ## Dữ liệu được lưu ở đâu?
 

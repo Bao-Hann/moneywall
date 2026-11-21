@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { arithmeticFormula, parseMoney, excelDate, detectColumns, detectHeader, workbookSheets, buildImport } from '../js/excel-import.js';
-import { initDB, replaceData, readData, appendTransactions, markExistingTransactions } from '../js/db.js';
-import { DEFAULT_PROFILE } from '../js/finance-engine.js';
+import { arithmeticFormula, parseMoney, excelDate, detectColumns, detectHeader, workbookSheets, buildImport, detectOpeningBalance } from '../js/excel-import.js';
+import { initDB, replaceData, readData, appendTransactions, markExistingTransactions, validateBackup } from '../js/db.js';
+import { DEFAULT_PROFILE, cashBalanceForMonth } from '../js/finance-engine.js';
 import { renderTransactions, renderSettings } from '../js/ui.js';
 import { analyzeFinance } from '../js/finance-engine.js';
 
@@ -125,4 +125,46 @@ test('daily ledger displays separate income, expense and net totals, including a
   assert.ok(html.includes('daily-ledger')); assert.ok(html.includes('65.000')); assert.ok(html.includes('Thu trừ chi'));
   assert.ok(html.includes('Nhập Excel'));
   assert.ok(renderSettings(data, a, { mode: 'indexeddb' }).includes('Chọn tệp Excel'));
+});
+test('opening balances are detected separately from transactions and savings', () => {
+  const sheet = sample();
+  sheet.rows[2][7] = { v: 'TK NH:' }; sheet.rows[2][8] = { f: '100000+200000', v: 300000 };
+  sheet.rows[3][7] = { v: 'Tiền mặt:' }; sheet.rows[3][8] = { v: 100000 };
+  sheet.rows[4][7] = { v: 'Tiết kiệm:' }; sheet.rows[4][8] = { v: 5000000 };
+  assert.deepEqual(detectOpeningBalance(sheet), { bank: 300000, cash: 100000 });
+  assert.equal(buildImport(sheet).rows.length, 4);
+});
+test('cash balance separates opening money, new income, expenses and emergency reserves', () => {
+  const data = empty(); data.transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  data.profile = { ...DEFAULT_PROFILE, liquidSavings: 5000000, openingBalances: { '2026-11': { bank: 300000, cash: 100000 } } };
+  const balance = cashBalanceForMonth(data, '2026-11', '2026-11-21');
+  assert.equal(balance.opening, 400000); assert.equal(balance.income, 900000); assert.equal(balance.expense, 265000); assert.equal(balance.available, 1035000);
+  assert.equal(cashBalanceForMonth(data, '2026-12').available, null);
+});
+test('future transactions do not alter current cash balance', () => {
+  const data = empty(); data.profile.openingBalances = { '2026-11': { bank: 100000, cash: 0 } };
+  data.transactions = buildImport(sample()).rows.map((r) => ({ ...r.transaction, date: '2026-11-30' }));
+  assert.equal(cashBalanceForMonth(data, '2026-11', '2026-11-21').available, 100000);
+});
+test('Excel import can atomically update opening money without replacing other profile fields', async () => {
+  const data = empty(); data.profile.liquidSavings = 700000; data.profile.theme = 'dark';
+  await replaceData(data);
+  const transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  await appendTransactions(transactions, { openingBalance: { month: '2026-11', bank: 300000, cash: 100000 } });
+  const after = await readData();
+  assert.equal(after.transactions.length, 4); assert.equal(after.profile.liquidSavings, 700000); assert.equal(after.profile.theme, 'dark');
+  assert.deepEqual(after.profile.openingBalances['2026-11'], { bank: 300000, cash: 100000 });
+  await appendTransactions([], { openingBalance: { month: '2026-11', bank: 350000, cash: 120000 } });
+  assert.equal((await readData()).transactions.length, 4);
+  assert.equal((await readData()).profile.openingBalances['2026-11'].bank, 350000);
+});
+test('invalid opening balance rejects the entire import before any record is written', async () => {
+  const before = await readData(), record = buildImport(sample()).rows[0].transaction;
+  await assert.rejects(appendTransactions([{ ...record, id: 'should-not-import' }], { openingBalance: { month: '2026-13', bank: 100000, cash: 0 } }));
+  assert.deepEqual(await readData(), before);
+});
+test('older backups without opening balances remain compatible', () => {
+  const data = empty(); delete data.profile.openingBalances; data.profile.liquidSavings = 250000;
+  const normalized = validateBackup({ app: 'vung-tai-chinh', version: 1, data });
+  assert.deepEqual(normalized.profile.openingBalances, {}); assert.equal(normalized.profile.liquidSavings, 250000);
 });

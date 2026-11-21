@@ -67,9 +67,11 @@ export function markExistingTransactions(incoming, existing) {
   for (const t of existing) { const key = transactionFingerprint(t); counts.set(key, (counts.get(key) || 0) + 1); }
   return incoming.map((t) => { const key = transactionFingerprint(t), count = counts.get(key) || 0; if (count) counts.set(key, count - 1); return count > 0; });
 }
-export async function appendTransactions(records, { skipDuplicates = true } = {}) {
+export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null } = {}) {
   if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
   const clean = records.map((record) => validateRecord('transactions', record));
+  const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
+  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } });
   if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
   const select = (existing) => {
     const duplicate = markExistingTransactions(clean, existing), ids = new Set(existing.map((t) => t.id));
@@ -79,17 +81,26 @@ export async function appendTransactions(records, { skipDuplicates = true } = {}
   };
   if (!database) {
     const result = select([...memory.transactions.values()]);
+    const nextProfile = opening ? amendProfile(memory.profile.get('default')) : null;
     for (const t of result.accepted) memory.transactions.set(t.id, clone(t));
+    if (nextProfile) memory.profile.set('default', clone(nextProfile));
     return { imported: result.imported, skipped: result.skipped };
   }
   return new Promise((resolve, reject) => {
-    const tx = database.transaction('transactions', 'readwrite'), store = tx.objectStore('transactions');
-    let result, failure;
-    const read = store.getAll();
-    read.onsuccess = () => {
-      try { result = select(read.result); for (const t of result.accepted) store.add(t); }
-      catch (error) { failure = error; tx.abort(); }
+    const tx = database.transaction(opening ? ['transactions', 'profile'] : ['transactions'], 'readwrite'), store = tx.objectStore('transactions');
+    let result, failure, existing, profile, rowsReady = false, profileReady = !opening;
+    const save = () => {
+      if (!rowsReady || !profileReady) return;
+      try {
+        result = select(existing);
+        const nextProfile = opening ? amendProfile(profile) : null;
+        for (const t of result.accepted) store.add(t);
+        if (nextProfile) tx.objectStore('profile').put(nextProfile);
+      } catch (error) { failure = error; tx.abort(); }
     };
+    const read = store.getAll();
+    read.onsuccess = () => { existing = read.result; rowsReady = true; save(); };
+    if (opening) { const readProfile = tx.objectStore('profile').get('default'); readProfile.onsuccess = () => { profile = readProfile.result; profileReady = true; save(); }; }
     tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped });
     tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
     tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
@@ -97,7 +108,7 @@ export async function appendTransactions(records, { skipDuplicates = true } = {}
 }
 export async function readData() {
   const [transactions, recurring_bills, debts, profiles] = await Promise.all(STORES.map(getAll));
-  return { transactions, recurring_bills, debts, profile: profiles.find((p) => p.id === 'default') || { ...DEFAULT_PROFILE } };
+  return { transactions, recurring_bills, debts, profile: { ...DEFAULT_PROFILE, ...(profiles.find((p) => p.id === 'default') || {}) } };
 }
 export async function replaceData(data) {
   const clean = validateBackup({ app: 'vung-tai-chinh', version: 1, data });
@@ -118,6 +129,10 @@ function text(value, label, max = 200) { assert(typeof value === 'string' && val
 function money(value, label, allowZero = true) { assert(Number.isSafeInteger(value) && value >= (allowZero ? 0 : 1), `${label} phải là số nguyên ${allowZero ? 'không âm' : 'lớn hơn 0'}.`); return value; }
 function bool(value, label) { assert(typeof value === 'boolean', `${label} không hợp lệ.`); return value; }
 function day(value) { assert(Number.isInteger(value) && value >= 1 && value <= 31, 'Ngày phải từ 1 đến 31.'); return value; }
+export function validateOpeningBalance(value) {
+  assert(value && typeof value === 'object' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value.month) && Number(value.month.slice(0, 4)) >= 1900, 'Tháng của số dư đầu kỳ không hợp lệ.');
+  return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng đầu tháng'), cash: money(value.cash, 'Tiền mặt đầu tháng') };
+}
 export function validateRecord(store, value) {
   assert(value && typeof value === 'object' && !Array.isArray(value), 'Bản ghi không hợp lệ.');
   const id = text(value.id, 'Mã bản ghi', 100);
@@ -140,7 +155,10 @@ export function validateRecord(store, value) {
   assert(store === 'profile' && id === 'default', 'Hồ sơ không hợp lệ.');
   assert(['AUTO', 'STABLE', 'IRREGULAR'].includes(value.incomeModeOverride) && ['light', 'dark'].includes(value.theme), 'Cài đặt không hợp lệ.');
   assert(value.lastBackupAt === null || Number.isSafeInteger(value.lastBackupAt) && value.lastBackupAt >= 0, 'Ngày sao lưu không hợp lệ.');
-  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt };
+  const openingBalances = {}, rawBalances = value.openingBalances ?? {};
+  assert(rawBalances && typeof rawBalances === 'object' && !Array.isArray(rawBalances) && Object.keys(rawBalances).length <= 1200, 'Danh sách số dư đầu tháng không hợp lệ.');
+  for (const [month, amounts] of Object.entries(rawBalances)) { const entry = validateOpeningBalance({ ...amounts, month }); openingBalances[month] = { bank: entry.bank, cash: entry.cash }; }
+  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances };
 }
 export function validateBackup(input) {
   assert(input && input.app === 'vung-tai-chinh' && input.version === 1 && input.data, 'Tệp không đúng định dạng sao lưu Vững Tài Chính (phiên bản 1).');
