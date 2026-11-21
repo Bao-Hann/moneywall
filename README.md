@@ -14,6 +14,24 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 
 Muốn khám phá trước, chọn **Thử dữ liệu mẫu** ở trang đầu. Bộ mẫu có sáu tháng đã hoàn tất và phần tháng hiện tại. Dữ liệu mẫu được ghi rõ trong giao diện, không nạp tự động. Có thể xóa mẫu rồi bắt đầu sổ riêng.
 
+## Nhập sổ Excel đang dùng
+
+Mở **Sổ thu chi → Nhập Excel** hoặc **Sao lưu & Cài đặt → Chọn tệp Excel**. Ứng dụng đọc `.xlsx`, `.xls` và `.csv` ngay trên laptop, tối đa 10 MB và 10.000 dòng giao dịch mỗi lần.
+
+1. Chọn tệp, sau đó kiểm tra trang tính và dòng tiêu đề được nhận diện. Có thể đổi cột nếu tệp của bạn khác mẫu.
+2. Kiểm tra cách ghi tiền: âm là chi/dương là thu, tất cả là chi, hoặc tất cả là thu. Có thể đổi đơn vị từ nghìn/triệu đồng sang đồng.
+3. Xem trước tổng thu, tổng chi và từng khoản. Ngày trong ô gộp được nhận tự động; ô ngày bỏ trống ngoài vùng gộp chỉ được lấy ngày dòng trước khi bạn bật tùy chọn đó.
+4. Giữ nguyên danh mục từ Excel, chọn lại nhóm Thiết yếu/Mong muốn/Tiết kiệm nếu cần, đánh dấu hóa đơn cố định và bỏ chọn khoản không muốn nhập.
+5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch; không xóa sổ, thay hồ sơ, tự nhập số dư hay tạo khoản nợ.
+
+Một bảng có hai cột cùng tên “Danh mục” được hiểu là tên khoản ở cột đầu, phân loại ở cột cuối. Cột tổng ngày và các ô số dư bên cạnh không được nhập lại thành giao dịch. Các phép cộng/trừ/nhân/chia đơn giản trong ô số tiền được tính bằng bộ phân tích giới hạn; công thức khác chỉ dùng kết quả số đã lưu trong tệp, có lưu ý ở bản xem trước. Ứng dụng không chạy mã hoặc hàm từ tệp Excel.
+
+Các dòng lỗi phải được sửa trong tệp, hoặc bạn chủ động cho phép chỉ nhập dòng hợp lệ. Các khoản giống sổ hiện có được bỏ qua mặc định, có đối chiếu số lần xuất hiện để giữ đúng những lần mua trùng nhau thực sự. Có thể bỏ tùy chọn này nếu cần nhập cả khoản giống nhau.
+
+Sổ thu chi có hai cách xem: **Theo từng ngày** và **Bảng tất cả khoản**. Theo từng ngày hiển thị tổng thu, tổng chi và chênh lệch riêng, cộng từ từng giao dịch để tránh lỗi vùng tính tổng trong bảng tính.
+
+Thư viện đọc Excel được đóng gói trong `vendor/`, không cần gọi dịch vụ để xử lý tệp. Xem [thông tin giấy phép](./vendor/NOTICE.md). Không đưa sổ Excel cá nhân hoặc dữ liệu thật vào kho GitHub.
+
 ## Dữ liệu được lưu ở đâu?
 
 Mọi giao dịch, hóa đơn, khoản nợ và cài đặt được lưu bằng IndexedDB trong trình duyệt trên máy đang dùng. Ứng dụng không có máy chủ nhận các dữ liệu này. Mỗi trình duyệt và mỗi địa chỉ web có một sổ riêng, không tự đồng bộ giữa các thiết bị.

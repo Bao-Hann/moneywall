@@ -57,6 +57,44 @@ function storeRequest(name, method, argument, write = false) {
 export const getAll = (name) => storeRequest(name, 'getAll');
 export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
 export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
+export function transactionFingerprint(t) {
+  const norm = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi-VN');
+  return JSON.stringify([t.date, t.type, t.amount, norm(t.category), norm(t.note)]);
+}
+/** Multiset comparison keeps legitimately repeated purchases in the source file. */
+export function markExistingTransactions(incoming, existing) {
+  const counts = new Map();
+  for (const t of existing) { const key = transactionFingerprint(t); counts.set(key, (counts.get(key) || 0) + 1); }
+  return incoming.map((t) => { const key = transactionFingerprint(t), count = counts.get(key) || 0; if (count) counts.set(key, count - 1); return count > 0; });
+}
+export async function appendTransactions(records, { skipDuplicates = true } = {}) {
+  if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
+  const clean = records.map((record) => validateRecord('transactions', record));
+  if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
+  const select = (existing) => {
+    const duplicate = markExistingTransactions(clean, existing), ids = new Set(existing.map((t) => t.id));
+    const accepted = clean.filter((t, i) => !skipDuplicates || !duplicate[i]);
+    if (accepted.some((t) => ids.has(t.id))) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.');
+    return { accepted, imported: accepted.length, skipped: clean.length - accepted.length };
+  };
+  if (!database) {
+    const result = select([...memory.transactions.values()]);
+    for (const t of result.accepted) memory.transactions.set(t.id, clone(t));
+    return { imported: result.imported, skipped: result.skipped };
+  }
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction('transactions', 'readwrite'), store = tx.objectStore('transactions');
+    let result, failure;
+    const read = store.getAll();
+    read.onsuccess = () => {
+      try { result = select(read.result); for (const t of result.accepted) store.add(t); }
+      catch (error) { failure = error; tx.abort(); }
+    };
+    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped });
+    tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
+    tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
+  });
+}
 export async function readData() {
   const [transactions, recurring_bills, debts, profiles] = await Promise.all(STORES.map(getAll));
   return { transactions, recurring_bills, debts, profile: profiles.find((p) => p.id === 'default') || { ...DEFAULT_PROFILE } };

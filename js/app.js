@@ -1,11 +1,12 @@
 import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, simulateDebtPayoff } from './finance-engine.js';
-import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid } from './db.js';
+import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions } from './db.js';
 import { createSeedData } from './seed-data.js';
 import { fillIcons, icon, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions } from './ui.js';
 import { renderCharts, destroyCharts } from './charts.js';
+import { openExcelImporter } from './excel-ui.js';
 
 const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích', planning: 'Nợ & Quỹ dự phòng', settings: 'Sao lưu & Cài đặt' };
-const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false };
+const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false };
 const content = document.getElementById('app-content');
 let toastTimer, installPrompt;
 try { state.installDismissed = sessionStorage.getItem('vung-install-dismissed') === '1'; } catch { /* Optional preference, unrelated to saved financial data. */ }
@@ -39,7 +40,12 @@ function render() {
   const warning = document.getElementById('storage-warning'); warning.textContent = state.storage.message; warning.hidden = !state.storage.message;
   document.getElementById('chart-warning').hidden = !!globalThis.Chart;
   if (state.tab === 'overview') content.innerHTML = renderOverview(state.data, a, state.installDismissed);
-  if (state.tab === 'transactions') { state.page = Math.min(state.page, Math.max(1, Math.ceil(filteredTransactions(state.data, state.filters).length / 15))); content.innerHTML = renderTransactions(state.data, a, state.filters, state.page); }
+  if (state.tab === 'transactions') {
+    const filtered = filteredTransactions(state.data, state.filters);
+    const pages = state.ledgerView === 'daily' ? Math.ceil(new Set(filtered.map((t) => t.date)).size / 10) : Math.ceil(filtered.length / 15);
+    state.page = Math.min(state.page, Math.max(1, pages));
+    content.innerHTML = renderTransactions(state.data, a, state.filters, state.page, state.ledgerView);
+  }
   if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a);
   if (state.tab === 'planning') { content.innerHTML = renderPlanning(state.data, a, state.extraPayment); updateSimulation(); }
   if (state.tab === 'settings') content.innerHTML = renderSettings(state.data, a, state.storage);
@@ -110,6 +116,22 @@ async function install() {
 async function handleAction(action, id) {
   const find = (store) => state.data[store].find((x) => x.id === id);
   if (action === 'add-transaction') openTransaction();
+  else if (action === 'import-excel') {
+    await openExcelImporter({
+      getExisting: () => state.data.transactions,
+      onImport: async (records, options) => {
+        let receipt;
+        const ok = await mutation(async () => { receipt = await appendTransactions(records, options); });
+        if (ok) {
+          state.filters = { month: records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
+          state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
+          toast(`Đã nhập ${receipt.imported} giao dịch${receipt.skipped ? `, bỏ qua ${receipt.skipped} khoản đã có` : ''}. Dữ liệu cũ được giữ nguyên.`);
+        }
+        return ok;
+      },
+    });
+  }
+  else if (action === 'view-daily' || action === 'view-table') { state.ledgerView = action === 'view-daily' ? 'daily' : 'table'; state.page = 1; render(); }
   else if (action === 'edit-transaction') { const t = find('transactions'); if (t) openTransaction(t); }
   else if (action === 'add-bill') openBill();
   else if (action === 'edit-bill') { const b = find('recurring_bills'); if (b) openBill(b); }
@@ -166,7 +188,7 @@ document.addEventListener('input', (event) => {
   if (el.id === 'filter-search') {
     state.filters.search = el.value; state.page = 1;
     const template = document.createElement('template');
-    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page);
+    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page, state.ledgerView);
     // Preserve the actual search input, caret, and IME composition while typing.
     document.getElementById('ledger-results').replaceChildren(...template.content.querySelector('#ledger-results').childNodes);
   }

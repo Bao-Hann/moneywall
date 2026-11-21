@@ -2,3 +2,7 @@ dist/
 .openai/
 node_modules/
 test-results/
+*.xlsx
+*.xls
+*.csv
+vung-tai-chinh-*.json

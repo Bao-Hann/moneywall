@@ -1,6 +1,6 @@
 # Mã nguồn đầy đủ — Vững Tài Chính
 
-Các tệp dưới đây được xuất nguyên văn theo đúng thứ tự bản yêu cầu.
+Mã ứng dụng kèm chức năng nhập Excel. Thư viện nguyên bản và giấy phép được đóng gói trong thư mục `vendor/`.
 
 ### File: .nojekyll
 
@@ -123,8 +123,8 @@ Các tệp dưới đây được xuất nguyên văn theo đúng thứ tự b�
 ### File: sw.js
 
 ```javascript
-const CACHE = 'vung-tai-chinh-v1';
-const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/db.js', './js/finance-engine.js', './js/charts.js', './js/seed-data.js', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'vung-tai-chinh-v2-excel';
+const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/db.js', './js/finance-engine.js', './js/charts.js', './js/seed-data.js', './js/excel-import.js', './js/excel-ui.js', './vendor/xlsx.full.min.js', './manifest.webmanifest', './icon.svg'];
 const CHART_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -175,6 +175,9 @@ label{display:block;font-size:12px;font-weight:500;margin-bottom:16px;color:var(
 @media(max-width:760px){:root{--sidebar:0px}.sidebar{position:fixed;top:auto;bottom:0;width:100%;height:69px;padding:0 6px;border:0;border-top:1px solid var(--line);z-index:30}.sidebar .brand,.nav-caption,.sidebar-bottom{display:none}.main-nav{display:flex;gap:0;justify-content:space-around}.nav-link{flex:1;flex-direction:column;justify-content:center;gap:5px;padding:10px 2px 7px;border-radius:0;font-size:9px;font-weight:500;white-space:normal;text-align:center}.nav-link .icon{width:19px;height:19px}.nav-link.active{background:transparent}.nav-link.active:before{top:0;left:25%;right:25%;bottom:auto;height:2px;width:auto}.nav-link:nth-child(4)>span:nth-child(2){font-size:8px}.nav-count{position:absolute;top:6px;right:15px;min-width:14px;font-size:8px;padding:0 2px}.app-shell{padding-bottom:69px}.topbar{height:59px;padding:0 20px}.breadcrumb{font-size:10px}.date-label{display:none}.avatar{height:32px;width:32px;font-size:11px}.topbar-right{gap:8px}main{padding:24px 18px 16px}h1{font-size:24px}.page-heading{display:block;margin-bottom:23px}.page-heading p{font-size:11px}.heading-actions{justify-content:flex-start;margin-top:17px}.month-pill{font-size:10px;padding:8px 10px}.button{padding:9px 12px;font-size:11px}.metrics-grid{gap:10px;margin-bottom:16px}.metric-card{padding:15px 13px;min-height:157px;border-radius:13px}.metric-top{font-size:9px;gap:3px;margin-bottom:16px;align-items:flex-start}.metric-icon{width:23px;height:23px;border-radius:6px}.metric-icon .icon{width:13px;height:13px}.metric-value{font-size:24px}.metric-value .unit{font-size:11px}.metric-foot{font-size:9px;gap:5px;margin-top:12px}.metric-foot .badge{font-size:8px;padding:2px 5px}.score-ring{width:34px;height:34px;right:12px;top:67px}.score-ring:before{width:26px;height:26px}.score-ring .icon{width:12px;height:12px}.savings-unit{font-size:10px}.panel{padding:18px;border-radius:13px}.panel-header{margin-bottom:17px;align-items:flex-start}.panel-header h2{font-size:14px}.panel-header p{font-size:10px}.main-grid{gap:16px;margin-bottom:16px}.chart-wrap{height:215px}.chart-wrap.small{height:210px}.chart-legend{font-size:8px;gap:8px}.chart-panel .panel-header{display:block}.chart-panel .chart-legend{margin-top:12px}.chart-summary{gap:26px}.chart-summary strong{font-size:15px}.strategy-panel{display:block}.strategy-panel .strategy-callout{margin-top:18px}.strategy-title{font-size:21px}.strategy-copy{font-size:12px}.diagnostics-grid{grid-template-columns:1fr;gap:16px}.install-banner{padding:13px;gap:9px;flex-wrap:wrap}.install-banner p{font-size:10px}.install-banner strong{font-size:11px}.install-banner>.icon{display:none}.install-banner>div{flex:1;min-width:180px}.install-banner .text-link{margin-left:0}.page-footer{margin:12px 18px 0;font-size:8px}.filters{gap:10px}.filters label{font-size:10px}.filters input,.filters select{font-size:11px}.transaction-title small{max-width:130px}.table-scroll table{min-width:490px}.recent-table th:nth-child(2),.recent-table td:nth-child(2){display:none}.recent-table table{min-width:0}.recent-table .transaction-title strong{font-size:10px}.recent-table td{font-size:10px}.alert-row{padding:11px;gap:8px;flex-wrap:wrap}.alert-body strong{font-size:11px}.alert-body p{font-size:10px}.alert-amount{font-size:11px}.form-dialog{padding:22px 19px}.dialog-header h2{font-size:21px}.dialog-header{margin-bottom:20px}.form-grid{gap:10px}label{font-size:11px}.quick-amounts{gap:5px}.quick-amounts button{font-size:10px;padding:7px 9px}.toast{bottom:85px;left:50%;width:max-content;max-width:90vw}.welcome-panel h2{font-size:18px}.welcome-actions{flex-wrap:wrap}.record-actions{flex-wrap:wrap;max-width:65px;justify-content:flex-end}.record-money{font-size:11px}.bill-row,.debt-row{gap:7px}.bill-row h3,.debt-row h3{font-size:11px}.settings-grid{gap:16px}.settings-card .button{font-size:11px}.transactions-summary{gap:25px}.transactions-summary strong{font-size:17px}.strategy-title{line-height:1.5}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 @media(min-width:761px) and (max-height:820px){.sidebar-note{display:none}.sidebar{overflow-y:auto}.brand{margin-bottom:30px}}
+.excel-dialog{width:min(1080px,calc(100% - 40px));max-height:92vh}.excel-file-box{border:1px dashed #9abca8;background:var(--mint);padding:18px;border-radius:12px;margin-bottom:18px}.excel-file-box label{margin-bottom:8px}.excel-file-box input{font-size:14px;max-width:100%}.excel-file-box input::file-selector-button{background:var(--surface);border:1px solid var(--line);color:var(--green);border-radius:7px;padding:9px 13px;margin-right:12px;cursor:pointer}.excel-config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.excel-config-grid label{font-size:13px}.excel-config-grid .checkbox-label{padding-top:22px;line-height:1.7}.excel-mapping{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin:6px 0 17px}.excel-mapping summary{font-size:14px;font-weight:500}.excel-column-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-top:16px}.excel-column-grid label{font-size:12px;overflow-wrap:anywhere;margin-bottom:2px}.excel-column-grid select{font-size:13px}.excel-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;border-top:1px solid var(--line);padding:20px 0 18px}.excel-summary span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.excel-summary strong{font-size:20px;font-variant-numeric:tabular-nums}.excel-import-options{display:flex;gap:20px;flex-wrap:wrap}.excel-import-options label{font-size:13px}.excel-preview-table{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:0 13px}.excel-preview-table thead{position:sticky;top:0;background:var(--surface);z-index:1}.excel-preview-table td{font-size:13px;vertical-align:top}.excel-preview-table th{font-size:12px}.excel-preview-table input[type=checkbox]{accent-color:var(--green);width:16px;height:16px}.excel-note{display:block;max-width:280px;white-space:normal;overflow-wrap:anywhere}.excel-row-number{display:block;color:var(--muted);font-size:11px;white-space:nowrap}.excel-row-warning{display:block;color:var(--orange);font-size:11px;line-height:1.6;max-width:270px;margin-top:5px}.excel-duplicate{opacity:.55}.excel-actions{position:sticky;bottom:-28px;background:var(--surface);padding:16px 0 3px;border-top:1px solid var(--line);margin-top:18px;align-items:center}.excel-actions>.helper-text{margin-right:auto;font-size:12px}.ledger-view-tabs{display:flex;gap:8px;margin-bottom:22px}.daily-ledger{border:1px solid var(--line);border-radius:11px;margin:13px 0;padding:0 15px;overflow:hidden}.daily-ledger>summary{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 0;font-size:14px;color:var(--ink);cursor:pointer}.daily-ledger>summary>span:first-child{display:flex;align-items:center;gap:12px}.daily-ledger>summary small{font-size:12px;color:var(--muted)}.daily-ledger>summary:before{content:'+';color:var(--green);font-size:17px;font-weight:600}.daily-ledger[open]>summary:before{content:'−'}.daily-totals{display:flex;gap:20px;margin-left:auto;font-size:12px;flex-wrap:wrap;justify-content:flex-end}.daily-totals b{font-weight:550;font-variant-numeric:tabular-nums;margin-left:5px}.daily-ledger .table-scroll{border-top:1px solid var(--line)}.welcome-actions{flex-wrap:wrap;justify-content:flex-end}.welcome-panel .welcome-actions{max-width:410px}
+@media(max-width:900px){.excel-column-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.excel-summary strong{font-size:17px}.daily-ledger>summary{flex-wrap:wrap}.daily-totals{width:100%;justify-content:flex-start;gap:14px}.excel-config-grid{grid-template-columns:1fr 1fr}.excel-config-grid label:last-child{grid-column:1/-1}.welcome-panel .welcome-actions{max-width:none;justify-content:flex-start}}
+@media(max-width:600px){.excel-dialog{padding:20px 14px;width:calc(100% - 18px)}.excel-config-grid{grid-template-columns:1fr}.excel-config-grid label:last-child{grid-column:auto}.excel-summary{grid-template-columns:1fr 1fr}.excel-summary strong{font-size:18px}.excel-actions{bottom:-20px;flex-wrap:wrap}.excel-actions>.helper-text{width:100%}.excel-column-grid{grid-template-columns:1fr 1fr}.excel-preview-table table{min-width:680px}.daily-totals{font-size:10px;gap:7px}.daily-ledger>summary>span:first-child{gap:8px}.daily-ledger{padding:0 10px}.excel-config-grid .checkbox-label{padding-top:0}}
 @media(min-width:761px){body{font-size:16px}.nav-link{font-size:14px}.sidebar-note strong{font-size:14px}.sidebar-note p{font-size:12px}.nav-caption{font-size:11px}.local-status{font-size:11px}.theme-button{font-size:14px}.breadcrumb{font-size:13px}.date-label{font-size:12px}.page-heading p{font-size:14px}.button{font-size:14px}.button.small{font-size:12px}.month-pill{font-size:13px}.metric-card{min-height:193px}.metric-top{font-size:14px;align-items:flex-start;min-height:34px;margin-bottom:13px;line-height:1.6}.metric-top>span:first-child{max-width:calc(100% - 35px)}.metric-value{font-size:29px}.metric-value .unit{font-size:14px}.metric-foot{font-size:12px;margin-top:14px}.badge{font-size:11px}.savings-unit{font-size:12px}.score-ring{top:81px;width:38px;height:38px;right:16px}.score-ring:before{width:29px;height:29px}.score-ring .icon{width:13px;height:13px}.section-label{font-size:12px}.panel-header h2{font-size:17px}.panel-header p{font-size:13px}.chart-legend{font-size:11px}.chart-summary span{font-size:12px}.chart-summary strong{font-size:17px}.strategy-copy{font-size:14px}.level-label{font-size:12px}.allocation-label{font-size:12px}.allocation-legend{font-size:12px}.allocation-legend strong{font-size:16px}.strategy-callout{font-size:13px}.text-link{font-size:13px}table{font-size:14px}th{font-size:12px}.transaction-title strong{font-size:14px}.transaction-title small{font-size:12px}.install-banner p{font-size:12px}.install-banner strong{font-size:14px}.empty-state p,.diagnostic-copy{font-size:14px}.empty-state h3{font-size:17px}.filters label,label{font-size:14px}.filters input,.filters select,input:not([type=checkbox]),select{font-size:14px}.transactions-summary span{font-size:13px}.pagination{font-size:13px}.alert-body strong{font-size:14px}.alert-body p{font-size:13px}.alert-amount{font-size:14px}.cutback-table td,.cutback-table th{font-size:13px}.insight-note{font-size:13px}.bill-row h3,.debt-row h3{font-size:14px}.bill-row p,.debt-row p{font-size:12px}.record-money{font-size:14px}.record-money small{font-size:12px}.settings-card>p{font-size:14px}.setting-row strong{font-size:14px}.setting-row small{font-size:13px}.fine-print{font-size:12px}.helper-text{font-size:14px}.form-dialog label{font-size:14px}.confirm-dialog p{font-size:14px}.welcome-panel p{font-size:14px}.page-footer{font-size:11px}.toast{font-size:14px}}
 ```
 
@@ -240,6 +243,44 @@ function storeRequest(name, method, argument, write = false) {
 export const getAll = (name) => storeRequest(name, 'getAll');
 export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
 export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
+export function transactionFingerprint(t) {
+  const norm = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi-VN');
+  return JSON.stringify([t.date, t.type, t.amount, norm(t.category), norm(t.note)]);
+}
+/** Multiset comparison keeps legitimately repeated purchases in the source file. */
+export function markExistingTransactions(incoming, existing) {
+  const counts = new Map();
+  for (const t of existing) { const key = transactionFingerprint(t); counts.set(key, (counts.get(key) || 0) + 1); }
+  return incoming.map((t) => { const key = transactionFingerprint(t), count = counts.get(key) || 0; if (count) counts.set(key, count - 1); return count > 0; });
+}
+export async function appendTransactions(records, { skipDuplicates = true } = {}) {
+  if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
+  const clean = records.map((record) => validateRecord('transactions', record));
+  if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
+  const select = (existing) => {
+    const duplicate = markExistingTransactions(clean, existing), ids = new Set(existing.map((t) => t.id));
+    const accepted = clean.filter((t, i) => !skipDuplicates || !duplicate[i]);
+    if (accepted.some((t) => ids.has(t.id))) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.');
+    return { accepted, imported: accepted.length, skipped: clean.length - accepted.length };
+  };
+  if (!database) {
+    const result = select([...memory.transactions.values()]);
+    for (const t of result.accepted) memory.transactions.set(t.id, clone(t));
+    return { imported: result.imported, skipped: result.skipped };
+  }
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction('transactions', 'readwrite'), store = tx.objectStore('transactions');
+    let result, failure;
+    const read = store.getAll();
+    read.onsuccess = () => {
+      try { result = select(read.result); for (const t of result.accepted) store.add(t); }
+      catch (error) { failure = error; tx.abort(); }
+    };
+    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped });
+    tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
+    tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
+  });
+}
 export async function readData() {
   const [transactions, recurring_bills, debts, profiles] = await Promise.all(STORES.map(getAll));
   return { transactions, recurring_bills, debts, profile: profiles.find((p) => p.id === 'default') || { ...DEFAULT_PROFILE } };
@@ -765,7 +806,8 @@ export function renderOverview(data, a, installDismissed) {
   const sample = data.transactions.some((t) => t.note === 'Thu nhập minh họa');
   return heading('Một chút rõ ràng, một ngày an tâm.', 'Cùng nhìn lại dòng tiền và vững vàng hơn với những lựa chọn hôm nay.', a) +
     (sample ? `<div class="banner">Bạn đang xem dữ liệu minh họa. ${btn('Bắt đầu sổ của tôi', 'clear-data', 'ghost small')}</div>` : '') +
-    (!hasData ? `<div class="panel welcome-panel"><div><h2>Chào mừng đến góc tài chính của bạn</h2><p>Bắt đầu bằng khoản thu đầu tiên, rồi ghi lại chi tiêu hằng ngày. Hoặc thử dữ liệu mẫu để khám phá dự báo và các gợi ý hành động.</p></div><div class="welcome-actions">${btn('Ghi khoản đầu tiên', 'add-transaction', 'primary', 'plus')}${btn('Thử dữ liệu mẫu', 'seed-data', 'secondary')}</div></div>` : '') +
+    (hasData && income.months < 3 ? '<div class="banner">Kế hoạch hiện chỉ dựa trên khoản thu bạn đã ghi trong dưới 3 tháng. Tiền có sẵn đầu kỳ và số dư tài khoản không phải thu nhập mới; các chỉ số chưa phản ánh đầy đủ nếu bạn mới nhập một phần sổ.</div>' : '') +
+    (!hasData ? `<div class="panel welcome-panel"><div><h2>Chào mừng đến góc tài chính của bạn</h2><p>Bắt đầu bằng khoản thu đầu tiên, rồi ghi lại chi tiêu hằng ngày. Hoặc thử dữ liệu mẫu để khám phá dự báo và các gợi ý hành động.</p></div><div class="welcome-actions">${btn('Ghi khoản đầu tiên', 'add-transaction', 'primary', 'plus')}${btn('Nhập Excel của tôi', 'import-excel', 'secondary', 'upload')}${btn('Thử dữ liệu mẫu', 'seed-data', 'secondary')}</div></div>` : '') +
     `<div class="section-label">BỨC TRANH TÀI CHÍNH THÁNG NÀY</div>
     <section class="metrics-grid" aria-label="Các chỉ số chính">
       <article class="metric-card featured"><div class="metric-top"><span>Hạn mức an toàn hôm nay</span><span class="metric-icon">${icon('wallet')}</span></div><div class="metric-value money">${formatVND(s.dailySafeToSpend)}</div><div class="metric-foot"><span class="badge ${s.status}">${burnLabels[s.status]}</span><span>Còn ${s.daysLeft} ngày</span></div></article>
@@ -783,11 +825,21 @@ export function renderOverview(data, a, installDismissed) {
 export function filteredTransactions(data, filters) {
   return data.transactions.filter((t) => (!filters.month || t.date.startsWith(filters.month)) && (!filters.group || t.group === filters.group) && (!filters.category || t.category === filters.category) && (!filters.search || `${t.note} ${t.category}`.toLocaleLowerCase('vi-VN').includes(filters.search.toLocaleLowerCase('vi-VN')))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
-export function renderTransactions(data, a, filters, page) {
-  const ts = filteredTransactions(data, filters), size = 15, pages = Math.max(1, Math.ceil(ts.length / size));
-  page = Math.min(page, pages);
+export function renderTransactions(data, a, filters, page, view = 'table') {
+  const ts = filteredTransactions(data, filters), days = [...new Set(ts.map((t) => t.date))];
+  const size = view === 'daily' ? 10 : 15, total = view === 'daily' ? days.length : ts.length;
+  const pages = Math.max(1, Math.ceil(total / size)); page = Math.min(page, pages);
   const categories = [...new Set(data.transactions.filter((t) => !filters.group || t.group === filters.group).map((t) => t.category))].sort((a, b) => a.localeCompare(b, 'vi'));
-  return heading('Sổ thu chi', 'Ghi lại từng khoản nhỏ. Hiểu rõ từng lựa chọn.', a) + `<section class="panel"><div class="filters"><label>Tháng<input type="month" id="filter-month" value="${E(filters.month)}"></label><label>Nhóm<select id="filter-group"><option value="">Tất cả nhóm</option>${Object.entries(GROUP_LABELS).map(([k, v]) => `<option value="${k}" ${filters.group === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Danh mục<select id="filter-category"><option value="">Tất cả danh mục</option>${categories.map((c) => `<option value="${E(c)}" ${filters.category === c ? 'selected' : ''}>${E(c)}</option>`).join('')}</select></label><label>Tìm giao dịch<input type="search" id="filter-search" value="${E(filters.search)}" placeholder="Tìm ghi chú, danh mục…" maxlength="1000"></label></div><div id="ledger-results"><div class="transactions-summary"><div><span>Tổng thu</span><strong class="amount-income">${formatVND(sum(ts.filter((t) => t.type === 'income').map((t) => t.amount)))}</strong></div><div><span>Tổng chi & Chuyển tiết kiệm</span><strong>${formatVND(sum(ts.filter((t) => t.type === 'expense').map((t) => t.amount)))}</strong></div><div><span>Số giao dịch</span><strong>${ts.length}</strong></div></div>${ts.length ? transactionTable(ts.slice((page - 1) * size, page * size), true) : empty('Chưa tìm thấy giao dịch', 'Thêm một khoản mới hoặc thử đổi bộ lọc để xem lại các giao dịch.', btn('Thêm giao dịch', 'add-transaction', 'secondary', 'plus'))}<div class="pagination"><span>${ts.length ? `${(page - 1) * size + 1}–${Math.min(page * size, ts.length)} / ${ts.length} giao dịch` : '0 giao dịch'}</span><div class="pagination-controls">${btn('Trước', 'prev-page', 'secondary small', '', page <= 1 ? 'disabled' : '')}<span class="month-pill">${page} / ${pages}</span>${btn('Sau', 'next-page', 'secondary small', '', page >= pages ? 'disabled' : '')}</div></div><p class="fine-print">Khoản chuyển tiết kiệm và trả nợ được ghi riêng, không tính là chi sinh hoạt trong dự báo. Giao dịch ngày tương lai chỉ được tính vào chỉ số khi đến ngày đó.</p></div></section>`;
+  const income = sum(ts.filter((t) => t.type === 'income').map((t) => t.amount)), expense = sum(ts.filter((t) => t.type === 'expense').map((t) => t.amount));
+  const daily = days.slice((page - 1) * size, page * size).map((day) => {
+    const records = ts.filter((t) => t.date === day), inc = sum(records.filter((t) => t.type === 'income').map((t) => t.amount)), out = sum(records.filter((t) => t.type === 'expense').map((t) => t.amount));
+    return `<details class="daily-ledger" open><summary><span><strong>${dateText(day)}</strong><small>${records.length} khoản</small></span><span class="daily-totals"><span>Thu <b class="amount-income">${formatVND(inc)}</b></span><span>Chi <b>${formatVND(out)}</b></span><span>Thu trừ chi <b class="${inc >= out ? 'amount-income' : ''}">${formatVND(inc - out)}</b></span></span></summary>${transactionTable(records, true)}</details>`;
+  }).join('');
+  const pageHeading = heading('Sổ thu chi', 'Ghi từng khoản, xem tổng từng ngày theo cách bạn vẫn quen.', a).replace('<div class="heading-actions">', `<div class="heading-actions">${btn('Nhập Excel', 'import-excel', 'secondary', 'upload')}`);
+  return pageHeading + `<section class="panel"><div class="ledger-view-tabs" role="group" aria-label="Cách xem sổ thu chi">${btn('Theo từng ngày', 'view-daily', view === 'daily' ? 'primary small' : 'secondary small', 'calendar')}${btn('Bảng tất cả khoản', 'view-table', view === 'table' ? 'primary small' : 'secondary small', 'grid')}</div><div class="filters"><label>Tháng<input type="month" id="filter-month" value="${E(filters.month)}"></label><label>Nhóm<select id="filter-group"><option value="">Tất cả nhóm</option>${Object.entries(GROUP_LABELS).map(([k, v]) => `<option value="${k}" ${filters.group === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Danh mục<select id="filter-category"><option value="">Tất cả danh mục</option>${categories.map((c) => `<option value="${E(c)}" ${filters.category === c ? 'selected' : ''}>${E(c)}</option>`).join('')}</select></label><label>Tìm giao dịch<input type="search" id="filter-search" value="${E(filters.search)}" placeholder="Tìm ghi chú, danh mục…" maxlength="1000"></label></div>
+    <div id="ledger-results"><div class="transactions-summary"><div><span>Tổng thu</span><strong class="amount-income">${formatVND(income)}</strong></div><div><span>Tổng chi & Chuyển tiết kiệm</span><strong>${formatVND(expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(income - expense)}</strong></div><div><span>Số giao dịch</span><strong>${ts.length}</strong></div></div>
+    ${ts.length ? view === 'daily' ? daily : transactionTable(ts.slice((page - 1) * size, page * size), true) : empty('Chưa tìm thấy giao dịch', 'Thêm khoản mới, nhập tệp Excel hoặc đổi bộ lọc để xem lại giao dịch.', btn('Nhập Excel', 'import-excel', 'secondary', 'upload'))}
+    <div class="pagination"><span>${total ? `${(page - 1) * size + 1}–${Math.min(page * size, total)} / ${total} ${view === 'daily' ? 'ngày' : 'giao dịch'}` : '0 giao dịch'}</span><div class="pagination-controls">${btn('Trước', 'prev-page', 'secondary small', '', page <= 1 ? 'disabled' : '')}<span class="month-pill">${page} / ${pages}</span>${btn('Sau', 'next-page', 'secondary small', '', page >= pages ? 'disabled' : '')}</div></div><p class="fine-print">Tổng thu, tổng chi và thu trừ chi được tính riêng từ từng khoản theo bộ lọc. Khoản chuyển tiết kiệm/trả nợ không tính là chi sinh hoạt trong dự báo. Giao dịch tương lai chỉ tính vào chỉ số khi đến ngày đó.</p></div></section>`;
 }
 
 export function renderAnalysis(data, a) {
@@ -816,7 +868,7 @@ export function renderDebtSimulation(plan) {
 
 export function renderSettings(data, a, storage) {
   return heading('Giữ dữ liệu, giữ sự an tâm.', 'Một vài cài đặt nhỏ để góc tài chính luôn thuộc về bạn.', a, false) +
-  `<div class="settings-grid"><section class="panel settings-card"><div class="panel-header"><h2>Sao lưu & Khôi phục</h2>${icon('download')}</div><p>Tải một bản JSON để giữ đầy đủ giao dịch, hóa đơn, nợ và cài đặt. Dùng tệp này để chuyển dữ liệu sang trình duyệt hoặc máy khác.</p>${btn('Sao lưu dữ liệu', 'backup', 'primary', 'download')}${btn('Khôi phục từ JSON', 'restore', 'secondary', 'upload')}<div class="setting-row"><div><strong>Bản sao lưu gần nhất</strong><small>${data.profile.lastBackupAt ? E(new Date(data.profile.lastBackupAt).toLocaleString('vi-VN')) : 'Bạn chưa tạo bản sao lưu nào.'}</small></div>${icon('clock')}</div><p class="fine-print">Khôi phục sẽ thay thế dữ liệu hiện có sau khi tệp được kiểm tra. Tệp sao lưu nằm trong thư mục tải xuống trên máy bạn.</p></section>
+  `<div class="settings-grid"><section class="panel settings-card"><div class="panel-header"><h2>Nhập sổ Excel của bạn</h2>${icon('upload')}</div><p>Đọc tệp .xlsx, .xls hoặc .csv ngay trên laptop. Tự nhận ngày gộp, tiền âm/dương và danh mục; xem trước rồi mới lưu, có kiểm tra khoản trùng.</p>${btn('Chọn tệp Excel', 'import-excel', 'primary', 'upload')}<p class="fine-print">Giữ nguyên tên danh mục bạn đang dùng. Các ô tổng ngày và số dư riêng không được nhập lại thành giao dịch.</p></section><section class="panel settings-card"><div class="panel-header"><h2>Sao lưu & Khôi phục</h2>${icon('download')}</div><p>Tải một bản JSON để giữ đầy đủ giao dịch, hóa đơn, nợ và cài đặt. Dùng tệp này để chuyển dữ liệu sang trình duyệt hoặc máy khác.</p>${btn('Sao lưu dữ liệu', 'backup', 'primary', 'download')}${btn('Khôi phục từ JSON', 'restore', 'secondary', 'upload')}<div class="setting-row"><div><strong>Bản sao lưu gần nhất</strong><small>${data.profile.lastBackupAt ? E(new Date(data.profile.lastBackupAt).toLocaleString('vi-VN')) : 'Bạn chưa tạo bản sao lưu nào.'}</small></div>${icon('clock')}</div><p class="fine-print">Khôi phục sẽ thay thế dữ liệu hiện có sau khi tệp được kiểm tra. Tệp sao lưu nằm trong thư mục tải xuống trên máy bạn.</p></section>
   <section class="panel settings-card"><div class="panel-header"><h2>Báo cáo cho bảng tính</h2>${icon('receipt')}</div><p>Xuất toàn bộ lịch sử thu chi sang CSV, mở được trong Excel và Google Sheets, giữ nguyên tiếng Việt có dấu.</p>${btn('Xuất báo cáo Excel (CSV)', 'export-csv', 'secondary', 'download')}<div class="setting-row"><div><strong>${data.transactions.length} giao dịch đang được lưu</strong><small>Số tiền là đồng Việt Nam, không có phần thập phân.</small></div><span class="badge">UTF-8</span></div></section>
   <section class="panel settings-card"><div class="panel-header"><h2>Nơi lưu dữ liệu</h2>${icon('shield')}</div><p>Dữ liệu được lưu trong trình duyệt trên laptop này. Đổi trình duyệt, đổi địa chỉ web hoặc xóa dữ liệu trang sẽ tạo một sổ riêng.</p><div class="setting-row"><div><strong>${storage.mode === 'indexeddb' ? 'Đã kết nối bộ nhớ trên máy' : 'Đang dùng bộ nhớ tạm'}</strong><small>${storage.mode === 'indexeddb' ? 'Dữ liệu còn sau khi đóng và mở lại trang.' : 'Hãy sao lưu trước khi đóng thẻ trình duyệt.'}</small></div><span class="badge ${storage.mode === 'indexeddb' ? 'safe' : 'danger'}">${storage.mode === 'indexeddb' ? 'Đã lưu' : 'Tạm thời'}</span></div><div class="setting-row"><div><strong>Lưu trữ bền vững</strong><small>${storage.persistent ? 'Trình duyệt đã cho phép bảo vệ dữ liệu khỏi dọn tự động.' : 'Trình duyệt chưa cấp quyền. Sao lưu thường xuyên vẫn rất cần thiết.'}</small></div>${btn('Kiểm tra', 'persist', 'secondary small')}</div><p class="fine-print">Cho phép lưu bền vững không bảo vệ trước việc bạn xóa dữ liệu trang. Trên Safari, dữ liệu có thể bị dọn sau một thời gian không dùng; cài ứng dụng và giữ một bản JSON sẽ giúp an tâm hơn.</p></section>
   <section class="panel settings-card"><div class="panel-header"><h2>Giao diện & Cách mở</h2>${icon('sun')}</div><div class="setting-row"><div><strong>Giao diện tối</strong><small>Dịu mắt hơn khi xem chi tiêu buổi tối.</small></div><button class="switch" data-action="theme" role="switch" aria-label="Giao diện tối" aria-checked="${data.profile.theme === 'dark'}"><span></span></button></div><div class="setting-row"><div><strong>Mở nhanh trên laptop</strong><small>Cài như một ứng dụng và ghim lên thanh tác vụ.</small></div>${btn('Cách cài', 'install', 'secondary small')}</div><p class="fine-print">Ứng dụng dùng được ngoại tuyến sau khi đã mở và tải đủ các tệp cần thiết ít nhất một lần.</p></section>
@@ -829,17 +881,348 @@ export function categoryOptions(group, selected = '', extra = []) {
 }
 ```
 
+### File: js/excel-import.js
+
+```javascript
+import { CATEGORIES, GROUP_LABELS, localDate } from './finance-engine.js';
+import { validateRecord, uuid } from './db.js';
+
+export const MAX_IMPORT_ROWS = 10000;
+const blank = (x) => x === undefined || x === null || x === '';
+export const normalizeLabel = (x) => String(x ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').replaceAll('Đ', 'D').toLowerCase().replace(/[^a-z0-9]/g, '');
+const val = (cell) => cell && typeof cell === 'object' && !(cell instanceof Date) && Object.hasOwn(cell, 'v') ? cell.v : cell;
+
+/** Arithmetic grammar only: no eval, cell references, functions, or external links. */
+export function arithmeticFormula(formula) {
+  const text = String(formula).replace(/^=/, '').replace(/\s+/g, '');
+  if (!text.length || text.length > 500) throw new Error('Công thức quá dài hoặc trống.');
+  const tokens = text.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|[()+*/-]/g) || [];
+  if (tokens.join('') !== text || tokens.length > 200) throw new Error('Công thức này cần kết quả đã lưu từ Excel.');
+  let i = 0, depth = 0;
+  function primary() {
+    if (++depth > 30) throw new Error('Công thức lồng quá sâu.');
+    let result;
+    if (tokens[i] === '+' || tokens[i] === '-') { const sign = tokens[i++]; result = (sign === '-' ? -1 : 1) * primary(); }
+    else if (tokens[i] === '(') { i++; result = expression(); if (tokens[i++] !== ')') throw new Error('Thiếu dấu ngoặc.'); }
+    else { const token = tokens[i++]; if (!token || !/^[\d.]/.test(token)) throw new Error('Công thức không hợp lệ.'); result = Number(token); }
+    depth--; return result;
+  }
+  function product() { let result = primary(); while (tokens[i] === '*' || tokens[i] === '/') { const op = tokens[i++], right = primary(); if (op === '/' && right === 0) throw new Error('Công thức chia cho 0.'); result = op === '*' ? result * right : result / right; } return result; }
+  function expression() { let result = product(); while (tokens[i] === '+' || tokens[i] === '-') { const op = tokens[i++], right = product(); result = op === '+' ? result + right : result - right; } return result; }
+  const result = expression();
+  if (i !== tokens.length || !Number.isFinite(result) || Math.abs(result) > Number.MAX_SAFE_INTEGER) throw new Error('Kết quả công thức không hợp lệ.');
+  return result;
+}
+
+export function parseMoney(cell, multiplier = 1) {
+  const value = val(cell);
+  let number, cachedFormula = false;
+  if (cell?.f) {
+    try { number = arithmeticFormula(cell.f); }
+    catch (error) {
+      if (typeof value === 'number' && Number.isFinite(value)) { number = value; cachedFormula = true; }
+      else throw new Error('Công thức chưa có kết quả lưu. Mở Excel, tính lại và lưu tệp rồi nhập lại.');
+    }
+  } else if (typeof value === 'number') number = value;
+  else {
+    if (blank(value)) throw new Error('Thiếu số tiền.');
+    let text = String(value).trim();
+    if (text.startsWith('=')) number = arithmeticFormula(text);
+    else {
+      const negative = /^\(.*\)$/.test(text); text = text.replace(/[()]/g, '').replace(/\s|₫|đ|vnd/gi, '');
+      if (text.includes(',') && text.includes('.')) {
+        if (text.lastIndexOf(',') > text.lastIndexOf('.')) text = text.replaceAll('.', '').replace(',', '.');
+        else text = text.replaceAll(',', '');
+      } else if (/^[+-]?\d{1,3}([.,]\d{3})+$/.test(text)) text = text.replace(/[.,]/g, '');
+      else if (text.includes(',')) text = text.replace(',', '.');
+      if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) throw new Error('Không đọc được số tiền.');
+      number = Number(text) * (negative ? -1 : 1);
+    }
+  }
+  number = Math.round(number * multiplier);
+  if (!Number.isSafeInteger(number)) throw new Error('Số tiền vượt giới hạn hoặc không hợp lệ.');
+  return { amount: number, cachedFormula };
+}
+
+export function excelDate(cell, month, date1904 = false) {
+  const value = val(cell);
+  const result = (year, m, day) => {
+    const date = new Date(Date.UTC(year, m - 1, day));
+    if (year < 1900 || year > 9999 || date.getUTCFullYear() !== year || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== day) return null;
+    return date.toISOString().slice(0, 10);
+  };
+  if (value instanceof Date) return result(value.getUTCFullYear(), value.getUTCMonth() + 1, value.getUTCDate());
+  if (typeof value === 'number') {
+    if (value >= 1 && value <= 31 && /^\d{4}-\d{2}$/.test(month || '')) return result(Number(month.slice(0, 4)), Number(month.slice(5)), Math.floor(value));
+    if (!Number.isFinite(value) || value < 0 || value > 2958465 || !date1904 && Math.floor(value) === 60) return null;
+    const epoch = Date.UTC(date1904 ? 1904 : 1899, date1904 ? 0 : 11, date1904 ? 1 : Math.floor(value) < 60 ? 31 : 30);
+    const d = new Date(epoch + Math.floor(value) * 86400000);
+    return result(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+  }
+  const text = String(value ?? '').trim();
+  let match = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T].*)?$/);
+  if (match) return result(Number(match[1]), Number(match[2]), Number(match[3]));
+  match = text.match(/^(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{2}|\d{4}))?$/);
+  if (match) {
+    if (!match[3] && !/^\d{4}-\d{2}$/.test(month || '')) return null;
+    return result(match[3] ? Number(match[3]) + (match[3].length === 2 ? 2000 : 0) : Number(month.slice(0, 4)), Number(match[2]), Number(match[1]));
+  }
+  if (/^\d{1,2}$/.test(text) && /^\d{4}-\d{2}$/.test(month || '')) return result(Number(month.slice(0, 4)), Number(month.slice(5)), Number(text));
+  return null;
+}
+
+export function detectColumns(headers) {
+  const labels = headers.map((c) => normalizeLabel(val(c)));
+  const find = (names) => labels.findIndex((h) => names.includes(h));
+  const categoryIndices = labels.flatMap((h, i) => ['danhmuc', 'phanloai', 'category', 'hangmuc'].includes(h) ? [i] : []);
+  const category = categoryIndices.at(-1) ?? -1;
+  const note = categoryIndices.length > 1 ? categoryIndices[0] : find(['noidung', 'diengiai', 'mota', 'khoanchi', 'tenkhoan', 'description', 'ghichu', 'note']);
+  const extra = find(['note', 'ghichu']);
+  return {
+    date: find(['ngay', 'ngaygiaodich', 'thoigian', 'date']),
+    amount: find(['vnd', 'sotien', 'sotienvnd', 'amount', 'tien', 'thuchi']),
+    category, note, extra: extra === note ? -1 : extra,
+    type: find(['loai', 'loaigiaodich', 'type']), group: find(['nhom', 'nhomchitieu', 'group']),
+    fixed: find(['hoadon', 'hoadoncodinh', 'codinh', 'isfixedbill']),
+  };
+}
+export function detectHeader(rows) {
+  let winner = { index: 0, score: 0, mapping: detectColumns([]) };
+  for (let i = 0; i < Math.min(30, rows.length); i++) {
+    const mapping = detectColumns(rows[i]);
+    const score = (mapping.date >= 0 ? 5 : 0) + (mapping.amount >= 0 ? 5 : 0) + (mapping.category >= 0 ? 2 : 0) + (mapping.note >= 0 ? 1 : 0);
+    if (score > winner.score) winner = { index: i, score, mapping };
+  }
+  return winner;
+}
+export function workbookSheets(workbook, XLSX) {
+  return workbook.SheetNames.map((name) => {
+    const sheet = workbook.Sheets[name];
+    if (!sheet?.['!ref']) return { name, rows: [], merges: [], score: 0, header: detectHeader([]), date1904: false };
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    if (range.e.r > MAX_IMPORT_ROWS + 30 || range.e.c > 255) throw new Error('Bảng quá lớn. Giữ tối đa 10.000 dòng giao dịch và 256 cột mỗi trang rồi thử lại.');
+    const rows = Array.from({ length: range.e.r + 1 }, (_, r) => Array.from({ length: range.e.c + 1 }, (_, c) => {
+      const cell = sheet[XLSX.utils.encode_cell({ r, c })];
+      return cell ? { v: cell.v ?? '', f: cell.f || '', t: cell.t } : null;
+    }));
+    const header = detectHeader(rows);
+    return { name, rows, merges: sheet['!merges'] || [], score: header.score, header, date1904: !!workbook.Workbook?.WBProps?.date1904 };
+  });
+}
+
+export function suggestedGroup(category) {
+  const label = normalizeLabel(category);
+  for (const [group, categories] of Object.entries(CATEGORIES)) if (categories.some((c) => normalizeLabel(c) === label)) return group;
+  if (['income', 'thunhap', 'makemoney'].includes(label)) return 'income';
+  if (/(shopping|muasam|friend|giaitri|du lich|qua|cafe|caph)/.test(label)) return 'wants';
+  if (/(tietkiem|trano|dautu)/.test(label)) return 'savings_debt';
+  return 'needs';
+}
+export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {} } = {}) {
+  if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };
+  if (mapping.date === mapping.amount) return { rows: [], errors: [{ row: headerRow + 1, message: 'Cột ngày và cột số tiền phải khác nhau.' }], skipped: 0, categories: [] };
+  const records = [], errors = [], categories = new Set(); let previousDate = null, skipped = 0;
+  const get = (row, field) => mapping[field] >= 0 ? row[mapping[field]] : null;
+  for (let r = headerRow + 1; r < sheet.rows.length; r++) {
+    const cells = sheet.rows[r], amountCell = get(cells, 'amount'), noteCell = get(cells, 'note'), categoryCell = get(cells, 'category');
+    if (blank(val(amountCell)) && !amountCell?.f && blank(val(noteCell)) && blank(val(categoryCell))) continue;
+    const label = String(val(noteCell) ?? '').trim(), rawCategory = String(val(categoryCell) ?? '').trim();
+    if (/^(tong|tongcong|tongthu|tongchi|cong|sodu|sodudauky|soducuoiky|subtotal|total)$/.test(normalizeLabel(label)) || /^(tong|tongcong|tongthu|tongchi|subtotal|total)$/.test(normalizeLabel(rawCategory))) { skipped++; continue; }
+    let dateCell = get(cells, 'date');
+    if (blank(val(dateCell))) {
+      const merged = sheet.merges.find((m) => mapping.date >= m.s.c && mapping.date <= m.e.c && r > m.s.r && r <= m.e.r);
+      if (merged) dateCell = sheet.rows[merged.s.r]?.[merged.s.c];
+    }
+    const parsedDate = excelDate(dateCell, month, sheet.date1904);
+    if (!blank(val(dateCell))) previousDate = parsedDate;
+    const date = parsedDate || (fillDates && blank(val(dateCell)) ? previousDate : null);
+    if (!date) { errors.push({ row: r + 1, message: 'Ngày chưa rõ. Chọn tháng hoặc kiểm tra ô ngày.' }); continue; }
+    try {
+      const parsedMoney = parseMoney(amountCell, multiplier), signed = parsedMoney.amount;
+      if (signed === 0) { skipped++; continue; }
+      const rawType = normalizeLabel(val(get(cells, 'type')));
+      let type = ['income', 'thu', 'khoanthu'].includes(rawType) ? 'income' : ['expense', 'chi', 'khoanchi'].includes(rawType) ? 'expense' : mode === 'income' ? 'income' : mode === 'expense' ? 'expense' : signed > 0 ? 'income' : 'expense';
+      const rawGroup = String(val(get(cells, 'group')) ?? '').trim();
+      const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup));
+      let group = type === 'income' ? 'income' : explicitGroup || categoryGroups[rawCategory || 'Chưa phân loại'] || suggestedGroup(rawCategory);
+      if (type === 'expense' && group === 'income') group = 'needs';
+      const category = rawCategory || (type === 'income' ? 'Thu nhập khác' : 'Chưa phân loại');
+      const extra = String(val(get(cells, 'extra')) ?? '').trim(), note = [label, extra].filter(Boolean).join(' · ');
+      const rawFixed = normalizeLabel(val(get(cells, 'fixed')));
+      const warnings = [];
+      if (!rawCategory) warnings.push('Chưa có danh mục trong tệp.');
+      if (parsedMoney.cachedFormula) warnings.push('Dùng kết quả công thức đã lưu trong tệp.');
+      if (/(coc|hoantra|hoantien)/.test(normalizeLabel(note))) warnings.push('Có thể là tiền cọc hoặc khoản hoàn. Hiện vẫn tính vào dòng tiền; kiểm tra trước khi nhập.');
+      const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now() });
+      categories.add(rawCategory || 'Chưa phân loại');
+      records.push({ row: r + 1, transaction, warnings, selected: true });
+    } catch (error) { errors.push({ row: r + 1, message: error.message }); }
+  }
+  return { rows: records, errors, skipped, categories: [...categories] };
+}
+```
+
+### File: js/excel-ui.js
+
+```javascript
+import { GROUP_LABELS, localDate } from './finance-engine.js';
+import { markExistingTransactions } from './db.js';
+import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns } from './excel-import.js';
+import { escapeHtml as E, formatVND, icon } from './ui.js';
+
+let libraryPromise;
+function loadExcelLibrary() {
+  if (globalThis.XLSX) return Promise.resolve(globalThis.XLSX);
+  if (!libraryPromise) libraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script'); script.src = new URL('../vendor/xlsx.full.min.js', import.meta.url).href;
+    let timer = setTimeout(() => { script.remove(); libraryPromise = null; reject(new Error('Chưa tải được phần đọc Excel. Kết nối mạng và thử lại.')); }, 15000);
+    script.onload = () => { clearTimeout(timer); if (globalThis.XLSX) resolve(globalThis.XLSX); else { libraryPromise = null; reject(new Error('Không khởi chạy được phần đọc Excel.')); } };
+    script.onerror = () => { clearTimeout(timer); libraryPromise = null; script.remove(); reject(new Error('Chưa tải được phần đọc Excel. Hãy tải lại trang.')); };
+    document.head.append(script);
+  });
+  return libraryPromise;
+}
+
+export async function openExcelImporter({ getExisting, onImport }) {
+  if (document.getElementById('excel-dialog')?.open) return;
+  const old = document.getElementById('excel-dialog'); if (old) old.remove();
+  const dialog = document.createElement('dialog'); dialog.id = 'excel-dialog'; dialog.className = 'form-dialog excel-dialog'; dialog.setAttribute('aria-labelledby', 'excel-title');
+  dialog.innerHTML = `<div class="dialog-header"><div><span class="eyebrow">TỪ SỔ CŨ SANG GÓC TÀI CHÍNH MỚI</span><h2 id="excel-title">Nhập ghi chép từ Excel</h2><p class="helper-text">Chọn tệp, xem lại từng khoản rồi mới đưa vào sổ thu chi.</p></div><button class="icon-button" type="button" data-excel-action="close" aria-label="Đóng nhập Excel">${icon('close')}</button></div>
+    <div class="excel-file-box"><label for="excel-file">Chọn tệp từ laptop (.xlsx, .xls hoặc .csv)</label><input id="excel-file" type="file" accept=".xlsx,.xls,.csv" aria-describedby="excel-privacy"><p id="excel-privacy" class="fine-print">Tệp được đọc ngay trên máy bạn, không gửi lên máy chủ. Chỉ nhập các dòng giao dịch, giữ nguyên dữ liệu đang có.</p><button type="button" class="text-link" data-excel-action="demo">Xem thử bằng tệp mẫu</button></div>
+    <p id="excel-error" class="form-error" role="alert" hidden></p><div id="excel-config"></div><div id="excel-preview"></div>
+    <div class="dialog-actions excel-actions"><span id="excel-ready" class="helper-text"></span><button type="button" class="button secondary" data-excel-action="close">Để sau</button><button type="button" class="button primary" data-excel-action="commit" id="excel-commit" disabled>Nhập vào sổ thu chi</button></div>`;
+  document.body.append(dialog); dialog.showModal();
+  const state = { sheets: [], sheetIndex: 0, result: null, options: null, excluded: new Set(), fixed: new Map(), skipDuplicates: true, allowPartial: false, busy: false, page: 1, ready: [] };
+  const errorBox = dialog.querySelector('#excel-error'), config = dialog.querySelector('#excel-config'), preview = dialog.querySelector('#excel-preview');
+  const showError = (message) => { errorBox.textContent = message; errorBox.hidden = !message; };
+  const currentSheet = () => state.sheets[state.sheetIndex];
+  function columnOptions(selected = -1) {
+    const sheet = currentSheet(), headers = sheet.rows[state.options.headerRow] || [];
+    return '<option value="-1">Không dùng cột</option>' + headers.map((cell, i) => `<option value="${i}" ${i === selected ? 'selected' : ''}>${i >= 26 ? String.fromCharCode(64 + Math.floor(i / 26)) : ''}${String.fromCharCode(65 + i % 26)} · ${E(cell?.v ?? `Cột ${i + 1}`)}</option>`).join('');
+  }
+  function configView() {
+    const sheet = currentSheet(), o = state.options;
+    config.innerHTML = `<div class="excel-config-grid"><label>Trang tính<select id="excel-sheet">${state.sheets.map((s, i) => `<option value="${i}" ${i === state.sheetIndex ? 'selected' : ''}>${E(s.name)}${s.score >= 10 ? ' · Có bảng thu chi' : ''}</option>`).join('')}</select></label><label>Dòng tiêu đề<input id="excel-header" type="number" min="1" max="${Math.max(1, sheet.rows.length)}" step="1" value="${o.headerRow + 1}"></label><label>Tháng của các ngày chưa có năm<input id="excel-month" type="month" value="${E(o.month)}"></label></div>
+    <div class="excel-config-grid"><label>Cách ghi số tiền<select id="excel-mode"><option value="signed" ${o.mode === 'signed' ? 'selected' : ''}>Số âm là chi, số dương là thu</option><option value="expense" ${o.mode === 'expense' ? 'selected' : ''}>Tất cả là khoản chi</option><option value="income" ${o.mode === 'income' ? 'selected' : ''}>Tất cả là khoản thu</option></select></label><label>Đơn vị tiền trong tệp<select id="excel-multiplier"><option value="1" ${o.multiplier === 1 ? 'selected' : ''}>Đồng (₫)</option><option value="1000" ${o.multiplier === 1000 ? 'selected' : ''}>Nghìn đồng (× 1.000)</option><option value="1000000" ${o.multiplier === 1000000 ? 'selected' : ''}>Triệu đồng (× 1.000.000)</option></select></label><label class="checkbox-label"><input id="excel-fill-dates" type="checkbox" ${o.fillDates ? 'checked' : ''}>Ô ngày trống dùng ngày dòng trước</label></div>
+    <details class="excel-mapping"><summary>Kiểm tra các cột được nhận diện</summary><div class="excel-column-grid">${[['date', 'Ngày'], ['amount', 'Số tiền giao dịch'], ['note', 'Tên khoản / Nội dung'], ['category', 'Danh mục'], ['extra', 'Ghi chú bổ sung'], ['type', 'Loại thu / chi'], ['group', 'Nhóm'], ['fixed', 'Hóa đơn cố định']].map(([key, label]) => `<label>${label}<select data-excel-column="${key}">${columnOptions(o.mapping[key])}</select></label>`).join('')}</div><p class="fine-print">Chọn cột tiền của từng khoản; không chọn cột tổng ngày hoặc số dư. Ngày trong ô gộp được nhận tự động.</p></details>`;
+  }
+  function rebuild() {
+    state.result = buildImport(currentSheet(), state.options);
+    for (const row of state.result.rows) if (state.fixed.has(row.row)) row.transaction.isFixedBill = state.fixed.get(row.row);
+    state.page = 1; previewView();
+  }
+  function readiness() {
+    const result = state.result; if (!result) return;
+    const selected = result.rows.filter((r) => !state.excluded.has(r.row));
+    const duplicate = markExistingTransactions(selected.map((r) => r.transaction), getExisting());
+    selected.forEach((row, i) => { row.duplicate = duplicate[i]; });
+    state.ready = selected.filter((r) => !state.skipDuplicates || !r.duplicate).map((r) => r.transaction);
+    const importedIncome = state.ready.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0), importedExpense = state.ready.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense };
+  }
+  function previewView() {
+    const result = state.result, totals = readiness(); if (!result || !totals) return;
+    const perPage = 30, pages = Math.max(1, Math.ceil(result.rows.length / perPage)); state.page = Math.min(state.page, pages);
+    const groupList = Object.entries(GROUP_LABELS).filter(([g]) => g !== 'income');
+    const categoryGroups = result.categories.map((cat) => {
+      const onlyIncome = result.rows.filter((r) => r.transaction.category === cat).every((r) => r.transaction.type === 'income');
+      const group = state.options.categoryGroups[cat] || suggestedGroup(cat);
+      return `<label>${E(cat)}<select data-excel-category="${E(cat)}" ${onlyIncome ? 'disabled' : ''}>${onlyIncome ? '<option>Thu nhập</option>' : groupList.map(([g, label]) => `<option value="${g}" ${g === group ? 'selected' : ''}>${label}</option>`).join('')}</select></label>`;
+    }).join('');
+    preview.innerHTML = `<div class="excel-summary"><div><span>Sẵn sàng nhập</span><strong>${state.ready.length} khoản</strong></div><div><span>Tổng thu được chọn</span><strong class="amount-income">${formatVND(totals.income)}</strong></div><div><span>Tổng chi được chọn</span><strong>${formatVND(totals.expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(totals.income - totals.expense)}</strong></div></div>
+      <details class="excel-mapping"><summary>Phân nhóm theo danh mục của bạn</summary><p class="helper-text">Giữ nguyên tên danh mục trong Excel. Kiểm tra nhóm Thiết yếu / Mong muốn trước khi xác nhận; các khoản nhận tiền luôn được ghi là thu.</p><div class="excel-column-grid">${categoryGroups}</div></details>
+      <div class="excel-import-options"><label class="checkbox-label"><input id="excel-skip-duplicates" type="checkbox" ${state.skipDuplicates ? 'checked' : ''}>Bỏ qua khoản giống giao dịch đã có (${totals.duplicateCount})</label>${result.errors.length ? `<label class="checkbox-label"><input id="excel-allow-partial" type="checkbox" ${state.allowPartial ? 'checked' : ''}>Chỉ nhập các dòng hợp lệ; bỏ ${result.errors.length} dòng lỗi</label>` : ''}</div>
+      ${result.errors.length ? `<div class="form-error"><strong>${result.errors.length} dòng cần kiểm tra</strong><ul>${result.errors.slice(0, 10).map((r) => `<li>Dòng ${r.row}: ${E(r.message)}</li>`).join('')}</ul>${result.errors.length > 10 ? '<p>Chỉ hiển thị 10 lỗi đầu. Hãy kiểm tra lại tệp trước khi nhập.</p>' : ''}</div>` : ''}
+      ${result.rows.length ? `<div class="table-scroll excel-preview-table"><table><thead><tr><th><input id="excel-select-all" type="checkbox" aria-label="Chọn tất cả giao dịch Excel" ${result.rows.every((r) => !state.excluded.has(r.row)) ? 'checked' : ''}></th><th>Ngày</th><th>Nội dung & Lưu ý</th><th>Danh mục</th><th class="align-right">Số tiền</th><th>Hóa đơn<br>cố định</th></tr></thead><tbody>${result.rows.slice((state.page - 1) * perPage, state.page * perPage).map((r) => `<tr class="${r.duplicate && state.skipDuplicates && !state.excluded.has(r.row) ? 'excel-duplicate' : ''}"><td><input type="checkbox" data-excel-row="${r.row}" aria-label="Chọn dòng ${r.row}" ${state.excluded.has(r.row) ? '' : 'checked'}></td><td class="tabular">${E(r.transaction.date.split('-').reverse().join('/'))}<small class="excel-row-number">Dòng ${r.row}</small></td><td><span class="excel-note">${E(r.transaction.note)}</span>${r.warnings.map((w) => `<small class="excel-row-warning">${E(w)}</small>`).join('')}${r.duplicate && !state.excluded.has(r.row) ? '<small class="excel-row-warning">Giống giao dịch đã có trong sổ.</small>' : ''}</td><td>${E(r.transaction.category)}<small class="excel-row-number">${GROUP_LABELS[r.transaction.group]}</small></td><td class="align-right money ${r.transaction.type === 'income' ? 'amount-income' : ''}">${r.transaction.type === 'income' ? '+' : '−'}${formatVND(r.transaction.amount)}</td><td><input type="checkbox" data-excel-fixed="${r.row}" aria-label="Dòng ${r.row} là hóa đơn cố định" ${r.transaction.isFixedBill ? 'checked' : ''} ${r.transaction.type === 'income' ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div><div class="pagination"><span>${result.rows.length} dòng hợp lệ · ${result.skipped} dòng tổng hoặc bằng 0 được bỏ qua</span><div class="pagination-controls"><button type="button" class="button secondary small" data-excel-action="previous" ${state.page === 1 ? 'disabled' : ''}>Trước</button><span>${state.page}/${pages}</span><button type="button" class="button secondary small" data-excel-action="next" ${state.page === pages ? 'disabled' : ''}>Sau</button></div></div>` : '<div class="empty-state"><h3>Chưa có giao dịch để nhập</h3><p>Kiểm tra trang tính, dòng tiêu đề và cột ngày / số tiền ở trên.</p></div>'}
+      <p class="fine-print">Các ô tổng ngày, số dư ngân hàng, tiền mặt và quỹ tiết kiệm nằm ngoài cột giao dịch sẽ không được cộng lại. Khoản cọc chờ hoàn vẫn được giữ đúng dòng tiền; có thể bỏ chọn nếu cần xem riêng trước khi nhập.</p>`;
+    const button = dialog.querySelector('#excel-commit'); button.textContent = `Nhập ${state.ready.length} giao dịch vào sổ`;
+    button.disabled = state.busy || !state.ready.length || result.errors.length > 0 && !state.allowPartial;
+    dialog.querySelector('#excel-ready').textContent = `${result.rows.length - state.excluded.size} khoản được chọn · Dữ liệu cũ được giữ`;
+  }
+  function selectSheet(index) {
+    state.sheetIndex = index; state.excluded.clear(); state.fixed.clear();
+    const sheet = currentSheet();
+    const hasNegative = sheet.rows.slice(sheet.header.index + 1).some((row) => { try { return parseMoney(row[sheet.header.mapping.amount]).amount < 0; } catch { return false; } });
+    const firstDate = sheet.rows.slice(sheet.header.index + 1).map((row) => row[sheet.header.mapping.date]?.v).find((v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v));
+    state.options = { headerRow: sheet.header.index, mapping: { ...sheet.header.mapping }, month: firstDate?.slice(0, 7) || localDate().slice(0, 7), mode: hasNegative ? 'signed' : 'expense', multiplier: 1, fillDates: false, categoryGroups: Object.create(null) };
+    state.allowPartial = false; configView(); rebuild();
+  }
+  async function readFile(file) {
+    if (!file) return;
+    showError(''); state.busy = true; dialog.querySelector('#excel-commit').disabled = true;
+    try {
+      if (!/\.(xlsx|xls|csv)$/i.test(file.name)) throw new Error('Hãy chọn tệp .xlsx, .xls hoặc .csv.');
+      if (file.size > 10 * 1024 * 1024) throw new Error('Tệp tối đa 10 MB. Hãy tách bớt trang không cần thiết rồi thử lại.');
+      const XLSX = await loadExcelLibrary();
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', raw: true, cellDates: false, cellHTML: false, cellFormula: true, bookVBA: false });
+      state.sheets = workbookSheets(workbook, XLSX);
+      if (!state.sheets.length) throw new Error('Tệp không có trang tính nào.');
+      state.busy = false;
+      selectSheet(state.sheets.indexOf([...state.sheets].sort((a, b) => b.score - a.score)[0]));
+    } catch (error) { state.result = null; state.ready = []; config.replaceChildren(); preview.replaceChildren(); showError(error.message || 'Không đọc được tệp Excel.'); }
+    finally { state.busy = false; }
+  }
+  dialog.addEventListener('change', async (event) => {
+    const el = event.target;
+    if (el.id === 'excel-file') { await readFile(el.files[0]); return; }
+    if (!state.options || state.busy) return;
+    if (el.id === 'excel-sheet') { selectSheet(Number(el.value)); return; }
+    if (el.id === 'excel-header') { state.options.headerRow = Math.max(0, Math.min(currentSheet().rows.length - 1, Math.round(Number(el.value)) - 1)); state.options.mapping = { ...detectColumns(currentSheet().rows[state.options.headerRow] || []) }; state.excluded.clear(); configView(); }
+    if (el.id === 'excel-mode') state.options.mode = el.value;
+    if (el.id === 'excel-month') state.options.month = el.value;
+    if (el.id === 'excel-multiplier') state.options.multiplier = Number(el.value);
+    if (el.id === 'excel-fill-dates') state.options.fillDates = el.checked;
+    if (el.id === 'excel-skip-duplicates') state.skipDuplicates = el.checked;
+    if (el.id === 'excel-allow-partial') state.allowPartial = el.checked;
+    if (el.id === 'excel-select-all') { if (el.checked) state.excluded.clear(); else state.result.rows.forEach((r) => state.excluded.add(r.row)); }
+    if (el.dataset.excelColumn) { state.options.mapping[el.dataset.excelColumn] = Number(el.value); state.excluded.clear(); }
+    if (el.dataset.excelCategory) state.options.categoryGroups[el.dataset.excelCategory] = el.value;
+    if (el.dataset.excelRow) { if (el.checked) state.excluded.delete(Number(el.dataset.excelRow)); else state.excluded.add(Number(el.dataset.excelRow)); }
+    if (el.dataset.excelFixed) state.fixed.set(Number(el.dataset.excelFixed), el.checked);
+    if (el.dataset.excelRow || el.id === 'excel-skip-duplicates' || el.id === 'excel-allow-partial' || el.id === 'excel-select-all') previewView(); else rebuild();
+  });
+  dialog.addEventListener('cancel', (event) => { if (state.busy) event.preventDefault(); });
+  dialog.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-excel-action]'); if (!button || state.busy) return;
+    const action = button.dataset.excelAction;
+    if (action === 'close') dialog.close();
+    if (action === 'previous') { state.page--; previewView(); }
+    if (action === 'next') { state.page++; previewView(); }
+    if (action === 'demo') {
+      try {
+        const X = await loadExcelLibrary(), m = localDate().slice(0, 7), workbook = X.utils.book_new();
+        const sheet = X.utils.aoa_to_sheet([['Ghi chép mẫu'], ['Ngày', 'Danh mục', 'VNĐ', 'Tổng chi / ngày', 'Note', 'Danh mục'], [`${m}-01`, 'Thu nhập minh họa', 2000000, '', '', 'Thu nhập khác'], [`${m}-02`, 'Đi chợ', -80000, '', '', 'Ăn uống'], ['', 'Đi xe', -25000, '', '', 'Di chuyển']]);
+        sheet['!merges'] = [{ s: { r: 3, c: 0 }, e: { r: 4, c: 0 } }]; X.utils.book_append_sheet(workbook, sheet, 'Thu chi mẫu');
+        const bytes = X.write(workbook, { type: 'array', bookType: 'xlsx' });
+        await readFile(new File([bytes], 'thu-chi-mau.xlsx'));
+      } catch (error) { showError(error.message); }
+    }
+    if (action === 'commit') {
+      readiness();
+      if (!state.ready.length || state.result.errors.length && !state.allowPartial) return;
+      state.busy = true; dialog.querySelector('#excel-commit').disabled = true; showError('');
+      try {
+        const result = await onImport(state.ready, { skipDuplicates: state.skipDuplicates });
+        if (result) dialog.close();
+      } catch (error) { showError(error.message || 'Chưa nhập được. Dữ liệu cũ được giữ nguyên.'); }
+      finally { state.busy = false; if (dialog.open) previewView(); }
+    }
+  });
+}
+```
+
 ### File: js/app.js
 
 ```javascript
 import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, simulateDebtPayoff } from './finance-engine.js';
-import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid } from './db.js';
+import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions } from './db.js';
 import { createSeedData } from './seed-data.js';
 import { fillIcons, icon, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions } from './ui.js';
 import { renderCharts, destroyCharts } from './charts.js';
+import { openExcelImporter } from './excel-ui.js';
 
 const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích', planning: 'Nợ & Quỹ dự phòng', settings: 'Sao lưu & Cài đặt' };
-const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false };
+const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false };
 const content = document.getElementById('app-content');
 let toastTimer, installPrompt;
 try { state.installDismissed = sessionStorage.getItem('vung-install-dismissed') === '1'; } catch { /* Optional preference, unrelated to saved financial data. */ }
@@ -873,7 +1256,12 @@ function render() {
   const warning = document.getElementById('storage-warning'); warning.textContent = state.storage.message; warning.hidden = !state.storage.message;
   document.getElementById('chart-warning').hidden = !!globalThis.Chart;
   if (state.tab === 'overview') content.innerHTML = renderOverview(state.data, a, state.installDismissed);
-  if (state.tab === 'transactions') { state.page = Math.min(state.page, Math.max(1, Math.ceil(filteredTransactions(state.data, state.filters).length / 15))); content.innerHTML = renderTransactions(state.data, a, state.filters, state.page); }
+  if (state.tab === 'transactions') {
+    const filtered = filteredTransactions(state.data, state.filters);
+    const pages = state.ledgerView === 'daily' ? Math.ceil(new Set(filtered.map((t) => t.date)).size / 10) : Math.ceil(filtered.length / 15);
+    state.page = Math.min(state.page, Math.max(1, pages));
+    content.innerHTML = renderTransactions(state.data, a, state.filters, state.page, state.ledgerView);
+  }
   if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a);
   if (state.tab === 'planning') { content.innerHTML = renderPlanning(state.data, a, state.extraPayment); updateSimulation(); }
   if (state.tab === 'settings') content.innerHTML = renderSettings(state.data, a, state.storage);
@@ -944,6 +1332,22 @@ async function install() {
 async function handleAction(action, id) {
   const find = (store) => state.data[store].find((x) => x.id === id);
   if (action === 'add-transaction') openTransaction();
+  else if (action === 'import-excel') {
+    await openExcelImporter({
+      getExisting: () => state.data.transactions,
+      onImport: async (records, options) => {
+        let receipt;
+        const ok = await mutation(async () => { receipt = await appendTransactions(records, options); });
+        if (ok) {
+          state.filters = { month: records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
+          state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
+          toast(`Đã nhập ${receipt.imported} giao dịch${receipt.skipped ? `, bỏ qua ${receipt.skipped} khoản đã có` : ''}. Dữ liệu cũ được giữ nguyên.`);
+        }
+        return ok;
+      },
+    });
+  }
+  else if (action === 'view-daily' || action === 'view-table') { state.ledgerView = action === 'view-daily' ? 'daily' : 'table'; state.page = 1; render(); }
   else if (action === 'edit-transaction') { const t = find('transactions'); if (t) openTransaction(t); }
   else if (action === 'add-bill') openBill();
   else if (action === 'edit-bill') { const b = find('recurring_bills'); if (b) openBill(b); }
@@ -1000,7 +1404,7 @@ document.addEventListener('input', (event) => {
   if (el.id === 'filter-search') {
     state.filters.search = el.value; state.page = 1;
     const template = document.createElement('template');
-    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page);
+    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page, state.ledgerView);
     // Preserve the actual search input, caret, and IME composition while typing.
     document.getElementById('ledger-results').replaceChildren(...template.content.querySelector('#ledger-results').childNodes);
   }
@@ -1053,7 +1457,7 @@ boot().catch((error) => { content.replaceChildren(); const box = document.create
 
 # Bảng kiểm chứng — Vững Tài Chính
 
-Ngày kiểm tra: 21/11/2026. Bộ kiểm tra tự động: `npm test`, **30/30 đạt**, không cần cài thư viện.
+Ngày kiểm tra: 21/11/2026. Bộ kiểm tra tự động: `npm test`, **45/45 đạt**, không cần cài thư viện.
 
 | Yêu cầu | Kết quả | Bằng chứng |
 | --- | --- | --- |
@@ -1088,3 +1492,11 @@ Với mốc ngày 21/11/2026 và dữ liệu do `createSeedData()` tạo:
 - Việc chuyển đổi qua JSON và trường hợp khôi phục sai không làm thay đổi dữ liệu cũ đã được kiểm tra tự động; quyền lưu bền vững phụ thuộc từng trình duyệt.
 - Không có đồng bộ giữa máy hoặc tài khoản; bản sao JSON là cách chuyển dữ liệu được hỗ trợ.
 - Dự báo và điểm FHI tuân theo các quy tắc trong bản yêu cầu của ứng dụng, không khẳng định là một mô hình dự báo đã được thẩm định ngoài thực tế.
+
+## Bổ sung nhập Excel
+
+15 bài kiểm tra mới xác nhận đọc/ghi lại dữ liệu Excel mẫu tổng hợp, nhận dòng tiêu đề sau dòng tên tháng, hai cột trùng tên danh mục, ngày gộp, ngày theo hệ 1900/1904, phép tính tiền an toàn, nhóm tùy chọn, dòng lỗi, dữ liệu trùng và thêm giao dịch mà giữ nguyên dữ liệu cũ. Chỉ dùng dữ liệu tổng hợp trong các tệp kiểm tra công khai.
+
+Giao diện cho xem trước, chọn trang/cột/đơn vị, bỏ chọn từng dòng, đánh dấu hóa đơn, phân nhóm danh mục và xác nhận nhập. Sổ theo ngày tách tổng thu, tổng chi và chênh lệch. Thư viện SheetJS 0.20.3 được đóng gói tại chỗ kèm giấy phép Apache 2.0.
+
+Đã thử trên Chrome: đọc một tệp Excel mẫu thành ba giao dịch, xem trước, xác nhận nhập và giữ nguyên các khoản cũ; đọc lại cùng tệp cho kết quả không có khoản mới khi bật bỏ trùng. Đã thử tắt bỏ trùng để kiểm tra bản xem trước cập nhật lại đúng tổng.
