@@ -148,7 +148,7 @@ test('old backups remain valid; linked records survive backups and render as esc
   const deposit = row({ note: '<script>bad()</script>', category: 'a" onclick="bad()', flow: { kind: 'deposit' } });
   const d = data([deposit]), clean = validateBackup({ app: 'vung-tai-chinh', version: 1, data: d });
   assert.deepEqual(clean.transactions[0].flow, { kind: 'deposit' });
-  const a = analyzeFinance(clean, date), html = renderOverview(clean, a, true) + renderAnalysis(clean, a);
+  const a = analyzeFinance(clean, date), html = renderOverview(clean, a, true) + renderAnalysis(clean, a, 'cashflow');
   assert.ok(!html.includes('<script>bad()')); assert.ok(html.includes('&lt;script&gt;bad()'));
   assert.ok(html.includes('data-action="open-ledger"')); assert.ok(html.includes('data-action="refund-deposit"'));
   assert.ok(!html.includes('NaN')); assert.ok(!html.includes('Sức khỏe tài chính · FHI'));

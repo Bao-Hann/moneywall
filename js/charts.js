@@ -1,5 +1,6 @@
-import { monthKeys, sum } from './finance-engine.js';
-import { formatVND } from './ui.js';
+import { sum } from './finance-engine.js';
+import { financePlanSummary, monthlyMoney } from './money-flow.js';
+import { formatVND, CATEGORY_COLORS } from './ui-parts.js';
 
 const instances = new Map();
 export function destroyCharts() { for (const chart of instances.values()) chart.destroy(); instances.clear(); }
@@ -27,33 +28,32 @@ function draw(id, config) {
 }
 export function renderCharts(tab, data, a) {
   destroyCharts();
-  const date = new Date(`${a.today}T12:00:00`);
-  if (tab === 'overview' || tab === 'analysis') {
-    const months = monthKeys(date, 6), totals = [...a.history, a.current];
-    const income = months.map((k) => totals.find((m) => m.month === k)?.income || 0);
-    const expenses = months.map((k) => totals.find((m) => m.month === k)?.spent || 0);
+  if (tab !== 'analysis') return;
+  const m = monthlyMoney(data, a), p = financePlanSummary(data, a, m);
+  if (document.getElementById('cashflow-chart')) {
+    const months = p.recentMonths;
     draw('cashflow-chart', { type: 'bar', data: {
-      labels: months.map((k) => `Thg ${Number(k.slice(5))}`),
+      labels: months.map((row) => `Thg ${Number(row.month.slice(5))}/${row.month.slice(2, 4)}`),
       datasets: [
-        { label: 'Thu nhập', data: income, backgroundColor: '#247a58', borderRadius: 4, maxBarThickness: 23 },
-        { label: 'Chi tiêu', data: expenses, backgroundColor: '#bed7c7', borderRadius: 4, maxBarThickness: 23 },
-        { label: 'Dự báo cuối tháng', data: months.map((k) => k === a.month && data.transactions.length ? a.forecast.blendedEomForecast : null), backgroundColor: '#f5e6ce', borderColor: '#c59650', borderWidth: 1, borderRadius: 4, maxBarThickness: 23 },
+        { label: 'Thu nhập mới', data: months.map((row) => row.income), backgroundColor: '#247a58', borderRadius: 4, maxBarThickness: 28 },
+        { label: 'Chi sinh hoạt', data: months.map((row) => row.spent), backgroundColor: '#aac8b5', borderRadius: 4, maxBarThickness: 28 },
+        { label: 'Dự báo cuối tháng', data: months.map((row) => row.month === a.month && p.canForecast ? a.forecast.blendedEomForecast : null), backgroundColor: '#ecd5ae', borderColor: '#c59650', borderWidth: 1, borderRadius: 4, maxBarThickness: 28 },
       ],
-    } });
-    const scores = a.health.scores;
-    draw('health-chart', { type: 'bar', data: { labels: ['Tiết kiệm', 'Quỹ dự phòng', 'Chi cố định', 'Kiểm soát nợ', 'Chi mong muốn'], datasets: [{ label: 'Điểm', data: data.transactions.length ? [scores.sSavings, scores.sRunway, scores.sFixed, scores.sDebt, scores.sControl] : [0, 0, 0, 0, 0], backgroundColor: ['#247a58', '#78a98c', '#a5c0ae', '#b9c7a2', '#d4deb9'], borderRadius: 4, barThickness: 10 }] }, options: { indexAxis: 'y', scales: { x: { min: 0, max: 100, border: { display: false }, grid: { display: false }, ticks: { stepSize: 25, font: { size: 11 } } }, y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, padding: 8 } } }, plugins: { tooltip: { callbacks: { label: (c) => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(c.parsed.x)} / 100 điểm` } } } } });
+    }, options: { plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, padding: 18 } } } } });
   }
-  if (tab === 'analysis') {
-    const categories = new Map();
-    for (const t of a.currentTs) if (t.type === 'expense' && ['needs', 'wants'].includes(t.group)) categories.set(t.category, (categories.get(t.category) || 0) + t.amount);
-    const entries = [...categories].sort((x, y) => y[1] - x[1]);
-    draw('category-chart', { type: 'doughnut', data: { labels: entries.map((x) => x[0]), datasets: [{ label: 'Chi tiêu', data: entries.map((x) => x[1]), backgroundColor: ['#247a58', '#78a98c', '#aecbba', '#d4deb9', '#c79651', '#8aa8bf', '#c2a6b2', '#91a575', '#8dbbb2', '#d9c28f'], borderWidth: 3, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(), hoverOffset: 5 }] }, options: { cutout: '70%', scales: {}, plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 9, boxHeight: 9, padding: 12, font: { size: 11 } } } } } });
+  if (document.getElementById('category-chart')) {
+    const entries = m.categories;
+    draw('category-chart', { type: 'doughnut', data: { labels: entries.map((c) => c.category), datasets: [{ label: 'Chi sinh hoạt', data: entries.map((c) => c.amount), backgroundColor: entries.map((_, i) => CATEGORY_COLORS[i % CATEGORY_COLORS.length]), borderWidth: 3, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(), hoverOffset: 4 }] }, options: { cutout: '72%', scales: {}, interaction: { intersect: true, mode: 'nearest' } } });
+  }
+  if (document.getElementById('daily-chart')) {
     let accumulated = 0;
     const actual = Array.from({ length: a.daysInMonth }, (_, i) => {
       if (i + 1 > a.elapsedDays) return null;
       accumulated += sum(a.currentTs.filter((t) => t.type === 'expense' && !t.isFixedBill && ['needs', 'wants'].includes(t.group) && Number(t.date.slice(8)) === i + 1).map((t) => t.amount));
       return accumulated;
     });
-    draw('daily-chart', { type: 'line', data: { labels: Array.from({ length: a.daysInMonth }, (_, i) => i + 1), datasets: [{ label: 'Đã chi', data: actual, borderColor: '#247a58', backgroundColor: '#247a5810', borderWidth: 2, fill: true, pointRadius: 0, tension: .25 }, { label: 'Mức chi đều', data: actual.map((_, i) => Math.round(a.safe.variableBudgetTotal / a.daysInMonth * (i + 1))), borderColor: '#c59650', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 }] }, options: { plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, pointStyle: 'line', boxWidth: 20, padding: 20, font: { size: 11 } } } } } });
+    const datasets = [{ label: 'Đã chi ngoài hóa đơn', data: actual, borderColor: '#247a58', backgroundColor: '#247a5810', borderWidth: 2, fill: true, pointRadius: 0, tension: .15 }];
+    if (p.canPlan) datasets.push({ label: 'Mức chi đều theo kế hoạch', data: actual.map((_, i) => Math.round(a.safe.variableBudgetTotal / a.daysInMonth * (i + 1))), borderColor: '#c59650', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 });
+    draw('daily-chart', { type: 'line', data: { labels: Array.from({ length: a.daysInMonth }, (_, i) => i + 1), datasets }, options: { plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, pointStyle: 'line', boxWidth: 20, padding: 18, font: { size: 12 } } } } } });
   }
 }

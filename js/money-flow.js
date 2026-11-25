@@ -2,6 +2,8 @@
 export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', deposit: 'Tiền cọc', refund: 'Tiền được hoàn', 'reserve-in': 'Chuyển vào quỹ', 'reserve-out': 'Rút từ quỹ', debt: 'Trả nợ' });
 export const kindOf = (t) => t.flow?.kind || 'regular';
 export const isPlanTransaction = (t) => kindOf(t) === 'regular';
+export const isContribution = (t) => kindOf(t) === 'reserve-out' || t.type === 'expense' && (['reserve-in', 'debt'].includes(kindOf(t)) || kindOf(t) === 'regular' && t.group === 'savings_debt');
+export const contributionAmount = (t) => !isContribution(t) ? 0 : kindOf(t) === 'reserve-out' ? -t.amount : t.amount;
 const total = (xs) => xs.reduce((s, t) => s + t.amount, 0);
 const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase();
 export function suggestFlow(t) {
@@ -58,10 +60,50 @@ export function monthlyMoney(data, a) {
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };
 }
+
+// These are presentation values from the existing finance model and the same ledger.
+// Money returned to the wallet is not new earned income; opening savings are not contributions.
+export function financePlanSummary(data, a, m = monthlyMoney(data, a)) {
+  const canPlan = a.income.yBase > 0;
+  const canForecast = m.ordinary.length > 0 || a.history.some((month) => month.spent > 0) || a.totalActiveFixedBills > 0;
+  const contributions = m.rows.reduce((value, t) => value + contributionAmount(t), 0);
+  const target = a.safe.savingsTargetMonthly;
+  const needs = Math.round(a.income.yBase * a.health.alloc.needs);
+  const wants = a.income.yBase - needs - target;
+  const allocation = [
+    { group: 'needs', label: 'Chi thiết yếu', ratio: a.health.alloc.needs, plan: needs, actual: a.current.needs },
+    { group: 'wants', label: 'Chi linh hoạt', ratio: a.health.alloc.wants, plan: wants, actual: a.current.wants },
+    { group: 'savings_debt', label: 'Để dành & trả nợ', ratio: a.health.alloc.save, plan: target, actual: contributions },
+  ];
+  const progress = target > 0 ? Math.max(0, Math.min(100, contributions / target * 100)) : null;
+  const recentMonths = a.history.slice(-5).concat(a.current);
+  return { canPlan, canForecast, provisional: a.income.months < 3, contributions, target, progress, allocation,
+    contributionGap: canPlan ? Math.max(0, target - contributions) : null,
+    extraDebt: Math.max(0, target - a.health.totalMinDebtPayments),
+    recentMonths };
+}
+
+export const ANALYSIS_VIEWS = Object.freeze([
+  { key: 'health', label: 'Sức khỏe tài chính', icon: 'heart', description: 'Mức độ an tâm và lộ trình' },
+  { key: 'plan', label: 'Kế hoạch chi tiêu', icon: 'target', description: 'Hạn mức, để dành, trả nợ' },
+  { key: 'cashflow', label: 'Dòng tiền & dự báo', icon: 'chart', description: 'Tiền đi đâu, cuối tháng ra sao' },
+  { key: 'habits', label: 'Thói quen & cảnh báo', icon: 'alert', description: 'Những khoản đáng xem lại' },
+]);
+export const isAnalysisView = (view) => ANALYSIS_VIEWS.some((v) => v.key === view);
+const analysisSections = Object.freeze({
+  'health-analysis': 'health', 'monthly-plan-section': 'plan', 'budget-section': 'plan',
+  'savings-section': 'plan', 'allocation-section': 'plan', 'cutbacks-section': 'plan', 'debt-advice-section': 'plan',
+  'spending-section': 'cashflow', 'income-history-section': 'cashflow', 'forecast-section': 'cashflow', 'deposit-section': 'cashflow',
+  'habit-section': 'habits', 'anomaly-section': 'habits', 'payday-section': 'habits', 'lifestyle-section': 'habits',
+});
+export function analysisViewForSection(section, fallback = 'health') {
+  return Object.hasOwn(analysisSections, section) ? analysisSections[section] : isAnalysisView(fallback) ? fallback : 'health';
+}
+
 /** Explain the existing health model without turning its score into a claim of independence. */
 export function wellbeingPlan(data, a) {
   const h = a.health, hasIncome = a.income.yBase > 0;
-  const hasEssentials = a.current.needs > 0 || a.history.some((m) => m.needs > 0) || a.totalActiveFixedBills > 0;
+  const hasEssentials = h.essentialMonthly > 1 && (a.current.needs > 0 || a.history.some((m) => m.needs > 0) || a.totalActiveFixedBills > 0);
   const ready = hasIncome && hasEssentials, provisional = a.income.months < 3;
   const score = ready ? h.fhi : null;
   const reserve = data.profile.liquidSavings, target = Math.ceil(h.essentialMonthly * h.targetRunway);

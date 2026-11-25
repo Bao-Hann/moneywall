@@ -2,12 +2,12 @@ import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, s
 import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions, saveTransaction } from './db.js';
 import { createSeedData } from './seed-data.js';
 import { fillIcons, icon, escapeHtml as E, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions, formatVND } from './ui.js';
-import { categoryHabits, depositBalances, dateForMonth, kindOf, suggestFlow, monthAfterDayChange } from './money-flow.js';
+import { categoryHabits, depositBalances, dateForMonth, kindOf, suggestFlow, monthAfterDayChange, analysisViewForSection, isAnalysisView } from './money-flow.js';
 import { renderCharts, destroyCharts } from './charts.js';
 import { openExcelImporter } from './excel-ui.js';
 
-const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích', planning: 'Khoản cần lo', settings: 'Sao lưu & Cài đặt' };
-const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false, importHints: null };
+const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích tài chính', planning: 'Khoản cần lo', settings: 'Sao lưu & Cài đặt' };
+const state = { data: null, analysis: null, storage: null, tab: 'overview', analysisView: 'health', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false, importHints: null };
 const content = document.getElementById('app-content');
 let toastTimer, installPrompt, calendarDay = localDate();
 try { state.installDismissed = sessionStorage.getItem('vung-install-dismissed') === '1'; } catch { /* Optional preference, unrelated to saved financial data. */ }
@@ -39,7 +39,7 @@ function render() {
   const alerts = a.anomalies.length + Number(a.payday.warning) + Number(a.lifestyle.warning), count = document.getElementById('nav-alert-count');
   count.textContent = alerts; count.hidden = !alerts;
   const warning = document.getElementById('storage-warning'); warning.textContent = state.storage.message; warning.hidden = !state.storage.message;
-  document.getElementById('chart-warning').hidden = !!globalThis.Chart;
+  document.getElementById('chart-warning').hidden = !!globalThis.Chart || state.tab !== 'analysis' || !['plan', 'cashflow'].includes(state.analysisView);
   if (state.tab === 'overview') content.innerHTML = renderOverview(state.data, a, state.installDismissed);
   if (state.tab === 'transactions') {
     const filtered = filteredTransactions(state.data, state.filters);
@@ -47,7 +47,7 @@ function render() {
     state.page = Math.min(state.page, Math.max(1, pages));
     content.innerHTML = renderTransactions(state.data, a, state.filters, state.page, state.ledgerView);
   }
-  if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a);
+  if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a, state.analysisView);
   if (state.tab === 'planning') { content.innerHTML = renderPlanning(state.data, a, state.extraPayment); updateSimulation(); }
   if (state.tab === 'settings') content.innerHTML = renderSettings(state.data, a, state.storage);
   if (state.importHints?.debt !== null && state.importHints && !state.data.debts.length) content.insertAdjacentHTML('afterbegin', `<aside class="banner"><strong>Ghi chú trong Excel có dư nợ ${formatVND(state.importHints.debt)}.</strong> Thêm mức trả mỗi tháng và lãi suất để giữ lại đúng tiền. <button class="button secondary small" data-action="setup-import-debt">Bổ sung khoản nợ</button><button class="icon-button" data-action="dismiss-import-hint" aria-label="Ẩn ghi chú từ Excel">${icon('close')}</button></aside>`);
@@ -64,7 +64,12 @@ async function mutation(work, success = '') {
   finally { state.busy = false; submitters.forEach((b) => { b.disabled = false; }); }
 }
 function navigate() {
-  const tab = location.hash.slice(1) || 'overview'; state.tab = Object.hasOwn(tabs, tab) ? tab : 'overview'; render();
+  const [tab, view] = location.hash.slice(1).split('/');
+  if (tab === 'main') { render(); document.getElementById('main').focus(); return; }
+  state.tab = Object.hasOwn(tabs, tab) ? tab : 'overview';
+  if (state.tab === 'analysis' && isAnalysisView(view)) state.analysisView = view;
+  render();
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function transactionType(type) {
   const form = document.getElementById('transaction-form'); form.elements.type.value = type;
@@ -160,22 +165,31 @@ async function install() {
 }
 function goTo(tab, section = '') {
   state.tab = tab;
-  if (location.hash !== `#${tab}`) history.pushState(null, '', `#${tab}`);
+  if (tab === 'analysis') state.analysisView = analysisViewForSection(section, state.analysisView);
+  const nextHash = tab === 'analysis' ? `#analysis/${state.analysisView}` : `#${tab}`;
+  if (location.hash !== nextHash) history.pushState(null, '', nextHash);
   render();
-  if (section) { const target = document.getElementById(section); let parent = target?.parentElement?.closest('details'); while (parent) { parent.open = true; parent = parent.parentElement?.closest('details'); } target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  else document.getElementById('main').scrollIntoView({ block: 'start' });
+  if (section && !['health-analysis', 'monthly-plan-section'].includes(section)) {
+    const target = document.getElementById(section);
+    let parent = target?.closest('details'); while (parent) { parent.open = true; parent = parent.parentElement?.closest('details'); }
+    target?.scrollIntoView({ block: 'start' });
+  } else window.scrollTo({ top: 0, behavior: 'instant' });
 }
 async function handleAction(action, id, attrs = {}) {
   const find = (store) => state.data[store].find((x) => x.id === id);
   if (action === 'add-transaction') openTransaction();
   else if (action === 'open-ledger') {
-    state.filters = { month: state.filters.month, group: attrs.group || '', category: attrs.category || '', search: '', kind: attrs.kind || '', type: attrs.type || '', target: attrs.target || '', scope: attrs.scope || '', through: attrs.scope || attrs.type ? state.analysis.today : '', allMonths: attrs.allMonths === 'true', billId: attrs.billId || '', billName: attrs.billName || '' };
+    const targetMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(attrs.month || '') && attrs.month <= localDate().slice(0, 7) ? attrs.month : state.filters.month;
+    state.filters = { month: targetMonth, group: attrs.group || '', category: attrs.category || '', search: '', kind: attrs.kind || '', type: attrs.type || '', target: attrs.target || '', scope: attrs.scope || '', from: attrs.from || '', through: attrs.through || (attrs.scope || attrs.type ? localDate(dateForMonth(targetMonth)) : ''), allMonths: attrs.allMonths === 'true', billId: attrs.billId || '', billName: attrs.billName || '', returnView: state.tab === 'analysis' ? state.analysisView : 'cashflow' };
     state.page = 1; goTo('transactions');
   }
   else if (action === 'clear-filters') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; state.page = 1; render(); }
   else if (action === 'open-opening') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; goTo('transactions', 'opening-section'); const details = document.querySelector('#opening-section details'); if (details) details.open = true; document.querySelector('#opening-balance-form [name=bank]')?.focus({ preventScroll: true }); }
   else if (action === 'show-balance') { const el = document.getElementById('balance-detail'); el.open = !el.open; }
-  else if (action === 'open-planning') goTo('planning', attrs.section);
+  else if (action === 'open-planning') {
+    if (attrs.section === 'debt-simulation-section' && attrs.extra !== undefined && Number.isSafeInteger(Number(attrs.extra)) && Number(attrs.extra) >= 0) state.extraPayment = Number(attrs.extra);
+    goTo('planning', attrs.section);
+  }
   else if (action === 'open-health') goTo('analysis', 'health-analysis');
   else if (action === 'open-analysis') goTo('analysis', attrs.section);
   else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
@@ -278,7 +292,7 @@ document.addEventListener('change', (event) => {
   if (el.id === 'tx-bill-target') el.form.elements.billId.value = el.value;
   if (el.id === 'focus-month' || el.id === 'filter-month') {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(el.value) || el.value > localDate().slice(0, 7)) { toast('Chọn tháng hiện tại hoặc một tháng trước đó.'); render(); return; }
-    state.filters.month = el.value; state.filters.allMonths = false; if (state.filters.through) state.filters.through = localDate(dateForMonth(el.value)); state.page = 1; render(); return;
+    state.filters.month = el.value; state.filters.allMonths = false; state.filters.from = ''; if (state.filters.through) state.filters.through = localDate(dateForMonth(el.value)); state.page = 1; render(); return;
   }
   if (el.id === 'filter-all-months') { state.filters.allMonths = el.checked; state.page = 1; render(); return; }
   const filters = { 'filter-month': 'month', 'filter-group': 'group', 'filter-category': 'category' };

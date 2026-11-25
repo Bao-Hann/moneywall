@@ -68,3 +68,13 @@ Kết quả hiện tại: **65/65 kiểm tra tự động đạt**. Bổ sung ki
 Sức khỏe trở lại vị trí đầu Tổng quan, giữ nguyên công thức FHI. Phân tích có năm phần điểm, mốc nền tảng và hành động liên quan. Năm kiểm tra bổ sung xác nhận: không chấm điểm khi sổ trống/thiếu chi thiết yếu; số dư đầu tháng không che phần chi vượt thu nhập; thứ tự ưu tiên và số thiếu đúng ở các cấp; ba tháng có dư phải là tháng đã hoàn tất; nội dung tên nợ được hiển thị an toàn. Tổng **70/70 kiểm tra đạt**.
 
 Đã thử trực tiếp trên Chrome: điểm hiện trên Tổng quan; nút lộ trình mở đúng phần phân tích; mốc xem các tháng tự mở phần biểu đồ đang thu gọn; các cột vừa chiều ngang laptop. Quỹ/nợ lấy số dư đang cập nhật, không khẳng định là số dư lịch sử của tháng cũ. Đã ghi rõ quỹ chỉ so với chi thiết yếu và điểm cao không đồng nghĩa đủ tiền sống lâu dài không cần thu nhập.
+
+
+## Khôi phục đầy đủ phân tích tài chính
+
+- Tổng quan có lại điểm sức khỏe, hạn mức chi theo thu nhập, dự báo cuối tháng và mục tiêu để dành/trả nợ theo tháng và ngày. Các số tiền thực vẫn tách riêng khỏi kế hoạch theo thu nhập.
+- Bốn phần phân tích có đường dẫn riêng: `#analysis/health`, `#analysis/plan`, `#analysis/cashflow`, `#analysis/habits`. Số liệu chính luôn hiển thị trong phần tương ứng; chỉ công thức được thu gọn. Giữ đủ các mô-đun phân loại thu nhập, dự báo, sức khỏe, phân bổ/hạn mức, cắt giảm, thói quen, khoản chi khác thường và mô phỏng nợ.
+- Các mức chi, dự báo, tỷ lệ và mốc tài chính dùng kết quả của mô hình hiện có. Tiến độ để dành/trả nợ bổ sung phép cộng ròng từ sổ, tách khỏi tiền có sẵn đầu kỳ. Bộ lọc mở đúng các giao dịch của chỉ số và đúng giai đoạn được dùng để tính toán.
+- Bảy bài kiểm tra mới xác nhận các mục và giá trị được hiển thị, đối chiếu tiến độ ròng và tổng phân bổ, giao dịch cảnh báo, ngày nhận tiền, chi ngoài hóa đơn và lịch sử cắt giảm; số liệu khi thiếu lịch sử; đường dẫn các phần. Hai bài cũ được cập nhật để kiểm tra đúng trang đích. Tổng **77/77 bài kiểm tra đạt**.
+- Đã xem trực tiếp trên Chrome ở kích thước laptop: Tổng quan và điểm sức khỏe, bốn nhóm phân tích, hạn mức và mục tiêu, biểu đồ danh mục/thu chi, số so sánh ngày nhận tiền và tăng chi linh hoạt. Bấm danh mục thu được đúng số tiền và số giao dịch; bấm cảnh báo hiện đúng tập khoản được nhắc. Sửa một lần chuyển quỹ trong sổ minh họa tăng tiến độ đúng số chênh, sau đó hoàn lại dữ liệu mẫu. Nút thử trả nợ chuyển đúng mức trả thêm sang phần mô phỏng. Không có cuộn ngang toàn trang ở kích thước đã thử.
+- Kiểm tra riêng sổ đã đọc từ tệp cá nhân: toàn bộ năm màn hình hiển thị được, tiền còn lại khớp với tổng từ từng khoản. Không ghi dữ liệu thực vào kho mã nguồn hoặc bài kiểm tra.

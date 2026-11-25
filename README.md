@@ -9,7 +9,7 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 1. Mở ứng dụng trên laptop, vào **Sổ thu chi → Nhập Excel** để mang ghi chép đang dùng vào sổ.
 2. Kiểm tra cách tính cọc/tiền hoàn và chọn lưu số dư ngân hàng, tiền mặt đầu tháng nếu đúng. Có thể đối chiếu quỹ để dành riêng.
 3. Ở **Tổng quan**, xem tiền còn dùng, tiền đã chi ra và gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
-4. Ở **Phân tích**, bấm một danh mục để xem đúng các khoản sinh hoạt tạo nên tổng đó. Xu hướng và công thức nằm trong phần mở rộng.
+4. Ở **Phân tích**, chọn một trong bốn phần: Sức khỏe tài chính, Kế hoạch chi tiêu, Dòng tiền & dự báo, Thói quen & cảnh báo. Các giá trị chính luôn hiển thị; bấm liên kết để mở đúng khoản đã ghi. Chỉ phần giải thích công thức được thu gọn.
 5. Ở **Khoản cần lo**, thêm hóa đơn, nợ hoặc quỹ. Ghi thanh toán, chuyển quỹ và trả nợ tại đây sẽ cập nhật cùng sổ thu chi.
 6. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
 
@@ -22,6 +22,21 @@ Sức khỏe tài chính được đặt ở đầu Tổng quan: điểm trên 1
 Nút **Xem lộ trình và từng phần** mở Phân tích, giải thích năm phần của điểm và các mốc: thu đủ chi sinh hoạt, quỹ đệm một tháng, kiểm soát nợ lãi cao, quỹ dài hơn và thu vượt chi sinh hoạt ba tháng hoàn chỉnh. Chưa ghi nợ được hiển thị là chưa đối chiếu, không tự đánh dấu hoàn tất mốc nợ. Mỗi mốc mở đúng sổ, quỹ, nợ hoặc biểu đồ liên quan.
 
 Bước ưu tiên đi theo cấp hiện tại của mô hình: cân bằng thu chi → quỹ đầu tiên → nợ lãi cao → quỹ dài hơn → duy trì nền tảng. Hiển thị số còn thiếu để đạt mốc quỹ hoặc khoản nợ cần xem, không tự thực hiện giao dịch. Điểm theo dõi nền tảng hiện tại; không dùng làm tỷ lệ phần trăm đã đạt tự do tài chính.
+
+## Phân tích tài chính đầy đủ
+
+Tổng quan hiển thị điểm sức khỏe, mốc ưu tiên, tiền còn dùng, chi đã ghi, tiền tạm chia mỗi ngày và ba số của kế hoạch thu nhập: hạn mức chi theo ngày, dự báo chi cuối tháng, mục tiêu để dành và trả nợ.
+
+| Phần | Xem được gì |
+| --- | --- |
+| Sức khỏe tài chính | Điểm trên 100, năm phần điểm, cấp 1–5, quỹ hiện đủ bao lâu, số tiền thiếu để đạt các mốc, lộ trình chủ động về tiền |
+| Kế hoạch chi tiêu | Hạn mức và nhịp chi theo thu nhập; số tiền thực tạm chia mỗi ngày; mức thu nhập làm căn cứ; tỷ lệ phân bổ; mục tiêu theo ngày/tháng và tiến độ đã ghi; các danh mục nên giảm, mức giảm tối đa và phần thiếu; mô phỏng trả nợ |
+| Dòng tiền & dự báo | Thu mới, chi sinh hoạt, thu trừ chi; dòng tiền thực có cả cọc/hoàn/chuyển quỹ; dự báo theo nhịp chi và lịch sử; biểu đồ tỷ lệ danh mục và thu chi các tháng; cọc liên kết khoản hoàn |
+| Thói quen & cảnh báo | Chi sau ngày nhận tiền so với ngày còn lại; tỷ lệ chi linh hoạt trong hai giai đoạn; khoản chi lớn hơn thông thường, số tiền thường thấy, mức chênh và liên kết mở từng khoản |
+
+Các phần dùng cùng một tháng được chọn và cùng một sổ. Các đường dẫn đến sổ giữ đúng phạm vi tính: chi ngoài hóa đơn, thu nhập mới, thu chi sinh hoạt, chuyển quỹ/trả nợ, danh mục và giai đoạn lịch sử, những khoản được cảnh báo. “Về phân tích” quay lại phần đã xem.
+
+Tiến độ mục tiêu để dành/trả nợ lấy các khoản đã ghi: chuyển vào quỹ + trả nợ cả gốc và lãi + các khoản thuộc nhóm để dành/trả nợ cũ − rút từ quỹ. Không tính lại tiền có sẵn trong quỹ. Các phép tính điểm sức khỏe, phân loại thu nhập, dự báo, hạn mức, giảm chi và mô phỏng nợ từ mô hình ban đầu được giữ nguyên. Khi thiếu lịch sử, số tính được vẫn hiển thị kèm trạng thái tạm; phép tính chưa có đầu vào được ghi rõ là chưa đủ dữ liệu.
 
 ## Cách ghi quen thuộc
 
@@ -44,7 +59,7 @@ Tháng được chọn thống nhất giữa Tổng quan, Phân tích và Sổ t
 
 Không cho hoàn vượt tiền cọc, rút vượt quỹ hoặc trả gốc vượt nợ. Muốn bỏ khoản cọc đã gắn tiền hoàn, cần gỡ liên kết tại khoản hoàn trước. Khoản nợ có lịch sử trả được giữ lại để truy vết; trả hết thì số nợ về 0. Các lần chuyển quỹ/trả nợ chỉ ghi khi đã thực hiện, không đặt ngày tương lai.
 
-**Tạm chia mỗi ngày** dùng tiền hiện còn, trừ hóa đơn chưa trả và mức trả nợ tháng này còn thiếu, rồi chia số ngày còn lại (kể cả hôm nay). Không dự đoán khoản thu tương lai, không bao gồm chi phí chưa ghi hoặc chưa khai báo. Đây là cách chia tiền hiện có, tách với kế hoạch theo thu nhập trong phần phân tích mở rộng.
+**Tạm chia mỗi ngày** dùng tiền hiện còn, trừ hóa đơn chưa trả và mức trả nợ tháng này còn thiếu, rồi chia số ngày còn lại (kể cả hôm nay). Không dự đoán khoản thu tương lai, không bao gồm chi phí chưa ghi hoặc chưa khai báo. Đây là cách chia tiền hiện có, tách với kế hoạch theo thu nhập trong phần Kế hoạch chi tiêu.
 
 ## Nhập sổ Excel đang dùng
 

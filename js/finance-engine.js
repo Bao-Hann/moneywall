@@ -134,12 +134,13 @@ export function detectAnomalies(transactions, yBase, date = new Date()) {
 }
 
 // Module 3B — include zero-spend days in both daily-average denominators.
+export const inPaydayWindow = (day, paydayDay) => (day - paydayDay + 30) % 30 <= 4;
 export function paydaySpike(transactions, paydayDay = 5, date = new Date()) {
   const earliest = monthKeys(date, 3)[0], first = transactions.filter((t) => t.date <= localDate(date)).map((t) => t.date).sort()[0];
   if (!first) return { psi: null, warning: false, paydayAvg: 0, otherAvg: 0 };
   const start = first > `${earliest}-01` ? first : `${earliest}-01`;
   let windowDays = 0, otherDays = 0, windowSpent = 0, otherSpent = 0;
-  const inWindow = (day) => (day - paydayDay + 30) % 30 <= 4;
+  const inWindow = (day) => inPaydayWindow(day, paydayDay);
   for (let d = new Date(`${start}T12:00:00`); localDate(d) <= localDate(date); d.setDate(d.getDate() + 1)) {
     if (inWindow(d.getDate())) windowDays++; else otherDays++;
   }
@@ -149,7 +150,7 @@ export function paydaySpike(transactions, paydayDay = 5, date = new Date()) {
   }
   const paydayAvg = windowDays ? windowSpent / windowDays : 0, otherAvg = otherDays ? otherSpent / otherDays : 0;
   const psi = otherAvg > 0 ? paydayAvg / otherAvg : paydayAvg > 0 && otherDays > 0 ? Infinity : null;
-  return { psi, warning: psi !== null && psi >= 1.5, paydayAvg, otherAvg, windowDays, otherDays };
+  return { psi, warning: psi !== null && psi >= 1.5, paydayAvg, otherAvg, windowDays, otherDays, start };
 }
 
 // Module 3C — compare adjacent complete calendar windows, never partial months.
