@@ -6,13 +6,37 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 
 ## Bắt đầu
 
-1. Mở ứng dụng bằng Chrome, Edge hoặc Firefox trên laptop.
-2. Chọn **Thêm giao dịch → Khoản thu** để ghi thu nhập. Tiếp tục ghi các khoản chi.
-3. Vào **Nợ & Quỹ dự phòng** để thêm hóa đơn, khoản nợ, số dư quỹ dự phòng và ngày nhận lương.
-4. Xem **Tổng quan** để biết hạn mức hôm nay, mục tiêu tiết kiệm theo ngày và chiến lược tháng này. **Phân tích** giúp nhìn lại chi sau ngày lương, chi mong muốn và các khoản bất thường.
-5. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, đặc biệt trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
+1. Mở ứng dụng trên laptop, vào **Sổ thu chi → Nhập Excel** để mang ghi chép đang dùng vào sổ.
+2. Kiểm tra cách tính cọc/tiền hoàn và chọn lưu số dư ngân hàng, tiền mặt đầu tháng nếu đúng. Có thể đối chiếu quỹ để dành riêng.
+3. Ở **Tổng quan**, xem tiền còn dùng, tiền đã chi ra và gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
+4. Ở **Phân tích**, bấm một danh mục để xem đúng các khoản sinh hoạt tạo nên tổng đó. Xu hướng và công thức nằm trong phần mở rộng.
+5. Ở **Khoản cần lo**, thêm hóa đơn, nợ hoặc quỹ. Ghi thanh toán, chuyển quỹ và trả nợ tại đây sẽ cập nhật cùng sổ thu chi.
+6. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
 
-Muốn khám phá trước, chọn **Thử dữ liệu mẫu** ở trang đầu. Bộ mẫu có sáu tháng đã hoàn tất và phần tháng hiện tại. Dữ liệu mẫu được ghi rõ trong giao diện, không nạp tự động. Có thể xóa mẫu rồi bắt đầu sổ riêng.
+Không tự nạp dữ liệu mẫu. Mục thử mẫu trong Cài đặt luôn hỏi trước khi thay sổ.
+
+## Cách ghi quen thuộc
+
+Tên khoản là nội dung chính, danh mục nằm ngay dưới. Biểu mẫu gợi lại danh mục và nội dung từng dùng, cho phép nhập danh mục mới. Nhóm dùng cho phân tích nằm trong phần mở rộng. Sổ mặc định gom theo ngày, cộng riêng thu, chi và chênh lệch; có thể chuyển sang bảng toàn bộ.
+
+Tháng được chọn thống nhất giữa Tổng quan, Phân tích và Sổ thu chi. Lịch sử chuyển quỹ/trả nợ có thể xem mọi tháng. Bộ lọc từ phân tích được ghi rõ và có nút bỏ lọc.
+
+## Các khoản nối với nhau
+
+| Việc ghi | Cập nhật cùng lúc |
+| --- | --- |
+| Thu hoặc chi thường | Sổ, số dư, danh mục và phân tích |
+| Tiền cọc | Tiền chi ra và số cọc đang chờ; tách khỏi chi sinh hoạt |
+| Nhận hoàn cọc | Tiền nhận và số còn chờ của khoản cọc đã chọn; tách khỏi thu nhập mới |
+| Chuyển vào/rút khỏi quỹ | Sổ và số dư quỹ; không tính thành thu nhập hay chi sinh hoạt |
+| Trả nợ | Toàn bộ tiền chi trong sổ; giảm nợ đúng phần gốc được nhập, phần còn lại là lãi/phí |
+| Thanh toán hóa đơn | Một khoản chi trong sổ và trạng thái đã trả/mức còn thiếu |
+| Dùng khoản Excel đã ghi để trả hóa đơn | Gắn chính khoản có sẵn, giữ nguyên số lượng giao dịch và tiền ra vào |
+| Sửa/xóa chuyển quỹ hoặc trả nợ | Hoàn lại tác động cũ rồi áp dụng thay đổi; lưu nguyên vẹn hoặc hủy toàn bộ |
+
+Không cho hoàn vượt tiền cọc, rút vượt quỹ hoặc trả gốc vượt nợ. Muốn bỏ khoản cọc đã gắn tiền hoàn, cần gỡ liên kết tại khoản hoàn trước. Khoản nợ có lịch sử trả được giữ lại để truy vết; trả hết thì số nợ về 0. Các lần chuyển quỹ/trả nợ chỉ ghi khi đã thực hiện, không đặt ngày tương lai.
+
+**Tạm chia mỗi ngày** dùng tiền hiện còn, trừ hóa đơn chưa trả và mức trả nợ tháng này còn thiếu, rồi chia số ngày còn lại (kể cả hôm nay). Không dự đoán khoản thu tương lai, không bao gồm chi phí chưa ghi hoặc chưa khai báo. Đây là cách chia tiền hiện có, tách với kế hoạch theo thu nhập trong phần phân tích mở rộng.
 
 ## Nhập sổ Excel đang dùng
 
@@ -22,7 +46,7 @@ Mở **Sổ thu chi → Nhập Excel** hoặc **Sao lưu & Cài đặt → Chọ
 2. Kiểm tra cách ghi tiền: âm là chi/dương là thu, tất cả là chi, hoặc tất cả là thu. Có thể đổi đơn vị từ nghìn/triệu đồng sang đồng.
 3. Xem trước tổng thu, tổng chi và từng khoản. Ngày trong ô gộp được nhận tự động; ô ngày bỏ trống ngoài vùng gộp chỉ được lấy ngày dòng trước khi bạn bật tùy chọn đó.
 4. Giữ nguyên danh mục từ Excel, chọn lại nhóm Thiết yếu/Mong muốn/Tiết kiệm nếu cần, đánh dấu hóa đơn cố định và bỏ chọn khoản không muốn nhập.
-5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch, không xóa sổ hay tự tạo khoản nợ. Nếu chọn lưu tiền đầu tháng, ứng dụng lưu riêng số dư của tháng đó.
+5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch, không xóa sổ hay tự tạo khoản nợ. Có thể bổ sung danh mục trống và cách tính cọc/hoàn của khoản đã có, có hiển thị số khoản cập nhật trước khi lưu. Nếu chọn lưu tiền đầu tháng, ứng dụng lưu riêng số dư của tháng đó.
 
 Một bảng có hai cột cùng tên “Danh mục” được hiểu là tên khoản ở cột đầu, phân loại ở cột cuối. Cột tổng ngày và các ô số dư bên cạnh không được nhập lại thành giao dịch. Các phép cộng/trừ/nhân/chia đơn giản trong ô số tiền được tính bằng bộ phân tích giới hạn; công thức khác chỉ dùng kết quả số đã lưu trong tệp, có lưu ý ở bản xem trước. Ứng dụng không chạy mã hoặc hàm từ tệp Excel.
 
@@ -52,20 +76,20 @@ JSON giữ đủ bốn nhóm dữ liệu để khôi phục. CSV dùng UTF-8 BOM
 
 | Khu vực | Chức năng |
 | --- | --- |
-| Tổng quan | Hạn mức hôm nay, sức khỏe FHI, tiết kiệm theo ngày/tháng, dự phòng, biểu đồ dòng tiền, chiến lược và kế hoạch giảm chi |
+| Tổng quan | Tiền còn dùng, tiền đã chi, tạm chia mỗi ngày, bước tiếp theo và khoản ghi gần đây |
 | Sổ thu chi | Thêm/sửa/xóa, chọn nhanh mệnh giá, nhóm và danh mục, lọc tháng/nhóm/danh mục/ghi chú, phân trang |
-| Phân tích | Giao dịch bất thường, hiệu ứng ngày lương PSI, tăng tỷ trọng chi mong muốn, biểu đồ danh mục và nhịp chi |
-| Nợ & Quỹ dự phòng | Hóa đơn định kỳ, ghi thanh toán, thứ tự trả nợ lãi cao, mô phỏng trả thêm, quỹ và ngày lương |
+| Phân tích | Danh mục chi lớn, việc cần xem, cọc và tiền hoàn; xu hướng và cách tính mở khi cần |
+| Khoản cần lo | Hóa đơn, dùng khoản đã ghi để đánh dấu đã trả, trả nợ gốc/lãi, chuyển quỹ và đối chiếu số dư |
 | Sao lưu & Cài đặt | Xuất/nhập JSON, xuất CSV, trạng thái lưu trữ, sáng/tối, dữ liệu mẫu và xóa sổ |
 
-Các quy tắc sáu mô-đun được viết độc lập với giao diện trong `js/finance-engine.js`. Số tiền lưu dưới dạng số nguyên VND. Lãi suất và các tỷ lệ được phép có phần thập phân.
+Các quy tắc phân tích được viết độc lập với giao diện trong `js/finance-engine.js`; liên kết dòng tiền và thay đổi số dư ở `js/money-flow.js`. Số tiền lưu dưới dạng số nguyên VND. Lãi suất và các tỷ lệ được phép có phần thập phân.
 
 ### Một số quy ước quan trọng
 
-- Dự báo chi sinh hoạt gồm nhóm thiết yếu và mong muốn, không cộng lại các khoản chuyển tiết kiệm/trả nợ.
+- Dự báo chi sinh hoạt gồm nhóm thiết yếu và mong muốn, không cộng lại cọc, hoàn tiền và chuyển quỹ/trả nợ. Tất cả vẫn có trong dòng tiền thực tế.
 - Hóa đơn định kỳ dùng để dành trước ngân sách; không tự tạo giao dịch. Nút ✓ mở giao dịch thanh toán để bạn kiểm tra rồi lưu. Thanh toán một phần chỉ dành trước số còn thiếu.
-- Nhiều hóa đơn trùng danh mục được đối chiếu lần lượt; một khoản thanh toán không được dùng hai lần.
-- Số dư quỹ và số dư gốc nợ được cập nhật thủ công, tách với sổ giao dịch để tránh nhầm phần gốc/lãi hoặc cộng tiền hai lần.
+- Hóa đơn có liên kết rõ được đối chiếu trước; khoản cũ chưa liên kết được đối chiếu theo danh mục. Một khoản thanh toán không dùng hai lần.
+- Đối chiếu số dư quỹ/nợ dùng khi thiết lập hoặc sửa số thực tế. Chuyển quỹ và ghi trả nợ hằng ngày dùng các chức năng liên kết với sổ; sửa/xóa giao dịch sẽ đảo đúng tác động cũ.
 - Dự báo chỉ dùng các tháng đã kết thúc; tháng có khoảng trống được tính là 0. Tháng hiện tại chỉ tham gia thu nhập nền khi đã có khoản thu.
 - Giao dịch có ngày tương lai được lưu trong sổ nhưng chưa cộng vào các chỉ số của hôm nay.
 - Mỗi mức giảm chi là bội số 50.000 ₫, không vượt 35% mức trung bình danh mục, không vượt phần hụt. Nếu làm tròn gần nhất vượt trần thì hạ về bội số lớn nhất còn nằm trong giới hạn.

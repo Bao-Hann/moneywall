@@ -111,7 +111,7 @@ test('append is atomic, preserves other stores and skips repeated imports', asyn
   const transactions = buildImport(sample()).rows.map((r) => r.transaction);
   assert.equal((await appendTransactions(transactions)).imported, 4);
   const second = transactions.map((t) => ({ ...t, id: crypto.randomUUID() }));
-  assert.deepEqual(await appendTransactions(second), { imported: 0, skipped: 4 });
+  assert.deepEqual(await appendTransactions(second), { imported: 0, skipped: 4, updated: 0 });
   const before = await readData();
   await assert.rejects(appendTransactions([{ ...transactions[0], id: 'valid-next' }, { ...transactions[1], id: 'invalid-next', amount: -1 }]));
   assert.deepEqual(await readData(), before);

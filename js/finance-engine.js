@@ -1,3 +1,4 @@
+import { isPlanTransaction } from './money-flow.js';
 /** All calculations are pure. Money is integer VND; dates are local calendar dates. */
 export const CATEGORIES = Object.freeze({
   income: ['Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
@@ -5,7 +6,7 @@ export const CATEGORIES = Object.freeze({
   wants: ['Ăn ngoài & Cafe', 'Mua sắm online', 'Giải trí & Du lịch', 'Đăng ký gói dịch vụ', 'Quà tặng & Giao lưu'],
   savings_debt: ['Nạp quỹ dự phòng', 'Trả nợ gốc/lãi', 'Đầu tư dài hạn'],
 });
-export const GROUP_LABELS = { income: 'Thu nhập', needs: 'Thiết yếu', wants: 'Mong muốn', savings_debt: 'Tiết kiệm & Trả nợ' };
+export const GROUP_LABELS = { income: 'Tiền nhận', needs: 'Sinh hoạt cần thiết', wants: 'Mua sắm & Giải trí', savings_debt: 'Để dành & Trả nợ' };
 export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null, openingBalances: {} };
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 export const sum = (xs) => xs.reduce((a, x) => a + x, 0);
@@ -34,6 +35,7 @@ export function cashBalanceForMonth(data, month, today = localDate()) {
 export function aggregateMonths(transactions, date = new Date()) {
   const months = new Map();
   for (const t of transactions) {
+    if (!isPlanTransaction(t)) continue;
     if (t.date > localDate(date)) continue;
     const key = t.date.slice(0, 7);
     if (!months.has(key)) months.set(key, { month: key, income: 0, needs: 0, wants: 0, savings_debt: 0, spent: 0, variable: 0 });
@@ -250,6 +252,7 @@ export function simulateDebtPayoff(debts, extraMonthly = 0) {
 }
 
 export function analyzeFinance({ transactions = [], recurring_bills = [], debts = [], profile = DEFAULT_PROFILE }, date = new Date()) {
+  transactions = transactions.filter(isPlanTransaction);
   const today = localDate(date), key = today.slice(0, 7), elapsedDays = date.getDate(), daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const months = aggregateMonths(transactions, date), current = months.find((m) => m.month === key) || { month: key, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 };
   const firstMonth = months[0]?.month;
@@ -260,15 +263,16 @@ export function analyzeFinance({ transactions = [], recurring_bills = [], debts 
   const fixedTs = currentTs.filter((t) => t.type === 'expense' && t.isFixedBill && ['needs', 'wants'].includes(t.group));
   const activeBills = recurring_bills.filter((b) => b.active);
   // Match each payment once. Partial payments leave the remaining bill reserved.
-  const paymentPool = fixedTs.map((t) => ({ ...t, left: t.amount }));
+  const paymentPool = fixedTs.map((t) => ({ ...t, left: t.amount })).sort((x, y) => Number(!!y.flow?.billId) - Number(!!x.flow?.billId));
   const bills = activeBills.map((b) => {
-    let remaining = b.amount;
+    let remaining = b.amount; const payments = [];
     for (const p of paymentPool) {
-      if (p.left <= 0 || p.category !== b.category || p.group !== b.group) continue;
+      if (p.left <= 0 || (p.flow?.billId ? p.flow.billId !== b.id : p.category !== b.category || p.group !== b.group)) continue;
       const used = Math.min(p.left, remaining); p.left -= used; remaining -= used;
+      payments.push({ id: p.id, amount: used });
       if (!remaining) break;
     }
-    return { ...b, remaining, paid: remaining === 0 };
+    return { ...b, remaining, paid: remaining === 0, payments };
   });
   const paidFixedBills = sum(fixedTs.map((t) => t.amount)), unpaidFixedBills = sum(bills.map((b) => b.remaining));
   const totalActiveFixedBills = Math.max(sum(activeBills.map((b) => b.amount)), paidFixedBills + unpaidFixedBills);

@@ -49,3 +49,15 @@ Giao diện cho xem trước, chọn trang/cột/đơn vị, bỏ chọn từng 
 Có sáu kiểm tra bổ sung cho số dư: nhận riêng ô ngân hàng/tiền mặt; loại quỹ dự phòng khỏi tiền đang dùng; không tính giao dịch tương lai; ghi giao dịch và số dư đầu kỳ trong cùng một lần lưu, giữ các cài đặt khác; hủy toàn bộ khi số dư không hợp lệ; chấp nhận tệp JSON cũ chưa có trường mới.
 
 Đã thử trên Chrome nhập lại tệp mẫu khi toàn bộ giao dịch bị nhận trùng, chỉ chọn lưu số dư đầu tháng. Số giao dịch và tổng thu giữ nguyên; tiền còn lại tăng đúng số tiền đầu kỳ.
+
+
+## Giao diện theo cách ghi chép hằng ngày — 25/11/2026
+
+- Tổng quan đưa ba câu trả lời lên trước: tiền còn dùng, tiền chi ra, số tạm chia mỗi ngày. Công thức và chỉ số nâng cao được thu gọn.
+- Danh mục trong phân tích mở đúng tập chi sinh hoạt tạo nên tổng đó; cọc/hoàn trong cùng danh mục không làm tổng chi tiết lệch khỏi số đã bấm. Giữ tháng đang chọn khi chuyển trang.
+- Nội dung khoản là chữ chính. Danh mục và mô tả đã dùng được gợi ý từ chính dữ liệu trong trình duyệt; không đưa dữ liệu cá nhân vào mã nguồn.
+- Các kiểm tra mới dùng dữ liệu tổng hợp: đối chiếu tiền thực tế với thu nhập/chi sinh hoạt, hoàn cọc một phần và qua tháng, chống hoàn vượt hoặc mất liên kết, cập nhật quỹ/nợ khi sửa và xóa, lỗi không gây lưu một phần, ngăn ghi hiệu ứng ở tương lai, liên kết đúng hóa đơn và tránh nhập trùng khi bổ sung danh mục cũ.
+- Đã thử trực tiếp trên Chrome bản nội bộ: ghi cọc, nhận hoàn một phần, bấm danh mục mở đúng sổ, chuyển quỹ rồi sửa số tiền, trả nợ có phần lãi, ghi đã trả hóa đơn và mở các biểu đồ thu gọn. Chiều ngang nội dung khớp cửa sổ laptop, không có thanh cuộn ngang toàn trang.
+- Nhập lại Excel có thể chỉ sửa phân loại cũ thay vì thêm tiền ra vào. Số dư đầu tháng và quỹ được lưu trong cùng giao dịch cơ sở dữ liệu với phần nhập; phải chủ động chọn đối chiếu quỹ. Ghi chú dư nợ chỉ tạo gợi ý thiết lập, không tự giả định lãi suất.
+
+Kết quả hiện tại: **65/65 kiểm tra tự động đạt**. Bổ sung kiểm tra ưu tiên giao dịch gắn đúng hóa đơn trước khi phân bổ khoản cũ theo danh mục, và giữ tháng cũ khi đồng hồ kiểm tra sang ngày mới. Trên Chrome, đã thử dùng khoản có sẵn để hoàn tất hóa đơn mà giữ nguyên tiền ra vào, cùng nhập lại tệp mẫu chỉ cập nhật phân loại cũ.

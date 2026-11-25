@@ -1,4 +1,5 @@
-import { DEFAULT_PROFILE, GROUP_LABELS } from './finance-engine.js';
+import { DEFAULT_PROFILE, GROUP_LABELS, localDate } from './finance-engine.js';
+import { FLOW_LABELS, changeTransaction, kindOf } from './money-flow.js';
 
 const STORES = ['transactions', 'recurring_bills', 'debts', 'profile'];
 const memory = Object.fromEntries(STORES.map((s) => [s, new Map()]));
@@ -57,51 +58,109 @@ function storeRequest(name, method, argument, write = false) {
 export const getAll = (name) => storeRequest(name, 'getAll');
 export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
 export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
+// Ledger changes and their fund/debt effects commit or roll back together.
+export async function saveTransaction(record, removingId = '', today = localDate()) {
+  const next = record ? validateRecord('transactions', record) : null, id = next?.id || removingId;
+  if (!id) throw new Error('Thiếu khoản cần cập nhật.');
+  const prepare = (data) => {
+    const result = changeTransaction(data, next, id, today);
+    return { ...result, profile: validateRecord('profile', result.profile), debts: result.debts.map((d) => validateRecord('debts', d)) };
+  };
+  if (!database) {
+    const result = prepare(await readData());
+    if (next) memory.transactions.set(id, clone(next)); else memory.transactions.delete(id);
+    memory.profile.set('default', clone(result.profile));
+    for (const d of result.debts) memory.debts.set(d.id, clone(d));
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(['transactions', 'profile', 'debts'], 'readwrite');
+    const data = {}, names = ['transactions', 'profile', 'debts']; let ready = 0, failure;
+    for (const name of names) {
+      const request = tx.objectStore(name).getAll();
+      request.onsuccess = () => {
+        data[name] = name === 'profile' ? { ...DEFAULT_PROFILE, ...(request.result.find((p) => p.id === 'default') || {}) } : request.result;
+        if (++ready !== names.length) return;
+        try {
+          const result = prepare(data);
+          if (next) tx.objectStore('transactions').put(next); else tx.objectStore('transactions').delete(id);
+          tx.objectStore('profile').put(result.profile);
+          for (const d of result.debts) tx.objectStore('debts').put(d);
+        } catch (error) { failure = error; tx.abort(); }
+      };
+    }
+    tx.oncomplete = resolve;
+    tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Chưa lưu được thay đổi. Các số dư cũ được giữ nguyên.'));
+  });
+}
 export function transactionFingerprint(t) {
   const norm = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi-VN');
   return JSON.stringify([t.date, t.type, t.amount, norm(t.category), norm(t.note)]);
 }
 /** Multiset comparison keeps legitimately repeated purchases in the source file. */
 export function markExistingTransactions(incoming, existing) {
-  const counts = new Map();
-  for (const t of existing) { const key = transactionFingerprint(t); counts.set(key, (counts.get(key) || 0) + 1); }
-  return incoming.map((t) => { const key = transactionFingerprint(t), count = counts.get(key) || 0; if (count) counts.set(key, count - 1); return count > 0; });
+  return matchExistingTransactions(incoming, existing).map((i) => i !== -1);
 }
-export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null } = {}) {
+export function matchExistingTransactions(incoming, existing) {
+  const exact = new Map(), any = new Map(), unclassified = new Map(), used = new Set();
+  const base = (t) => transactionFingerprint({ ...t, category: '' });
+  const add = (map, key, i) => { if (!map.has(key)) map.set(key, []); map.get(key).push(i); };
+  existing.forEach((t, i) => { add(exact, transactionFingerprint(t), i); add(any, base(t), i); if (t.category === 'Chưa phân loại') add(unclassified, base(t), i); });
+  const take = (map, key) => { const q = map.get(key) || []; while (q.length && used.has(q.at(-1))) q.pop(); if (!q.length) return -1; const i = q.pop(); used.add(i); return i; };
+  const matched = incoming.map((t) => take(exact, transactionFingerprint(t)));
+  incoming.forEach((t, i) => { if (matched[i] === -1) matched[i] = take(t.category === 'Chưa phân loại' ? any : unclassified, base(t)); });
+  return matched;
+}
+export function planImport(clean, existing, { skipDuplicates = true, updateDetails = true } = {}) {
+  const matches = matchExistingTransactions(clean, existing), accepted = [], updates = [], ids = new Set(existing.map((t) => t.id));
+  clean.forEach((t, i) => {
+    if (!skipDuplicates || matches[i] === -1) { if (ids.has(t.id)) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.'); accepted.push(t); return; }
+    const old = existing[matches[i]], updated = { ...old };
+    if (updateDetails) {
+      if (old.category === 'Chưa phân loại' && t.category !== old.category) { updated.category = t.category; updated.group = t.group; }
+      if (kindOf(old) === 'regular' && ['deposit', 'refund'].includes(kindOf(t))) { updated.flow = t.flow; updated.isFixedBill = false; }
+      if (t.isFixedBill && !old.isFixedBill && kindOf(updated) === 'regular') updated.isFixedBill = true;
+      if (JSON.stringify(updated) !== JSON.stringify(old)) updates.push(updated);
+    }
+  });
+  return { accepted, updates, imported: accepted.length, updated: updates.length, skipped: clean.length - accepted.length };
+}
+export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null, liquidSavings = null, updateDetails = true } = {}) {
   if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
   const clean = records.map((record) => validateRecord('transactions', record));
+  if (clean.some((t) => !['regular', 'deposit', 'refund'].includes(kindOf(t)))) throw new Error('Ghi chuyển quỹ và trả nợ bằng chức năng trong sổ để cập nhật các số dư cùng lúc.');
   const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
-  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } });
+  if (liquidSavings !== null) money(liquidSavings, 'Quỹ để dành từ Excel');
+  const profileChanges = !!opening || liquidSavings !== null;
+  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, ...(liquidSavings !== null ? { liquidSavings } : {}), ...(opening ? { openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } } : {}) });
   if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
   const select = (existing) => {
-    const duplicate = markExistingTransactions(clean, existing), ids = new Set(existing.map((t) => t.id));
-    const accepted = clean.filter((t, i) => !skipDuplicates || !duplicate[i]);
-    if (accepted.some((t) => ids.has(t.id))) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.');
-    return { accepted, imported: accepted.length, skipped: clean.length - accepted.length };
+    return planImport(clean, existing, { skipDuplicates, updateDetails });
   };
   if (!database) {
     const result = select([...memory.transactions.values()]);
-    const nextProfile = opening ? amendProfile(memory.profile.get('default')) : null;
-    for (const t of result.accepted) memory.transactions.set(t.id, clone(t));
+    const nextProfile = profileChanges ? amendProfile(memory.profile.get('default')) : null;
+    for (const t of [...result.accepted, ...result.updates]) memory.transactions.set(t.id, clone(t));
     if (nextProfile) memory.profile.set('default', clone(nextProfile));
-    return { imported: result.imported, skipped: result.skipped };
+    return { imported: result.imported, skipped: result.skipped, updated: result.updated };
   }
   return new Promise((resolve, reject) => {
-    const tx = database.transaction(opening ? ['transactions', 'profile'] : ['transactions'], 'readwrite'), store = tx.objectStore('transactions');
-    let result, failure, existing, profile, rowsReady = false, profileReady = !opening;
+    const tx = database.transaction(profileChanges ? ['transactions', 'profile'] : ['transactions'], 'readwrite'), store = tx.objectStore('transactions');
+    let result, failure, existing, profile, rowsReady = false, profileReady = !profileChanges;
     const save = () => {
       if (!rowsReady || !profileReady) return;
       try {
         result = select(existing);
-        const nextProfile = opening ? amendProfile(profile) : null;
+        const nextProfile = profileChanges ? amendProfile(profile) : null;
         for (const t of result.accepted) store.add(t);
+        for (const t of result.updates) store.put(t);
         if (nextProfile) tx.objectStore('profile').put(nextProfile);
       } catch (error) { failure = error; tx.abort(); }
     };
     const read = store.getAll();
     read.onsuccess = () => { existing = read.result; rowsReady = true; save(); };
-    if (opening) { const readProfile = tx.objectStore('profile').get('default'); readProfile.onsuccess = () => { profile = readProfile.result; profileReady = true; save(); }; }
-    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped });
+    if (profileChanges) { const readProfile = tx.objectStore('profile').get('default'); readProfile.onsuccess = () => { profile = readProfile.result; profileReady = true; save(); }; }
+    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped, updated: result.updated });
     tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
     tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
   });
@@ -142,7 +201,19 @@ export function validateRecord(store, value) {
     assert((value.type === 'income') === (value.group === 'income'), 'Loại giao dịch không khớp với nhóm.');
     assert(typeof value.note === 'string' && value.note.length <= 1000, 'Ghi chú tối đa 1.000 ký tự.');
     money(value.createdAt, 'Thời điểm tạo');
-    return { id, date: value.date, type: value.type, amount: money(value.amount, 'Số tiền', false), group: value.group, category: text(value.category, 'Danh mục'), isFixedBill: bool(value.isFixedBill, 'Hóa đơn cố định'), note: value.note, createdAt: value.createdAt };
+    const result = { id, date: value.date, type: value.type, amount: money(value.amount, 'Số tiền', false), group: value.group, category: text(value.category, 'Danh mục'), isFixedBill: bool(value.isFixedBill, 'Hóa đơn cố định'), note: value.note, createdAt: value.createdAt };
+    if (value.flow) {
+      const kind = value.flow.kind;
+      assert(Object.hasOwn(FLOW_LABELS, kind), 'Cách tính khoản tiền không hợp lệ.');
+      assert(!(['deposit', 'reserve-in', 'debt'].includes(kind) && value.type !== 'expense') && !(['refund', 'reserve-out'].includes(kind) && value.type !== 'income'), 'Cách tính không khớp khoản thu hoặc chi.');
+      assert(!['reserve-in', 'debt'].includes(kind) || value.group === 'savings_debt', 'Chuyển quỹ và trả nợ cần thuộc nhóm Để dành & Trả nợ.');
+      const flow = { kind };
+      if (value.flow.targetId) flow.targetId = text(value.flow.targetId, 'Khoản liên kết', 100);
+      if (value.flow.billId) { assert(kind === 'regular' && value.type === 'expense' && value.isFixedBill, 'Liên kết hóa đơn không hợp lệ.'); flow.billId = text(value.flow.billId, 'Hóa đơn liên kết', 100); }
+      if (kind === 'debt') { assert(flow.targetId, 'Hãy chọn khoản nợ được trả.'); flow.principal = money(value.flow.principal, 'Phần trả gốc'); assert(flow.principal <= result.amount, 'Phần trả gốc không được lớn hơn tổng tiền đã trả.'); }
+      if (kind !== 'regular' || flow.billId) result.flow = flow;
+    }
+    return result;
   }
   if (store === 'recurring_bills') {
     assert(['needs', 'wants'].includes(value.group), 'Nhóm hóa đơn không hợp lệ.');

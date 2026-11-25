@@ -28,7 +28,7 @@ function draw(id, config) {
 export function renderCharts(tab, data, a) {
   destroyCharts();
   const date = new Date(`${a.today}T12:00:00`);
-  if (tab === 'overview') {
+  if (tab === 'overview' || tab === 'analysis') {
     const months = monthKeys(date, 6), totals = [...a.history, a.current];
     const income = months.map((k) => totals.find((m) => m.month === k)?.income || 0);
     const expenses = months.map((k) => totals.find((m) => m.month === k)?.spent || 0);

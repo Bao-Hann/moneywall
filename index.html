@@ -26,7 +26,7 @@
       <a href="#overview" data-tab="overview" class="nav-link active"><span data-icon="grid"></span><span>Tổng quan</span></a>
       <a href="#transactions" data-tab="transactions" class="nav-link"><span data-icon="wallet"></span><span>Sổ thu chi</span></a>
       <a href="#analysis" data-tab="analysis" class="nav-link"><span data-icon="chart"></span><span>Phân tích</span><span class="nav-count" id="nav-alert-count" hidden></span></a>
-      <a href="#planning" data-tab="planning" class="nav-link"><span data-icon="layers"></span><span>Nợ & Quỹ dự phòng</span></a>
+      <a href="#planning" data-tab="planning" class="nav-link"><span data-icon="layers"></span><span>Khoản cần lo</span></a>
       <a href="#settings" data-tab="settings" class="nav-link"><span data-icon="settings"></span><span>Sao lưu & Cài đặt</span></a>
     </nav>
     <div class="sidebar-bottom">
@@ -48,17 +48,22 @@
 
   <dialog id="transaction-dialog" class="form-dialog" aria-labelledby="transaction-dialog-title">
     <form id="transaction-form" method="dialog">
-      <div class="dialog-header"><div><span class="eyebrow">THÊM MỘT CHÚT RÕ RÀNG</span><h2 id="transaction-dialog-title">Ghi một giao dịch</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+      <div class="dialog-header"><div><h2 id="transaction-dialog-title">Ghi thu chi</h2><p class="helper-text">Ghi ngắn như trong sổ của bạn.</p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
       <input type="hidden" name="id">
       <div class="type-switch" role="group" aria-label="Loại giao dịch"><button type="button" data-tx-type="expense" class="selected">Khoản chi</button><button type="button" data-tx-type="income">Khoản thu</button></div>
       <input type="hidden" name="type" value="expense">
       <label class="amount-field">Số tiền <span class="required">*</span><span class="amount-input"><input name="amount" inputmode="numeric" type="number" min="1" max="9000000000000" step="1" placeholder="0" required><span>₫</span></span></label>
       <div class="quick-amounts" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="30000">30.000</button><button type="button" data-amount="50000">50.000</button><button type="button" data-amount="100000">100.000</button><button type="button" data-amount="200000">200.000</button><button type="button" data-amount="500000">500.000</button></div>
-      <div class="form-grid"><label>Nhóm chi tiêu<select name="group" id="tx-group"><option value="needs">Thiết yếu</option><option value="wants">Mong muốn</option><option value="savings_debt">Tiết kiệm & Trả nợ</option></select></label><label>Danh mục<select name="category" id="tx-category"></select></label></div>
-      <div class="form-grid"><label>Ngày giao dịch<input name="date" type="date" required></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Đây là hóa đơn cố định</label></div>
-      <label>Ghi chú <span class="optional">(không bắt buộc)</span><input name="note" maxlength="1000" placeholder="Khoản này dành cho điều gì?"></label>
+      <label>Nội dung <span class="optional">(ghi ngắn tùy bạn)</span><input name="note" maxlength="1000" list="note-suggestions" placeholder="Ví dụ: ăn trưa, xăng, tiền trọ…" autocomplete="off"><datalist id="note-suggestions"></datalist></label>
+      <div class="form-grid"><label>Danh mục<input name="category" id="tx-category" list="category-suggestions" maxlength="200" placeholder="Chọn hoặc gõ tên mới" required autocomplete="off"><datalist id="category-suggestions"></datalist></label><label>Ngày ghi<input name="date" type="date" required></label></div>
+      <div id="category-shortcuts" class="category-shortcuts" aria-label="Danh mục hay dùng"></div>
+      <label>Khoản này là<select name="flowKind" id="tx-flow-kind"></select></label>
+      <div id="tx-link-fields" hidden><label id="tx-target-label">Khoản liên quan<select name="targetId" id="tx-target"></select></label><label id="tx-principal-label" hidden>Trong đó trả tiền gốc (₫)<input name="principal" type="number" min="0" max="9000000000000" step="1"><span class="helper-text">Phần còn lại là lãi hoặc phí. Chỉ tiền gốc làm giảm số nợ.</span></label></div>
+      <p class="flow-explanation helper-text" id="tx-flow-explanation"></p>
+      <input name="billId" type="hidden">
+      <details class="tx-extra"><summary>Phân nhóm và hóa đơn</summary><div class="form-grid"><label>Nhóm để phân tích<select name="group" id="tx-group"><option value="needs">Sinh hoạt cần thiết</option><option value="wants">Mua sắm & Giải trí</option><option value="savings_debt">Để dành & Trả nợ</option></select></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Hóa đơn hằng tháng</label></div><label id="tx-bill-label" hidden>Hóa đơn liên quan<select name="billTarget" id="tx-bill-target"></select></label></details>
       <p class="form-error" role="alert" id="transaction-error" hidden></p>
-      <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu giao dịch</button></div>
+      <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu vào sổ</button></div>
     </form>
   </dialog>
 
@@ -78,6 +83,12 @@
     <div class="form-grid"><label>Lãi suất (%/năm)<input name="apr" type="number" min="0" max="1000" step="0.01" required></label><label>Trả tối thiểu/tháng (₫)<input name="minMonthlyPayment" type="number" min="0" max="9000000000000" step="1" required></label></div>
     <p class="helper-text">Các khoản nợ có lãi trên 10%/năm sẽ được ưu tiên trong chiến lược trả nợ.</p>
     <p class="form-error" role="alert" id="debt-error" hidden></p><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Hủy</button><button class="button primary" type="submit">Lưu khoản nợ</button></div>
+  </form></dialog>
+
+  <dialog id="link-payment-dialog" class="form-dialog" aria-labelledby="link-payment-title"><form id="link-payment-form" method="dialog">
+    <div class="dialog-header"><h2 id="link-payment-title">Dùng khoản đã ghi</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <input type="hidden" name="billId"><p class="helper-text">Chọn khoản bạn đã trả cho hóa đơn này. Giữ nguyên số tiền trong sổ, không thêm khoản chi mới.</p><label>Khoản chi trong tháng<select name="transactionId" id="bill-payment-source" required></select></label>
+    <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary">Gắn với hóa đơn</button></div>
   </form></dialog>
 
   <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><span class="confirm-icon" data-icon="shield"></span><h2 id="confirm-title">Xác nhận thay đổi</h2><p id="confirm-description"></p><div class="dialog-actions"><button class="button secondary" value="cancel">Giữ nguyên</button><button class="button primary" value="confirm" id="confirm-button">Xác nhận</button></div></form></dialog>

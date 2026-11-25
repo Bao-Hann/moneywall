@@ -1,5 +1,6 @@
 import { CATEGORIES, GROUP_LABELS, localDate } from './finance-engine.js';
 import { validateRecord, uuid } from './db.js';
+import { suggestFlow } from './money-flow.js';
 
 export const MAX_IMPORT_ROWS = 10000;
 const blank = (x) => x === undefined || x === null || x === '';
@@ -145,6 +146,19 @@ export function detectOpeningBalance(sheet, multiplier = 1) {
   }
   return bank !== null && cash !== null ? { bank, cash } : null;
 }
+export function detectSideBalances(sheet, multiplier = 1) {
+  let liquidSavings = null, debt = null;
+  for (const row of sheet.rows.slice(0, 40)) for (let c = 0; c < row.length - 1; c++) {
+    const label = normalizeLabel(val(row[c]));
+    if (!['tietkiem', 'quyduphong', 'quydedanh', 'duno'].includes(label)) continue;
+    try {
+      const amount = parseMoney(row[c + 1], multiplier).amount;
+      if (amount < 0) continue;
+      if (label === 'duno') debt = amount; else liquidSavings = amount;
+    } catch { /* Side notes are suggestions only, never financial transactions. */ }
+  }
+  return { liquidSavings, debt };
+}
 export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {} } = {}) {
   if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };
   if (mapping.date === mapping.amount) return { rows: [], errors: [{ row: headerRow + 1, message: 'Cột ngày và cột số tiền phải khác nhau.' }], skipped: 0, categories: [] };
@@ -170,7 +184,8 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const rawType = normalizeLabel(val(get(cells, 'type')));
       let type = ['income', 'thu', 'khoanthu'].includes(rawType) ? 'income' : ['expense', 'chi', 'khoanchi'].includes(rawType) ? 'expense' : mode === 'income' ? 'income' : mode === 'expense' ? 'expense' : signed > 0 ? 'income' : 'expense';
       const rawGroup = String(val(get(cells, 'group')) ?? '').trim();
-      const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup));
+      const legacyGroups = { thunhap: 'income', thietyeu: 'needs', mongmuon: 'wants', tietkiemtrano: 'savings_debt' };
+      const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup)) || legacyGroups[normalizeLabel(rawGroup)];
       let group = type === 'income' ? 'income' : explicitGroup || categoryGroups[rawCategory || 'Chưa phân loại'] || suggestedGroup(rawCategory);
       if (type === 'expense' && group === 'income') group = 'needs';
       const category = rawCategory || (type === 'income' ? 'Thu nhập khác' : 'Chưa phân loại');
@@ -179,8 +194,9 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const warnings = [];
       if (!rawCategory) warnings.push('Chưa có danh mục trong tệp.');
       if (parsedMoney.cachedFormula) warnings.push('Dùng kết quả công thức đã lưu trong tệp.');
-      if (/(coc|hoantra|hoantien)/.test(normalizeLabel(note))) warnings.push('Có thể là tiền cọc hoặc khoản hoàn. Hiện vẫn tính vào dòng tiền; kiểm tra trước khi nhập.');
-      const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now() });
+      const kind = suggestFlow({ type, note });
+      if (kind !== 'regular') warnings.push(kind === 'deposit' ? 'Gợi ý tách tiền cọc khỏi chi sinh hoạt. Có thể đổi cách tính ở cột bên phải.' : 'Gợi ý tách tiền hoàn khỏi thu nhập mới. Sau khi nhập, chọn khoản cọc liên quan.');
+      const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: kind === 'regular' && type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now(), ...(kind !== 'regular' ? { flow: { kind } } : {}) });
       categories.add(rawCategory || 'Chưa phân loại');
       records.push({ row: r + 1, transaction, warnings, selected: true });
     } catch (error) { errors.push({ row: r + 1, message: error.message }); }

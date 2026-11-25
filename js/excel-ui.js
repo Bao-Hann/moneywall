@@ -1,6 +1,7 @@
 import { GROUP_LABELS, localDate } from './finance-engine.js';
-import { markExistingTransactions } from './db.js';
-import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns, detectOpeningBalance, excelDate } from './excel-import.js';
+import { markExistingTransactions, planImport } from './db.js';
+import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns, detectOpeningBalance, detectSideBalances, excelDate } from './excel-import.js';
+import { kindOf } from './money-flow.js';
 import { escapeHtml as E, formatVND, icon } from './ui.js';
 
 let libraryPromise;
@@ -25,7 +26,7 @@ export async function openExcelImporter({ getExisting, onImport }) {
     <p id="excel-error" class="form-error" role="alert" hidden></p><div id="excel-config"></div><div id="excel-preview"></div>
     <div class="dialog-actions excel-actions"><span id="excel-ready" class="helper-text"></span><button type="button" class="button secondary" data-excel-action="close">Để sau</button><button type="button" class="button primary" data-excel-action="commit" id="excel-commit" disabled>Nhập vào sổ thu chi</button></div>`;
   document.body.append(dialog); dialog.showModal();
-  const state = { sheets: [], sheetIndex: 0, result: null, options: null, excluded: new Set(), fixed: new Map(), skipDuplicates: true, allowPartial: false, importOpening: false, openingBalance: null, busy: false, page: 1, ready: [] };
+  const state = { sheets: [], sheetIndex: 0, result: null, options: null, excluded: new Set(), fixed: new Map(), kinds: new Map(), skipDuplicates: true, updateDetails: true, allowPartial: false, importOpening: false, importSavings: false, openingBalance: null, busy: false, page: 1, ready: [], incoming: [], updates: 0, liquidSavings: null };
   const errorBox = dialog.querySelector('#excel-error'), config = dialog.querySelector('#excel-config'), preview = dialog.querySelector('#excel-preview');
   const showError = (message) => { errorBox.textContent = message; errorBox.hidden = !message; };
   const currentSheet = () => state.sheets[state.sheetIndex];
@@ -42,6 +43,8 @@ export async function openExcelImporter({ getExisting, onImport }) {
   function rebuild() {
     state.result = buildImport(currentSheet(), state.options);
     for (const row of state.result.rows) if (state.fixed.has(row.row)) row.transaction.isFixedBill = state.fixed.get(row.row);
+    for (const row of state.result.rows) if (state.kinds.has(row.row)) { const kind = state.kinds.get(row.row); if (kind === 'regular') delete row.transaction.flow; else { row.transaction.flow = { kind }; row.transaction.isFixedBill = false; } }
+    for (const row of state.result.rows) if (row.transaction.type === 'income' || kindOf(row.transaction) !== 'regular') row.transaction.isFixedBill = false;
     state.page = 1; previewView();
   }
   function readiness() {
@@ -49,11 +52,15 @@ export async function openExcelImporter({ getExisting, onImport }) {
     const selected = result.rows.filter((r) => !state.excluded.has(r.row));
     const duplicate = markExistingTransactions(selected.map((r) => r.transaction), getExisting());
     selected.forEach((row, i) => { row.duplicate = duplicate[i]; });
-    state.ready = selected.filter((r) => !state.skipDuplicates || !r.duplicate).map((r) => r.transaction);
+    state.incoming = selected.map((r) => r.transaction);
+    const planned = planImport(state.incoming, getExisting(), { skipDuplicates: state.skipDuplicates, updateDetails: state.updateDetails });
+    state.ready = planned.accepted; state.updates = planned.updated;
     const foundOpening = detectOpeningBalance(currentSheet(), state.options.multiplier);
     state.openingBalance = state.importOpening && foundOpening ? { month: state.options.month, ...foundOpening } : null;
+    const side = detectSideBalances(currentSheet(), state.options.multiplier);
+    state.liquidSavings = state.importSavings ? side.liquidSavings : null;
     const importedIncome = state.ready.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0), importedExpense = state.ready.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense, foundOpening };
+    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense, foundOpening, side };
   }
   function previewView() {
     const result = state.result, totals = readiness(); if (!result || !totals) return;
@@ -67,17 +74,20 @@ export async function openExcelImporter({ getExisting, onImport }) {
     preview.innerHTML = `<div class="excel-summary"><div><span>Sẵn sàng nhập</span><strong>${state.ready.length} khoản</strong></div><div><span>Tổng thu được chọn</span><strong class="amount-income">${formatVND(totals.income)}</strong></div><div><span>Tổng chi được chọn</span><strong>${formatVND(totals.expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(totals.income - totals.expense)}</strong></div></div>
       ${totals.foundOpening ? `<aside class="banner excel-opening-banner"><label class="checkbox-label"><input id="excel-import-opening" type="checkbox" ${state.importOpening ? 'checked' : ''}>Lưu cả tiền có sẵn đầu tháng ${E(state.options.month)}</label><p>Ngân hàng: <strong>${formatVND(totals.foundOpening.bank)}</strong> · Tiền mặt: <strong>${formatVND(totals.foundOpening.cash)}</strong>. Tổng: <strong>${formatVND(totals.foundOpening.bank + totals.foundOpening.cash)}</strong>.</p><p class="fine-print">Chỉ chọn nếu đây là số dư đầu tháng. Lưu riêng để tính tiền còn lại, không cộng vào thu nhập mới và không cộng quỹ tiết kiệm. Sẽ thay số dư đầu tháng đang lưu cho tháng này.</p></aside>` : ''}
       <details class="excel-mapping"><summary>Phân nhóm theo danh mục của bạn</summary><p class="helper-text">Giữ nguyên tên danh mục trong Excel. Kiểm tra nhóm Thiết yếu / Mong muốn trước khi xác nhận; các khoản nhận tiền luôn được ghi là thu.</p><div class="excel-column-grid">${categoryGroups}</div></details>
-      <div class="excel-import-options"><label class="checkbox-label"><input id="excel-skip-duplicates" type="checkbox" ${state.skipDuplicates ? 'checked' : ''}>Bỏ qua khoản giống giao dịch đã có (${totals.duplicateCount})</label>${result.errors.length ? `<label class="checkbox-label"><input id="excel-allow-partial" type="checkbox" ${state.allowPartial ? 'checked' : ''}>Chỉ nhập các dòng hợp lệ; bỏ ${result.errors.length} dòng lỗi</label>` : ''}</div>
+      ${totals.side.liquidSavings !== null ? `<aside class="banner"><label class="checkbox-label"><input id="excel-import-savings" type="checkbox" ${state.importSavings ? 'checked' : ''}>Đối chiếu quỹ để dành: ${formatVND(totals.side.liquidSavings)}</label><p class="fine-print">Thay số dư quỹ đang lưu bằng số này, không tạo khoản thu chi. Chỉ chọn nếu đây là số quỹ thực tế hiện tại.</p></aside>` : ''}
+      ${totals.side.debt !== null ? `<p class="compact-note">Tệp có ghi dư nợ ${formatVND(totals.side.debt)}. Sau khi nhập, bạn có thể bổ sung lãi suất và mức trả trong Khoản cần lo; ứng dụng chưa tự tạo nợ.</p>` : ''}
+      <p class="fine-print">Cọc và tiền hoàn được gợi ý tách riêng ở cột “Cách tính”. Kiểm tra trước khi lưu; tiền ra vào vẫn giữ nguyên.</p>
+      <div class="excel-import-options"><label class="checkbox-label"><input id="excel-skip-duplicates" type="checkbox" ${state.skipDuplicates ? 'checked' : ''}>Bỏ qua khoản giống giao dịch đã có (${totals.duplicateCount})</label>${state.skipDuplicates ? `<label class="checkbox-label"><input id="excel-update-details" type="checkbox" ${state.updateDetails ? 'checked' : ''}>Bổ sung danh mục trống, loại cọc/hoàn cho khoản đã có (${state.updates} khoản)</label>` : ''}${result.errors.length ? `<label class="checkbox-label"><input id="excel-allow-partial" type="checkbox" ${state.allowPartial ? 'checked' : ''}>Chỉ nhập các dòng hợp lệ; bỏ ${result.errors.length} dòng lỗi</label>` : ''}</div>
       ${result.errors.length ? `<div class="form-error"><strong>${result.errors.length} dòng cần kiểm tra</strong><ul>${result.errors.slice(0, 10).map((r) => `<li>Dòng ${r.row}: ${E(r.message)}</li>`).join('')}</ul>${result.errors.length > 10 ? '<p>Chỉ hiển thị 10 lỗi đầu. Hãy kiểm tra lại tệp trước khi nhập.</p>' : ''}</div>` : ''}
-      ${result.rows.length ? `<div class="table-scroll excel-preview-table"><table><thead><tr><th><input id="excel-select-all" type="checkbox" aria-label="Chọn tất cả giao dịch Excel" ${result.rows.every((r) => !state.excluded.has(r.row)) ? 'checked' : ''}></th><th>Ngày</th><th>Nội dung & Lưu ý</th><th>Danh mục</th><th class="align-right">Số tiền</th><th>Hóa đơn<br>cố định</th></tr></thead><tbody>${result.rows.slice((state.page - 1) * perPage, state.page * perPage).map((r) => `<tr class="${r.duplicate && state.skipDuplicates && !state.excluded.has(r.row) ? 'excel-duplicate' : ''}"><td><input type="checkbox" data-excel-row="${r.row}" aria-label="Chọn dòng ${r.row}" ${state.excluded.has(r.row) ? '' : 'checked'}></td><td class="tabular">${E(r.transaction.date.split('-').reverse().join('/'))}<small class="excel-row-number">Dòng ${r.row}</small></td><td><span class="excel-note">${E(r.transaction.note)}</span>${r.warnings.map((w) => `<small class="excel-row-warning">${E(w)}</small>`).join('')}${r.duplicate && !state.excluded.has(r.row) ? '<small class="excel-row-warning">Giống giao dịch đã có trong sổ.</small>' : ''}</td><td>${E(r.transaction.category)}<small class="excel-row-number">${GROUP_LABELS[r.transaction.group]}</small></td><td class="align-right money ${r.transaction.type === 'income' ? 'amount-income' : ''}">${r.transaction.type === 'income' ? '+' : '−'}${formatVND(r.transaction.amount)}</td><td><input type="checkbox" data-excel-fixed="${r.row}" aria-label="Dòng ${r.row} là hóa đơn cố định" ${r.transaction.isFixedBill ? 'checked' : ''} ${r.transaction.type === 'income' ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div><div class="pagination"><span>${result.rows.length} dòng hợp lệ · ${result.skipped} dòng tổng hoặc bằng 0 được bỏ qua</span><div class="pagination-controls"><button type="button" class="button secondary small" data-excel-action="previous" ${state.page === 1 ? 'disabled' : ''}>Trước</button><span>${state.page}/${pages}</span><button type="button" class="button secondary small" data-excel-action="next" ${state.page === pages ? 'disabled' : ''}>Sau</button></div></div>` : '<div class="empty-state"><h3>Chưa có giao dịch để nhập</h3><p>Kiểm tra trang tính, dòng tiêu đề và cột ngày / số tiền ở trên.</p></div>'}
-      <p class="fine-print">Các ô tổng ngày, số dư ngân hàng, tiền mặt và quỹ tiết kiệm nằm ngoài cột giao dịch sẽ không được cộng lại. Khoản cọc chờ hoàn vẫn được giữ đúng dòng tiền; có thể bỏ chọn nếu cần xem riêng trước khi nhập.</p>`;
-    const button = dialog.querySelector('#excel-commit'); button.textContent = !state.ready.length && state.openingBalance ? 'Lưu số dư đầu tháng' : `Nhập ${state.ready.length} giao dịch vào sổ`;
-    button.disabled = state.busy || !state.ready.length && !state.openingBalance || result.errors.length > 0 && !state.allowPartial;
+      ${result.rows.length ? `<div class="table-scroll excel-preview-table"><table><thead><tr><th><input id="excel-select-all" type="checkbox" aria-label="Chọn tất cả giao dịch Excel" ${result.rows.every((r) => !state.excluded.has(r.row)) ? 'checked' : ''}></th><th>Ngày</th><th>Nội dung & Lưu ý</th><th>Danh mục</th><th class="align-right">Số tiền</th><th>Cách tính</th><th>Hóa đơn<br>cố định</th></tr></thead><tbody>${result.rows.slice((state.page - 1) * perPage, state.page * perPage).map((r) => `<tr class="${r.duplicate && state.skipDuplicates && !state.excluded.has(r.row) ? 'excel-duplicate' : ''}"><td><input type="checkbox" data-excel-row="${r.row}" aria-label="Chọn dòng ${r.row}" ${state.excluded.has(r.row) ? '' : 'checked'}></td><td class="tabular">${E(r.transaction.date.split('-').reverse().join('/'))}<small class="excel-row-number">Dòng ${r.row}</small></td><td><span class="excel-note">${E(r.transaction.note)}</span>${r.warnings.map((w) => `<small class="excel-row-warning">${E(w)}</small>`).join('')}${r.duplicate && !state.excluded.has(r.row) ? '<small class="excel-row-warning">Giống giao dịch đã có trong sổ.</small>' : ''}</td><td>${E(r.transaction.category)}<small class="excel-row-number">${GROUP_LABELS[r.transaction.group]}</small></td><td class="align-right money ${r.transaction.type === 'income' ? 'amount-income' : ''}">${r.transaction.type === 'income' ? '+' : '−'}${formatVND(r.transaction.amount)}</td><td><select class="excel-kind-select" data-excel-kind="${r.row}" aria-label="Cách tính dòng ${r.row}">${(r.transaction.type === 'income' ? [['regular','Thu nhập mới'],['refund','Tiền được hoàn']] : [['regular','Chi sinh hoạt'],['deposit','Tiền cọc']]).map(([kind,label]) => `<option value="${kind}" ${kindOf(r.transaction) === kind ? 'selected' : ''}>${label}</option>`).join('')}</select></td><td><input type="checkbox" data-excel-fixed="${r.row}" aria-label="Dòng ${r.row} là hóa đơn cố định" ${r.transaction.isFixedBill ? 'checked' : ''} ${r.transaction.type === 'income' || kindOf(r.transaction) !== 'regular' ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div><div class="pagination"><span>${result.rows.length} dòng hợp lệ · ${result.skipped} dòng tổng hoặc bằng 0 được bỏ qua</span><div class="pagination-controls"><button type="button" class="button secondary small" data-excel-action="previous" ${state.page === 1 ? 'disabled' : ''}>Trước</button><span>${state.page}/${pages}</span><button type="button" class="button secondary small" data-excel-action="next" ${state.page === pages ? 'disabled' : ''}>Sau</button></div></div>` : '<div class="empty-state"><h3>Chưa có giao dịch để nhập</h3><p>Kiểm tra trang tính, dòng tiêu đề và cột ngày / số tiền ở trên.</p></div>'}
+      <p class="fine-print">Các ô tổng ngày và ghi chú số dư bên cạnh bảng không trở thành giao dịch. Quỹ và tiền đầu tháng chỉ được lưu khi bạn chọn ở trên.</p>`;
+    const button = dialog.querySelector('#excel-commit'); button.textContent = !state.ready.length ? state.updates ? `Cập nhật ${state.updates} khoản đã có` : state.openingBalance ? 'Lưu số dư đầu tháng' : state.liquidSavings !== null ? 'Lưu số dư quỹ' : 'Không có khoản mới' : `Nhập ${state.ready.length} giao dịch vào sổ`;
+    button.disabled = state.busy || !state.ready.length && !state.updates && !state.openingBalance && state.liquidSavings === null || result.errors.length > 0 && !state.allowPartial;
     dialog.querySelector('#excel-ready').textContent = `${result.rows.length - state.excluded.size} khoản được chọn${state.openingBalance ? ' · Lưu cả số dư đầu tháng' : ' · Dữ liệu cũ được giữ'}`;
   }
   function selectSheet(index) {
-    state.sheetIndex = index; state.excluded.clear(); state.fixed.clear();
-    state.importOpening = false; state.openingBalance = null;
+    state.sheetIndex = index; state.excluded.clear(); state.fixed.clear(); state.kinds.clear();
+    state.importOpening = false; state.importSavings = false; state.liquidSavings = null; state.openingBalance = null;
     const sheet = currentSheet();
     const hasNegative = sheet.rows.slice(sheet.header.index + 1).some((row) => { try { return parseMoney(row[sheet.header.mapping.amount]).amount < 0; } catch { return false; } });
     const firstDate = sheet.rows.slice(sheet.header.index + 1).map((row) => excelDate(row[sheet.header.mapping.date], localDate().slice(0, 7), sheet.date1904)).find(Boolean);
@@ -112,12 +122,15 @@ export async function openExcelImporter({ getExisting, onImport }) {
     if (el.id === 'excel-skip-duplicates') state.skipDuplicates = el.checked;
     if (el.id === 'excel-allow-partial') state.allowPartial = el.checked;
     if (el.id === 'excel-import-opening') state.importOpening = el.checked;
+    if (el.id === 'excel-import-savings') state.importSavings = el.checked;
+    if (el.id === 'excel-update-details') state.updateDetails = el.checked;
     if (el.id === 'excel-select-all') { if (el.checked) state.excluded.clear(); else state.result.rows.forEach((r) => state.excluded.add(r.row)); }
     if (el.dataset.excelColumn) { state.options.mapping[el.dataset.excelColumn] = Number(el.value); state.excluded.clear(); }
     if (el.dataset.excelCategory) state.options.categoryGroups[el.dataset.excelCategory] = el.value;
     if (el.dataset.excelRow) { if (el.checked) state.excluded.delete(Number(el.dataset.excelRow)); else state.excluded.add(Number(el.dataset.excelRow)); }
     if (el.dataset.excelFixed) state.fixed.set(Number(el.dataset.excelFixed), el.checked);
-    if (el.dataset.excelRow || el.id === 'excel-skip-duplicates' || el.id === 'excel-allow-partial' || el.id === 'excel-select-all' || el.id === 'excel-import-opening') previewView(); else rebuild();
+    if (el.dataset.excelKind) state.kinds.set(Number(el.dataset.excelKind), el.value);
+    if (el.dataset.excelRow || el.id === 'excel-skip-duplicates' || el.id === 'excel-allow-partial' || el.id === 'excel-select-all' || el.id === 'excel-import-opening' || el.id === 'excel-import-savings' || el.id === 'excel-update-details') previewView(); else rebuild();
   });
   dialog.addEventListener('cancel', (event) => { if (state.busy) event.preventDefault(); });
   dialog.addEventListener('click', async (event) => {
@@ -139,10 +152,10 @@ export async function openExcelImporter({ getExisting, onImport }) {
     }
     if (action === 'commit') {
       readiness();
-      if (!state.ready.length && !state.openingBalance || state.result.errors.length && !state.allowPartial) return;
+      if (!state.ready.length && !state.updates && !state.openingBalance && state.liquidSavings === null || state.result.errors.length && !state.allowPartial) return;
       state.busy = true; dialog.querySelector('#excel-commit').disabled = true; showError('');
       try {
-        const result = await onImport(state.ready, { skipDuplicates: state.skipDuplicates, openingBalance: state.openingBalance });
+        const result = await onImport(state.incoming, { skipDuplicates: state.skipDuplicates, updateDetails: state.updateDetails, openingBalance: state.openingBalance, liquidSavings: state.liquidSavings, debtHint: detectSideBalances(currentSheet(), state.options.multiplier).debt });
         if (result) dialog.close();
       } catch (error) { showError(error.message || 'Chưa nhập được. Dữ liệu cũ được giữ nguyên.'); }
       finally { state.busy = false; if (dialog.open) previewView(); }

@@ -1,6 +1,6 @@
 # Mã nguồn đầy đủ — Vững Tài Chính
 
-Mã ứng dụng có nhập Excel và số dư đầu tháng. Thư viện nguyên bản kèm giấy phép nằm trong thư mục `vendor/`.
+Phiên bản giao diện ghi chép hằng ngày, liên kết cọc/hoàn, hóa đơn, quỹ và nợ. Thư viện SheetJS nguyên bản nằm trong `vendor/`; dữ liệu cá nhân không nằm trong mã nguồn.
 
 ### File: .nojekyll
 
@@ -39,7 +39,7 @@ Mã ứng dụng có nhập Excel và số dư đầu tháng. Thư viện nguyê
       <a href="#overview" data-tab="overview" class="nav-link active"><span data-icon="grid"></span><span>Tổng quan</span></a>
       <a href="#transactions" data-tab="transactions" class="nav-link"><span data-icon="wallet"></span><span>Sổ thu chi</span></a>
       <a href="#analysis" data-tab="analysis" class="nav-link"><span data-icon="chart"></span><span>Phân tích</span><span class="nav-count" id="nav-alert-count" hidden></span></a>
-      <a href="#planning" data-tab="planning" class="nav-link"><span data-icon="layers"></span><span>Nợ & Quỹ dự phòng</span></a>
+      <a href="#planning" data-tab="planning" class="nav-link"><span data-icon="layers"></span><span>Khoản cần lo</span></a>
       <a href="#settings" data-tab="settings" class="nav-link"><span data-icon="settings"></span><span>Sao lưu & Cài đặt</span></a>
     </nav>
     <div class="sidebar-bottom">
@@ -61,17 +61,22 @@ Mã ứng dụng có nhập Excel và số dư đầu tháng. Thư viện nguyê
 
   <dialog id="transaction-dialog" class="form-dialog" aria-labelledby="transaction-dialog-title">
     <form id="transaction-form" method="dialog">
-      <div class="dialog-header"><div><span class="eyebrow">THÊM MỘT CHÚT RÕ RÀNG</span><h2 id="transaction-dialog-title">Ghi một giao dịch</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+      <div class="dialog-header"><div><h2 id="transaction-dialog-title">Ghi thu chi</h2><p class="helper-text">Ghi ngắn như trong sổ của bạn.</p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
       <input type="hidden" name="id">
       <div class="type-switch" role="group" aria-label="Loại giao dịch"><button type="button" data-tx-type="expense" class="selected">Khoản chi</button><button type="button" data-tx-type="income">Khoản thu</button></div>
       <input type="hidden" name="type" value="expense">
       <label class="amount-field">Số tiền <span class="required">*</span><span class="amount-input"><input name="amount" inputmode="numeric" type="number" min="1" max="9000000000000" step="1" placeholder="0" required><span>₫</span></span></label>
       <div class="quick-amounts" aria-label="Chọn nhanh số tiền"><button type="button" data-amount="30000">30.000</button><button type="button" data-amount="50000">50.000</button><button type="button" data-amount="100000">100.000</button><button type="button" data-amount="200000">200.000</button><button type="button" data-amount="500000">500.000</button></div>
-      <div class="form-grid"><label>Nhóm chi tiêu<select name="group" id="tx-group"><option value="needs">Thiết yếu</option><option value="wants">Mong muốn</option><option value="savings_debt">Tiết kiệm & Trả nợ</option></select></label><label>Danh mục<select name="category" id="tx-category"></select></label></div>
-      <div class="form-grid"><label>Ngày giao dịch<input name="date" type="date" required></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Đây là hóa đơn cố định</label></div>
-      <label>Ghi chú <span class="optional">(không bắt buộc)</span><input name="note" maxlength="1000" placeholder="Khoản này dành cho điều gì?"></label>
+      <label>Nội dung <span class="optional">(ghi ngắn tùy bạn)</span><input name="note" maxlength="1000" list="note-suggestions" placeholder="Ví dụ: ăn trưa, xăng, tiền trọ…" autocomplete="off"><datalist id="note-suggestions"></datalist></label>
+      <div class="form-grid"><label>Danh mục<input name="category" id="tx-category" list="category-suggestions" maxlength="200" placeholder="Chọn hoặc gõ tên mới" required autocomplete="off"><datalist id="category-suggestions"></datalist></label><label>Ngày ghi<input name="date" type="date" required></label></div>
+      <div id="category-shortcuts" class="category-shortcuts" aria-label="Danh mục hay dùng"></div>
+      <label>Khoản này là<select name="flowKind" id="tx-flow-kind"></select></label>
+      <div id="tx-link-fields" hidden><label id="tx-target-label">Khoản liên quan<select name="targetId" id="tx-target"></select></label><label id="tx-principal-label" hidden>Trong đó trả tiền gốc (₫)<input name="principal" type="number" min="0" max="9000000000000" step="1"><span class="helper-text">Phần còn lại là lãi hoặc phí. Chỉ tiền gốc làm giảm số nợ.</span></label></div>
+      <p class="flow-explanation helper-text" id="tx-flow-explanation"></p>
+      <input name="billId" type="hidden">
+      <details class="tx-extra"><summary>Phân nhóm và hóa đơn</summary><div class="form-grid"><label>Nhóm để phân tích<select name="group" id="tx-group"><option value="needs">Sinh hoạt cần thiết</option><option value="wants">Mua sắm & Giải trí</option><option value="savings_debt">Để dành & Trả nợ</option></select></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Hóa đơn hằng tháng</label></div><label id="tx-bill-label" hidden>Hóa đơn liên quan<select name="billTarget" id="tx-bill-target"></select></label></details>
       <p class="form-error" role="alert" id="transaction-error" hidden></p>
-      <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu giao dịch</button></div>
+      <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu vào sổ</button></div>
     </form>
   </dialog>
 
@@ -93,6 +98,12 @@ Mã ứng dụng có nhập Excel và số dư đầu tháng. Thư viện nguyê
     <p class="form-error" role="alert" id="debt-error" hidden></p><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Hủy</button><button class="button primary" type="submit">Lưu khoản nợ</button></div>
   </form></dialog>
 
+  <dialog id="link-payment-dialog" class="form-dialog" aria-labelledby="link-payment-title"><form id="link-payment-form" method="dialog">
+    <div class="dialog-header"><h2 id="link-payment-title">Dùng khoản đã ghi</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <input type="hidden" name="billId"><p class="helper-text">Chọn khoản bạn đã trả cho hóa đơn này. Giữ nguyên số tiền trong sổ, không thêm khoản chi mới.</p><label>Khoản chi trong tháng<select name="transactionId" id="bill-payment-source" required></select></label>
+    <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary">Gắn với hóa đơn</button></div>
+  </form></dialog>
+
   <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><span class="confirm-icon" data-icon="shield"></span><h2 id="confirm-title">Xác nhận thay đổi</h2><p id="confirm-description"></p><div class="dialog-actions"><button class="button secondary" value="cancel">Giữ nguyên</button><button class="button primary" value="confirm" id="confirm-button">Xác nhận</button></div></form></dialog>
   <dialog id="install-dialog" class="confirm-dialog" aria-labelledby="install-title"><form method="dialog"><h2 id="install-title">Mở nhanh ngay trên máy bạn</h2><p>Trên Chrome hoặc Edge, mở menu trình duyệt → Truyền, lưu và chia sẻ → Cài đặt trang dưới dạng ứng dụng. Khi đã cài, bạn có thể ghim ứng dụng lên thanh tác vụ.</p><p>Trên iPhone: Chia sẻ → Thêm vào Màn hình chính. Cách này giúp giảm nguy cơ dữ liệu bị dọn khi lâu không dùng; sao lưu JSON vẫn là cách bảo vệ chắc chắn hơn.</p><button class="button primary">Đã hiểu</button></form></dialog>
   <input type="file" id="restore-file" accept=".json,application/json" hidden>
@@ -100,69 +111,14 @@ Mã ứng dụng có nhập Excel và số dư đầu tháng. Thư viện nguyê
   <noscript><div class="banner warning">Hãy bật JavaScript để ghi thu chi và lưu dữ liệu trên máy.</div></noscript>
 </body>
 </html>
-```
 
-### File: manifest.webmanifest
-
-```json
-{
-  "id": "./",
-  "name": "Vững Tài Chính",
-  "short_name": "Vững",
-  "description": "Tiền rõ ràng. Sống nhẹ nhàng.",
-  "lang": "vi",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#f5f7f6",
-  "theme_color": "#0f6f50",
-  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
-}
-```
-
-### File: sw.js
-
-```javascript
-const CACHE = 'vung-tai-chinh-v3-excel-opening';
-const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/db.js', './js/finance-engine.js', './js/charts.js', './js/seed-data.js', './js/excel-import.js', './js/excel-ui.js', './vendor/xlsx.full.min.js', './manifest.webmanifest', './icon.svg'];
-const CHART_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
-self.addEventListener('install', (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE);
-    await cache.addAll(STATIC);
-    try { const response = await fetch(CHART_URL, { mode: 'cors' }); if (response.ok) await cache.put(CHART_URL, response); } catch { /* The application still works without charts. */ }
-    await self.skipWaiting();
-  })());
-});
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => { for (const name of await caches.keys()) if (name.startsWith('vung-tai-chinh-') && name !== CACHE) await caches.delete(name); await self.clients.claim(); })());
-});
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin && event.request.url !== CHART_URL) return;
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE);
-    if (event.request.url === CHART_URL) {
-      const saved = await cache.match(event.request);
-      if (saved) return saved;
-      try { const response = await fetch(event.request); if (response.ok) await cache.put(event.request, response.clone()); return response; } catch { return Response.error(); }
-    }
-    try {
-      const response = await fetch(event.request);
-      if (response.ok) await cache.put(event.request, response.clone());
-      return response;
-    } catch {
-      return await cache.match(event.request) || (event.request.mode === 'navigate' ? await cache.match('./index.html') : null) || new Response('Tài nguyên chưa có khi ngoại tuyến.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-    }
-  })());
-});
 ```
 
 ### File: css/styles.css
 
 ```css
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;450;500;550;600;650;700;750;800&display=swap');
+
 
 :root{color-scheme:light;--bg:#f5f7f6;--surface:#fff;--surface-soft:#fafcfb;--ink:#1c302b;--muted:#73817b;--line:#e5ebe8;--green:#0f6f50;--green-dark:#10523f;--mint:#eaf5ee;--lime:#c6f5ad;--blue:#6288ce;--blue-soft:#edf3fc;--orange:#cc8a3b;--orange-soft:#fff4e5;--red:#c95757;--red-soft:#fceeee;--shadow:0 4px 22px #183d2810;--sidebar:242px;--radius:18px;font-family:'Be Vietnam Pro',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;font-size:14px}button,input,select,textarea{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}a{color:var(--green);text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px}button{border:0}svg{display:block}h1,h2,h3,p{margin-top:0}h1{font-size:28px;letter-spacing:-1px;line-height:1.3;font-weight:650;margin-bottom:9px}h2{font-size:18px;letter-spacing:-.35px;font-weight:600;margin-bottom:4px}h3{font-size:16px;font-weight:600;margin-bottom:5px}p{margin-bottom:12px}.icon{width:20px;height:20px;flex:none;display:inline-block;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.muted,.helper-text{color:var(--muted)}.helper-text{font-size:13px}.eyebrow{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1.5px}.money,.tabular{font-variant-numeric:tabular-nums;letter-spacing:-.35px}strong{font-weight:600}[hidden]{display:none!important}.skip-link{position:fixed;left:16px;top:-100px;z-index:100;background:var(--surface);padding:12px}.skip-link:focus{top:10px}
@@ -181,197 +137,119 @@ label{display:block;font-size:12px;font-weight:500;margin-bottom:16px;color:var(
 @media(max-width:900px){.excel-column-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.excel-summary strong{font-size:17px}.daily-ledger>summary{flex-wrap:wrap}.daily-totals{width:100%;justify-content:flex-start;gap:14px}.excel-config-grid{grid-template-columns:1fr 1fr}.excel-config-grid label:last-child{grid-column:1/-1}.welcome-panel .welcome-actions{max-width:none;justify-content:flex-start}}
 @media(max-width:600px){.excel-dialog{padding:20px 14px;width:calc(100% - 18px)}.excel-config-grid{grid-template-columns:1fr}.excel-config-grid label:last-child{grid-column:auto}.excel-summary{grid-template-columns:1fr 1fr}.excel-summary strong{font-size:18px}.excel-actions{bottom:-20px;flex-wrap:wrap}.excel-actions>.helper-text{width:100%}.excel-column-grid{grid-template-columns:1fr 1fr}.excel-preview-table table{min-width:680px}.daily-totals{font-size:10px;gap:7px}.daily-ledger>summary>span:first-child{gap:8px}.daily-ledger{padding:0 10px}.excel-config-grid .checkbox-label{padding-top:0}}
 @media(min-width:761px){body{font-size:16px}.nav-link{font-size:14px}.sidebar-note strong{font-size:14px}.sidebar-note p{font-size:12px}.nav-caption{font-size:11px}.local-status{font-size:11px}.theme-button{font-size:14px}.breadcrumb{font-size:13px}.date-label{font-size:12px}.page-heading p{font-size:14px}.button{font-size:14px}.button.small{font-size:12px}.month-pill{font-size:13px}.metric-card{min-height:193px}.metric-top{font-size:14px;align-items:flex-start;min-height:34px;margin-bottom:13px;line-height:1.6}.metric-top>span:first-child{max-width:calc(100% - 35px)}.metric-value{font-size:29px}.metric-value .unit{font-size:14px}.metric-foot{font-size:12px;margin-top:14px}.badge{font-size:11px}.savings-unit{font-size:12px}.score-ring{top:81px;width:38px;height:38px;right:16px}.score-ring:before{width:29px;height:29px}.score-ring .icon{width:13px;height:13px}.section-label{font-size:12px}.panel-header h2{font-size:17px}.panel-header p{font-size:13px}.chart-legend{font-size:11px}.chart-summary span{font-size:12px}.chart-summary strong{font-size:17px}.strategy-copy{font-size:14px}.level-label{font-size:12px}.allocation-label{font-size:12px}.allocation-legend{font-size:12px}.allocation-legend strong{font-size:16px}.strategy-callout{font-size:13px}.text-link{font-size:13px}table{font-size:14px}th{font-size:12px}.transaction-title strong{font-size:14px}.transaction-title small{font-size:12px}.install-banner p{font-size:12px}.install-banner strong{font-size:14px}.empty-state p,.diagnostic-copy{font-size:14px}.empty-state h3{font-size:17px}.filters label,label{font-size:14px}.filters input,.filters select,input:not([type=checkbox]),select{font-size:14px}.transactions-summary span{font-size:13px}.pagination{font-size:13px}.alert-body strong{font-size:14px}.alert-body p{font-size:13px}.alert-amount{font-size:14px}.cutback-table td,.cutback-table th{font-size:13px}.insight-note{font-size:13px}.bill-row h3,.debt-row h3{font-size:14px}.bill-row p,.debt-row p{font-size:12px}.record-money{font-size:14px}.record-money small{font-size:12px}.settings-card>p{font-size:14px}.setting-row strong{font-size:14px}.setting-row small{font-size:13px}.fine-print{font-size:12px}.helper-text{font-size:14px}.form-dialog label{font-size:14px}.confirm-dialog p{font-size:14px}.welcome-panel p{font-size:14px}.page-footer{font-size:11px}.toast{font-size:14px}}
-```
 
-### File: js/db.js
+/* Everyday money: answers first, supporting calculations on demand. */
+body { font-size: 16px; }
+.page-heading h1 { font-size: 28px; letter-spacing: -.7px; }
+.page-heading p { max-width: 550px; font-size: 14px; }
+.heading-actions { flex-shrink: 0; }
+.month-picker { display: flex; align-items: center; gap: 8px; margin: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); padding: 3px 11px; }
+.month-picker .icon { width: 17px; color: var(--green); }
+.month-picker input { border: 0; padding: 8px 0; background: transparent; width: 145px; min-width: 0; margin: 0; font-size: 14px; }
+.money-cards { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.money-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; min-width: 0; display: flex; align-items: flex-start; flex-direction: column; }
+.card-label { font-size: 14px; font-weight: 500; margin-bottom: 14px; }
+.big-money { font-size: clamp(25px, 2.35vw, 36px); font-weight: 650; letter-spacing: -1px; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.money-card p { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 12px 0 8px; }
+.money-card .text-link, .balance-link { margin-top: auto; padding: 4px 0; background: transparent; font-size: 13px; text-align: left; color: var(--green); }
+.balance-card { background: #16523e; color: #fff; border-color: #16523e; }
+.balance-card p { color: #d1e9dc; }
+.balance-link { color: #e2f6d9; text-decoration: underline; text-underline-offset: 4px; }
+.daily-card { background: var(--mint); border-color: var(--line); }
+.daily-note { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.balance-detail { margin-bottom: 22px; padding: 15px 22px; }
+.balance-detail>summary { font-size: 14px; }
+.money-equation { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 15px; margin: 20px 0 16px; }
+.money-equation span { color: var(--muted); font-size: 13px; }
+.money-equation strong { display: block; margin-top: 6px; color: var(--ink); font-size: 19px; font-variant-numeric: tabular-nums; }
+.overview-columns { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 20px; margin-bottom: 20px; }
+.overview-columns>.panel { min-width: 0; }
+.panel-header { gap: 12px; }
+.panel-header h2 { font-size: 18px; }
+.panel-header p { font-size: 13px; line-height: 1.7; }
+.eyebrow { font-size: 11px; letter-spacing: 1.2px; }
+.next-panel>.panel-header { margin-bottom: 10px; }
+.next-step { display: flex; gap: 13px; padding: 16px 0; border-top: 1px solid var(--line); }
+.next-step:first-of-type { border-top: 0; }
+.step-icon { width: 34px; height: 34px; display: grid; place-items: center; background: var(--mint); border-radius: 10px; color: var(--green); flex-shrink: 0; margin-top: 2px; }
+.step-icon .icon { width: 18px; height: 18px; }
+.next-step h3 { font-size: 15px; margin: 0 0 5px; }
+.next-step p { font-size: 13px; color: var(--muted); margin: 0 0 10px; line-height: 1.7; }
+.next-step .button.small { font-size: 13px; }
+.category-breakdown { display: grid; gap: 18px; }
+.category-line { display: block; width: 100%; padding: 0; text-align: left; background: transparent; color: var(--ink); border-radius: 5px; }
+.category-line:hover .category-line-head>span { color: var(--green); }
+.category-line-head { display: flex; gap: 12px; justify-content: space-between; font-size: 14px; margin-bottom: 9px; }
+.category-line-head small { display: block; font-size: 12px; color: var(--muted); }
+.category-line-head strong { flex-shrink: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.category-track { display: block; height: 7px; border-radius: 7px; background: var(--bg); overflow: hidden; }
+.category-track>i { display: block; height: 100%; border-radius: 7px; background: var(--bar-color); }
+.compact-note { padding: 13px 15px; background: var(--surface-soft); border-radius: 9px; font-size: 13px; color: var(--muted); margin: 18px 0 0; line-height: 1.8; }
+.recent-list { display: grid; }
+.recent-item { display: flex; gap: 12px; padding: 14px 0; width: 100%; align-items: center; text-align: left; color: var(--ink); background: transparent; border-bottom: 1px solid var(--line); }
+.recent-item:last-child { border-bottom: 0; }
+.recent-item:hover .recent-copy strong { color: var(--green); }
+.recent-copy { min-width: 0; flex: 1; }
+.recent-copy strong { font-size: 14px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-copy small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+.recent-item>.money { font-size: 14px; flex-shrink: 0; }
+.separate-row { display: flex; gap: 15px; justify-content: space-between; align-items: center; width: 100%; text-align: left; background: transparent; color: var(--ink); padding: 17px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.separate-row:last-child { border-bottom: 0; }
+.separate-row>span { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+.separate-row .icon { width: 18px; color: var(--green); }
+.separate-row:hover { color: var(--green); }
+.analysis-lead { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; background: var(--mint); }
+.analysis-lead>div { flex: 1; }
+.analysis-lead h2 { margin: 0 0 6px; }
+.analysis-lead p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.deposit-row { padding: 17px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.deposit-row>div:first-child { flex: 1; min-width: 180px; }
+.deposit-row h3 { font-size: 15px; }
+.deposit-row p { font-size: 13px; color: var(--muted); margin: 0; }
+.deposit-row .row-actions { flex-wrap: wrap; }
+.adjustment-list,.plain-insights { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+.adjustment-list>article { padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+.adjustment-list h3 { font-size: 15px; }
+.adjustment-list strong { color: var(--green); font-size: 15px; }
+.adjustment-list p { margin: 6px 0 12px; font-size: 13px; color: var(--muted); }
+.plain-insights,.trend-charts { grid-template-columns: 1fr 1fr; display: grid; gap: 25px; margin: 20px 0; }
+.advanced-analysis .chart-wrap { height: 250px; }
+.advanced-analysis .method-content>p { font-size: 13px; }
+.advanced-analysis summary { font-size: 15px; }
+.ledger-context { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 0 0 20px; padding: 10px 16px; background: var(--mint); border-radius: 10px; font-size: 14px; }
+.ledger-context .text-link { margin-left: auto; }
+.transaction-title { min-width: 210px; }
+.transaction-title strong { max-width: 350px; white-space: normal; overflow-wrap: anywhere; }
+.transaction-title small { white-space: normal; }
+.bill-row,.debt-row { flex-wrap: wrap; gap: 10px; }
+.record-info { min-width: 175px; }
+.record-actions { flex-wrap: wrap; justify-content: flex-end; }
+.record-actions .button.small { font-size: 12px; }
+.reserve-amount { display: block; font-size: 32px; margin: 15px 0 20px; color: var(--green); }
+.fund-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 16px; }
+.profile-form { margin-top: 18px; }
+.category-shortcuts { display: flex; gap: 7px; flex-wrap: wrap; margin: -5px 0 16px; }
+.category-shortcuts button { color: var(--green); background: var(--mint); border: 1px solid var(--line); padding: 6px 10px; border-radius: 20px; font-size: 12px; }
+.category-shortcuts button:hover { border-color: var(--green); }
+.flow-explanation { background: var(--surface-soft); padding: 10px 12px; border-radius: 8px; font-size: 13px; margin: 4px 0 15px; }
+.tx-extra { margin: 12px 0 8px; }
+.tx-extra>summary { font-size: 13px; }
+.tx-extra>.form-grid { margin-top: 16px; }
+#tx-target-label { display: block; }
+#tx-principal-label .helper-text { display: block; font-size: 12px; margin-top: 7px; }
+.excel-kind-select { min-width: 140px; font-size: 12px; }
+.button.small,.text-link { font-size: 13px; }
+@media (max-width: 1150px) { .page-heading { align-items: flex-start; flex-wrap: wrap; } .heading-actions { flex-wrap: wrap; } .money-card { padding: 20px 17px; } .big-money { font-size: 26px; } .record-actions { justify-content: flex-start; } }
+@media (max-width: 950px) { .overview-columns { grid-template-columns: 1fr; } .money-equation { grid-template-columns: 1fr 1fr; } .money-cards { gap: 12px; } .money-card { padding: 18px 14px; } .big-money { font-size: 23px; } .analysis-lead { flex-wrap: wrap; } }
+@media (max-width: 760px) { .money-cards { grid-template-columns: 1fr 1fr; } .money-cards>.balance-card { grid-column: 1/-1; } .big-money { font-size: 30px; } .money-card:not(.balance-card) .big-money { font-size: 24px; } .card-label { font-size: 13px; } .money-card p { font-size: 12px; } .page-heading h1 { font-size: 25px; } .money-card { min-height: 170px; } .balance-card { min-height: 185px; } .heading-actions { width: 100%; justify-content: space-between; } .analysis-lead>div { min-width: calc(100% - 65px); } .plain-insights,.trend-charts,.adjustment-list { grid-template-columns: 1fr; } .recent-item { gap: 9px; } .recent-item>.money { font-size: 13px; } .recent-copy strong { font-size: 13px; } .separate-row { font-size: 13px; } .helper-text { font-size: 14px; } .fine-print { font-size: 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto!important; } }
 
-```javascript
-import { DEFAULT_PROFILE, GROUP_LABELS } from './finance-engine.js';
-
-const STORES = ['transactions', 'recurring_bills', 'debts', 'profile'];
-const memory = Object.fromEntries(STORES.map((s) => [s, new Map()]));
-let database = null;
-export const storageState = { mode: 'opening', persistent: false, message: '' };
-const clone = (v) => JSON.parse(JSON.stringify(v));
-export const uuid = () => globalThis.crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
-
-export async function storageStatus(request = false) {
-  try {
-    if (request) await navigator.storage?.persist?.();
-    storageState.persistent = await navigator.storage?.persisted?.() || false;
-  } catch { storageState.persistent = false; }
-  return { ...storageState };
-}
-export async function initDB() {
-  try {
-    if (!globalThis.indexedDB) throw new Error('IndexedDB unavailable');
-    database = await new Promise((resolve, reject) => {
-      let done = false;
-      const request = indexedDB.open('vung_tai_chinh_db', 1);
-      const timeout = setTimeout(() => { done = true; reject(new Error('Database timeout')); }, 5000);
-      request.onupgradeneeded = () => { for (const name of STORES) if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: 'id' }); };
-      request.onsuccess = () => { clearTimeout(timeout); if (done) request.result.close(); else { done = true; resolve(request.result); } };
-      request.onerror = () => { clearTimeout(timeout); done = true; reject(request.error); };
-      request.onblocked = () => { storageState.message = 'Hãy đóng các thẻ Vững Tài Chính khác rồi tải lại trang.'; };
-    });
-    database.onversionchange = () => { database.close(); database = null; storageState.mode = 'memory'; storageState.message = 'Dữ liệu tạm thời trong thẻ này. Hãy tải lại để kết nối kho dữ liệu.'; };
-    storageState.mode = 'indexeddb';
-  } catch {
-    storageState.mode = 'memory';
-    storageState.message = 'Trình duyệt đang chặn lưu dữ liệu. Dữ liệu chỉ giữ trong thẻ này; hãy sao lưu trước khi đóng.';
-  }
-  await storageStatus(true);
-  if (!(await getAll('profile')).length) await putRecord('profile', { ...DEFAULT_PROFILE });
-  return { ...storageState };
-}
-function storeRequest(name, method, argument, write = false) {
-  if (!STORES.includes(name)) return Promise.reject(new Error('Kho dữ liệu không hợp lệ.'));
-  if (!database) {
-    if (method === 'getAll') return Promise.resolve([...memory[name].values()].map(clone));
-    if (method === 'put') memory[name].set(argument.id, clone(argument));
-    if (method === 'delete') memory[name].delete(argument);
-    return Promise.resolve(argument);
-  }
-  return new Promise((resolve, reject) => {
-    const tx = database.transaction(name, write ? 'readwrite' : 'readonly');
-    const request = tx.objectStore(name)[method](...(argument === undefined ? [] : [argument]));
-    let result;
-    request.onsuccess = () => { result = request.result; };
-    tx.oncomplete = () => resolve(result);
-    tx.onerror = () => reject(tx.error || new Error('Không thể lưu dữ liệu. Có thể bộ nhớ đã đầy.'));
-    tx.onabort = () => reject(tx.error || new Error('Thao tác chưa được lưu.'));
-  });
-}
-export const getAll = (name) => storeRequest(name, 'getAll');
-export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
-export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
-export function transactionFingerprint(t) {
-  const norm = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi-VN');
-  return JSON.stringify([t.date, t.type, t.amount, norm(t.category), norm(t.note)]);
-}
-/** Multiset comparison keeps legitimately repeated purchases in the source file. */
-export function markExistingTransactions(incoming, existing) {
-  const counts = new Map();
-  for (const t of existing) { const key = transactionFingerprint(t); counts.set(key, (counts.get(key) || 0) + 1); }
-  return incoming.map((t) => { const key = transactionFingerprint(t), count = counts.get(key) || 0; if (count) counts.set(key, count - 1); return count > 0; });
-}
-export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null } = {}) {
-  if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
-  const clean = records.map((record) => validateRecord('transactions', record));
-  const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
-  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } });
-  if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
-  const select = (existing) => {
-    const duplicate = markExistingTransactions(clean, existing), ids = new Set(existing.map((t) => t.id));
-    const accepted = clean.filter((t, i) => !skipDuplicates || !duplicate[i]);
-    if (accepted.some((t) => ids.has(t.id))) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.');
-    return { accepted, imported: accepted.length, skipped: clean.length - accepted.length };
-  };
-  if (!database) {
-    const result = select([...memory.transactions.values()]);
-    const nextProfile = opening ? amendProfile(memory.profile.get('default')) : null;
-    for (const t of result.accepted) memory.transactions.set(t.id, clone(t));
-    if (nextProfile) memory.profile.set('default', clone(nextProfile));
-    return { imported: result.imported, skipped: result.skipped };
-  }
-  return new Promise((resolve, reject) => {
-    const tx = database.transaction(opening ? ['transactions', 'profile'] : ['transactions'], 'readwrite'), store = tx.objectStore('transactions');
-    let result, failure, existing, profile, rowsReady = false, profileReady = !opening;
-    const save = () => {
-      if (!rowsReady || !profileReady) return;
-      try {
-        result = select(existing);
-        const nextProfile = opening ? amendProfile(profile) : null;
-        for (const t of result.accepted) store.add(t);
-        if (nextProfile) tx.objectStore('profile').put(nextProfile);
-      } catch (error) { failure = error; tx.abort(); }
-    };
-    const read = store.getAll();
-    read.onsuccess = () => { existing = read.result; rowsReady = true; save(); };
-    if (opening) { const readProfile = tx.objectStore('profile').get('default'); readProfile.onsuccess = () => { profile = readProfile.result; profileReady = true; save(); }; }
-    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped });
-    tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
-    tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
-  });
-}
-export async function readData() {
-  const [transactions, recurring_bills, debts, profiles] = await Promise.all(STORES.map(getAll));
-  return { transactions, recurring_bills, debts, profile: { ...DEFAULT_PROFILE, ...(profiles.find((p) => p.id === 'default') || {}) } };
-}
-export async function replaceData(data) {
-  const clean = validateBackup({ app: 'vung-tai-chinh', version: 1, data });
-  if (!database) {
-    for (const s of STORES) { memory[s].clear(); for (const item of s === 'profile' ? [clean.profile] : clean[s]) memory[s].set(item.id, clone(item)); }
-    return;
-  }
-  await new Promise((resolve, reject) => {
-    const tx = database.transaction(STORES, 'readwrite');
-    for (const s of STORES) { const store = tx.objectStore(s); store.clear(); for (const item of s === 'profile' ? [clean.profile] : clean[s]) store.put(item); }
-    tx.oncomplete = resolve;
-    tx.onerror = () => reject(tx.error || new Error('Không đủ bộ nhớ để khôi phục. Dữ liệu cũ được giữ nguyên.'));
-    tx.onabort = () => reject(tx.error || new Error('Khôi phục chưa thành công. Dữ liệu cũ được giữ nguyên.'));
-  });
-}
-const assert = (condition, message) => { if (!condition) throw new Error(message); };
-function text(value, label, max = 200) { assert(typeof value === 'string' && value.trim().length > 0 && value.length <= max, `${label} không hợp lệ.`); return value.trim(); }
-function money(value, label, allowZero = true) { assert(Number.isSafeInteger(value) && value >= (allowZero ? 0 : 1), `${label} phải là số nguyên ${allowZero ? 'không âm' : 'lớn hơn 0'}.`); return value; }
-function bool(value, label) { assert(typeof value === 'boolean', `${label} không hợp lệ.`); return value; }
-function day(value) { assert(Number.isInteger(value) && value >= 1 && value <= 31, 'Ngày phải từ 1 đến 31.'); return value; }
-export function validateOpeningBalance(value) {
-  assert(value && typeof value === 'object' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value.month) && Number(value.month.slice(0, 4)) >= 1900, 'Tháng của số dư đầu kỳ không hợp lệ.');
-  return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng đầu tháng'), cash: money(value.cash, 'Tiền mặt đầu tháng') };
-}
-export function validateRecord(store, value) {
-  assert(value && typeof value === 'object' && !Array.isArray(value), 'Bản ghi không hợp lệ.');
-  const id = text(value.id, 'Mã bản ghi', 100);
-  if (store === 'transactions') {
-    assert(/^\d{4}-\d{2}-\d{2}$/.test(value.date) && value.date.slice(0, 4) >= '1900' && new Date(`${value.date}T12:00:00Z`).toISOString().slice(0, 10) === value.date, 'Ngày giao dịch không hợp lệ.');
-    assert(['income', 'expense'].includes(value.type) && Object.hasOwn(GROUP_LABELS, value.group), 'Loại hoặc nhóm giao dịch không hợp lệ.');
-    assert((value.type === 'income') === (value.group === 'income'), 'Loại giao dịch không khớp với nhóm.');
-    assert(typeof value.note === 'string' && value.note.length <= 1000, 'Ghi chú tối đa 1.000 ký tự.');
-    money(value.createdAt, 'Thời điểm tạo');
-    return { id, date: value.date, type: value.type, amount: money(value.amount, 'Số tiền', false), group: value.group, category: text(value.category, 'Danh mục'), isFixedBill: bool(value.isFixedBill, 'Hóa đơn cố định'), note: value.note, createdAt: value.createdAt };
-  }
-  if (store === 'recurring_bills') {
-    assert(['needs', 'wants'].includes(value.group), 'Nhóm hóa đơn không hợp lệ.');
-    return { id, name: text(value.name, 'Tên hóa đơn'), amount: money(value.amount, 'Số tiền', false), dueDay: day(value.dueDay), category: text(value.category, 'Danh mục'), group: value.group, active: bool(value.active, 'Trạng thái hóa đơn') };
-  }
-  if (store === 'debts') {
-    assert(typeof value.apr === 'number' && Number.isFinite(value.apr) && value.apr >= 0 && value.apr <= 1000, 'Lãi suất phải từ 0 đến 1.000%/năm.');
-    return { id, name: text(value.name, 'Tên khoản nợ'), principal: money(value.principal, 'Dư nợ'), apr: value.apr, minMonthlyPayment: money(value.minMonthlyPayment, 'Tiền trả tối thiểu'), isHighInterest: value.apr > 10 };
-  }
-  assert(store === 'profile' && id === 'default', 'Hồ sơ không hợp lệ.');
-  assert(['AUTO', 'STABLE', 'IRREGULAR'].includes(value.incomeModeOverride) && ['light', 'dark'].includes(value.theme), 'Cài đặt không hợp lệ.');
-  assert(value.lastBackupAt === null || Number.isSafeInteger(value.lastBackupAt) && value.lastBackupAt >= 0, 'Ngày sao lưu không hợp lệ.');
-  const openingBalances = {}, rawBalances = value.openingBalances ?? {};
-  assert(rawBalances && typeof rawBalances === 'object' && !Array.isArray(rawBalances) && Object.keys(rawBalances).length <= 1200, 'Danh sách số dư đầu tháng không hợp lệ.');
-  for (const [month, amounts] of Object.entries(rawBalances)) { const entry = validateOpeningBalance({ ...amounts, month }); openingBalances[month] = { bank: entry.bank, cash: entry.cash }; }
-  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances };
-}
-export function validateBackup(input) {
-  assert(input && input.app === 'vung-tai-chinh' && input.version === 1 && input.data, 'Tệp không đúng định dạng sao lưu Vững Tài Chính (phiên bản 1).');
-  const clean = {};
-  for (const s of STORES.slice(0, 3)) {
-    assert(Array.isArray(input.data[s]) && input.data[s].length <= 100000, `Danh sách ${s} không hợp lệ hoặc quá lớn.`);
-    clean[s] = input.data[s].map((item) => validateRecord(s, item));
-    assert(new Set(clean[s].map((x) => x.id)).size === clean[s].length, 'Tệp có mã bản ghi trùng lặp.');
-  }
-  clean.profile = validateRecord('profile', input.data.profile);
-  return clean;
-}
-export function createBackup(data, timestamp = Date.now()) {
-  return JSON.stringify({ app: 'vung-tai-chinh', version: 1, exportedAt: new Date(timestamp).toISOString(), data: validateBackup({ app: 'vung-tai-chinh', version: 1, data }) }, null, 2);
-}
-export function createCSV(transactions) {
-  const cell = (v) => { let s = String(v ?? ''); if (/^\s*[=+\-@]|^[\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };
-  const rows = [['Ngày', 'Loại', 'Số tiền (VND)', 'Nhóm', 'Danh mục', 'Hóa đơn cố định', 'Ghi chú'], ...[...transactions].sort((a, b) => a.date.localeCompare(b.date)).map((t) => [t.date, t.type === 'income' ? 'Thu' : 'Chi', t.amount, GROUP_LABELS[t.group], t.category, t.isFixedBill ? 'Có' : 'Không', t.note])];
-  return '\uFEFF' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
-}
 ```
 
 ### File: js/finance-engine.js
 
 ```javascript
+import { isPlanTransaction } from './money-flow.js';
 /** All calculations are pure. Money is integer VND; dates are local calendar dates. */
 export const CATEGORIES = Object.freeze({
   income: ['Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
@@ -379,7 +257,7 @@ export const CATEGORIES = Object.freeze({
   wants: ['Ăn ngoài & Cafe', 'Mua sắm online', 'Giải trí & Du lịch', 'Đăng ký gói dịch vụ', 'Quà tặng & Giao lưu'],
   savings_debt: ['Nạp quỹ dự phòng', 'Trả nợ gốc/lãi', 'Đầu tư dài hạn'],
 });
-export const GROUP_LABELS = { income: 'Thu nhập', needs: 'Thiết yếu', wants: 'Mong muốn', savings_debt: 'Tiết kiệm & Trả nợ' };
+export const GROUP_LABELS = { income: 'Tiền nhận', needs: 'Sinh hoạt cần thiết', wants: 'Mua sắm & Giải trí', savings_debt: 'Để dành & Trả nợ' };
 export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null, openingBalances: {} };
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 export const sum = (xs) => xs.reduce((a, x) => a + x, 0);
@@ -408,6 +286,7 @@ export function cashBalanceForMonth(data, month, today = localDate()) {
 export function aggregateMonths(transactions, date = new Date()) {
   const months = new Map();
   for (const t of transactions) {
+    if (!isPlanTransaction(t)) continue;
     if (t.date > localDate(date)) continue;
     const key = t.date.slice(0, 7);
     if (!months.has(key)) months.set(key, { month: key, income: 0, needs: 0, wants: 0, savings_debt: 0, spent: 0, variable: 0 });
@@ -624,6 +503,7 @@ export function simulateDebtPayoff(debts, extraMonthly = 0) {
 }
 
 export function analyzeFinance({ transactions = [], recurring_bills = [], debts = [], profile = DEFAULT_PROFILE }, date = new Date()) {
+  transactions = transactions.filter(isPlanTransaction);
   const today = localDate(date), key = today.slice(0, 7), elapsedDays = date.getDate(), daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const months = aggregateMonths(transactions, date), current = months.find((m) => m.month === key) || { month: key, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 };
   const firstMonth = months[0]?.month;
@@ -634,15 +514,16 @@ export function analyzeFinance({ transactions = [], recurring_bills = [], debts 
   const fixedTs = currentTs.filter((t) => t.type === 'expense' && t.isFixedBill && ['needs', 'wants'].includes(t.group));
   const activeBills = recurring_bills.filter((b) => b.active);
   // Match each payment once. Partial payments leave the remaining bill reserved.
-  const paymentPool = fixedTs.map((t) => ({ ...t, left: t.amount }));
+  const paymentPool = fixedTs.map((t) => ({ ...t, left: t.amount })).sort((x, y) => Number(!!y.flow?.billId) - Number(!!x.flow?.billId));
   const bills = activeBills.map((b) => {
-    let remaining = b.amount;
+    let remaining = b.amount; const payments = [];
     for (const p of paymentPool) {
-      if (p.left <= 0 || p.category !== b.category || p.group !== b.group) continue;
+      if (p.left <= 0 || (p.flow?.billId ? p.flow.billId !== b.id : p.category !== b.category || p.group !== b.group)) continue;
       const used = Math.min(p.left, remaining); p.left -= used; remaining -= used;
+      payments.push({ id: p.id, amount: used });
       if (!remaining) break;
     }
-    return { ...b, remaining, paid: remaining === 0 };
+    return { ...b, remaining, paid: remaining === 0, payments };
   });
   const paidFixedBills = sum(fixedTs.map((t) => t.amount)), unpaidFixedBills = sum(bills.map((b) => b.remaining));
   const totalActiveFixedBills = Math.max(sum(activeBills.map((b) => b.amount)), paidFixedBills + unpaidFixedBills);
@@ -654,70 +535,363 @@ export function analyzeFinance({ transactions = [], recurring_bills = [], debts 
   const cutbacks = cutbackPlan({ yBase: income.yBase, blendedEomForecast: forecast.blendedEomForecast, savingsTargetMonthly: safe.savingsTargetMonthly, categoryAverages, daysInMonth });
   return { today, month: key, elapsedDays, daysInMonth, history, current, currentTs, income, health, forecast, safe, cutbacks, bills, totalActiveFixedBills, paidFixedBills, unpaidFixedBills, anomalies: detectAnomalies(transactions, income.yBase, date), payday: paydaySpike(transactions, profile.paydayDay, date), lifestyle: lifestyleCreep(history), debtPlan: simulateDebtPayoff(debts, Math.max(0, safe.savingsTargetMonthly - health.totalMinDebtPayments)) };
 }
+
 ```
 
-### File: js/charts.js
+### File: js/money-flow.js
 
 ```javascript
-import { monthKeys, sum } from './finance-engine.js';
-import { formatVND } from './ui.js';
-
-const instances = new Map();
-export function destroyCharts() { for (const chart of instances.values()) chart.destroy(); instances.clear(); }
-function draw(id, config) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  if (instances.has(id)) { instances.get(id).destroy(); instances.delete(id); }
-  if (!globalThis.Chart) {
-    const fallback = document.createElement('div'); fallback.className = 'no-chart';
-    fallback.textContent = 'Biểu đồ sẽ xuất hiện khi tải được thư viện. Các chỉ số vẫn được cập nhật.';
-    canvas.replaceWith(fallback); return;
+// One ledger owns every cash movement. Plans use earned income and ordinary spending only.
+export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', deposit: 'Tiền cọc', refund: 'Tiền được hoàn', 'reserve-in': 'Chuyển vào quỹ', 'reserve-out': 'Rút từ quỹ', debt: 'Trả nợ' });
+export const kindOf = (t) => t.flow?.kind || 'regular';
+export const isPlanTransaction = (t) => kindOf(t) === 'regular';
+const total = (xs) => xs.reduce((s, t) => s + t.amount, 0);
+const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase();
+export function suggestFlow(t) {
+  const text = norm(t.note);
+  if (t.type === 'income' && /\b(hoan tien|hoan coc|nhan lai coc|refund)\b/.test(text)) return 'refund';
+  if (t.type === 'expense' && /\b(coc|co hoan tra|deposit)\b/.test(text)) return 'deposit';
+  return 'regular';
+}
+export function categoryHabits(transactions, type = 'expense') {
+  const found = new Map();
+  for (const t of [...transactions].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)) {
+    if (t.type !== type) continue;
+    const item = found.get(t.category) || { category: t.category, group: t.group, count: 0, last: t.date };
+    item.count++; found.set(t.category, item);
   }
-  const css = getComputedStyle(document.documentElement), ink = css.getPropertyValue('--muted').trim(), line = css.getPropertyValue('--line').trim();
-  Chart.defaults.font.family = "'Be Vietnam Pro', system-ui, sans-serif";
-  Chart.defaults.font.size = 12;
-  Chart.defaults.color = ink;
-  const base = {
-    responsive: true, maintainAspectRatio: false,
-    animation: matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 300 },
-    interaction: { intersect: false, mode: 'index' },
-    plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1c302b', titleFont: { size: 12 }, bodyFont: { size: 12 }, callbacks: { label: (context) => `${context.dataset.label || context.label}: ${formatVND(typeof context.parsed === 'number' ? context.parsed : context.parsed.y)}` } } },
-    scales: { x: { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0 } }, y: { beginAtZero: true, suggestedMax: 1000000, border: { display: false }, grid: { color: line, drawTicks: false }, ticks: { padding: 10, callback: (v) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(v / 1000000) } } },
+  return [...found.values()].sort((a, b) => b.count - a.count || b.last.localeCompare(a.last));
+}
+export function depositBalances(transactions, through = '9999-12-31', excludingId = '') {
+  const rows = transactions.filter((t) => t.date <= through && t.id !== excludingId);
+  return rows.filter((t) => kindOf(t) === 'deposit').map((t) => {
+    const refunded = total(rows.filter((r) => kindOf(r) === 'refund' && r.flow?.targetId === t.id));
+    return { ...t, refunded, remaining: Math.max(0, t.amount - refunded) };
+  }).sort((a, b) => b.date.localeCompare(a.date));
+}
+export function dateForMonth(month, now = new Date()) {
+  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '') || month >= current) return now;
+  return new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0, 12);
+}
+export function monthAfterDayChange(selectedMonth, previousDay, nextDay) {
+  return selectedMonth === previousDay.slice(0, 7) ? nextDay.slice(0, 7) : selectedMonth;
+}
+export function monthlyMoney(data, a) {
+  const rows = data.transactions.filter((t) => t.date.startsWith(a.month) && t.date <= a.today);
+  const incoming = rows.filter((t) => t.type === 'income'), outgoing = rows.filter((t) => t.type === 'expense');
+  const opening = data.profile.openingBalances?.[a.month];
+  const received = total(incoming), paid = total(outgoing), available = opening ? opening.bank + opening.cash + received - paid : null;
+  const ordinary = rows.filter((t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group));
+  const buckets = new Map();
+  for (const t of ordinary) { const c = buckets.get(t.category) || { category: t.category, amount: 0, count: 0 }; c.amount += t.amount; c.count++; buckets.set(t.category, c); }
+  const categories = [...buckets.values()].sort((x, y) => y.amount - x.amount);
+  const refunds = total(incoming.filter((t) => kindOf(t) === 'refund'));
+  const deposits = depositBalances(data.transactions, a.today);
+  const unmatchedRefunds = rows.filter((t) => kindOf(t) === 'refund' && !t.flow?.targetId);
+  const review = rows.filter((t) => kindOf(t) === 'regular' && suggestFlow(t) !== 'regular');
+  const debtDue = data.debts.filter((d) => d.principal > 0).reduce((s, d) => {
+    const paidThisMonth = total(rows.filter((t) => kindOf(t) === 'debt' && t.flow?.targetId === d.id));
+    return s + Math.min(d.principal, Math.max(0, d.minMonthlyPayment - paidThisMonth));
+  }, 0);
+  const reserved = a.unpaidFixedBills + debtDue;
+  const daily = available === null ? null : Math.max(0, Math.floor((available - reserved) / a.safe.daysLeft));
+  return { rows, incoming, outgoing, opening, received, paid, available, ordinary, everyday: total(ordinary), categories, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
+    earned: total(incoming.filter(isPlanTransaction)), deposited: total(outgoing.filter((t) => kindOf(t) === 'deposit')),
+    moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
+    latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };
+}
+/** Compute reversals and replacements before one atomic database write. */
+export function changeTransaction(data, next, id, today) {
+  const previous = data.transactions.find((t) => t.id === id);
+  const transactions = data.transactions.filter((t) => t.id !== id);
+  const debts = data.debts.map((d) => ({ ...d }));
+  const profile = { ...data.profile };
+  const effects = (t, direction) => {
+    if (!t) return;
+    const kind = kindOf(t);
+    if (['reserve-in', 'reserve-out', 'debt'].includes(kind) && t.date > today) throw new Error('Chỉ ghi chuyển quỹ hoặc trả nợ khi đã thực hiện. Ngày ghi không được ở tương lai.');
+    if (kind === 'reserve-in') profile.liquidSavings += direction * t.amount;
+    if (kind === 'reserve-out') profile.liquidSavings -= direction * t.amount;
+    if (kind === 'debt') {
+      const debt = debts.find((d) => d.id === t.flow.targetId);
+      if (!debt) throw new Error('Khoản nợ liên quan không còn tồn tại. Kiểm tra lại trong Khoản cần lo.');
+      debt.principal -= direction * t.flow.principal;
+    }
   };
-  instances.set(id, new Chart(canvas, { ...config, options: { ...base, ...(config.options || {}), plugins: { ...base.plugins, ...(config.options?.plugins || {}) } } }));
-}
-export function renderCharts(tab, data, a) {
-  destroyCharts();
-  const date = new Date(`${a.today}T12:00:00`);
-  if (tab === 'overview') {
-    const months = monthKeys(date, 6), totals = [...a.history, a.current];
-    const income = months.map((k) => totals.find((m) => m.month === k)?.income || 0);
-    const expenses = months.map((k) => totals.find((m) => m.month === k)?.spent || 0);
-    draw('cashflow-chart', { type: 'bar', data: {
-      labels: months.map((k) => `Thg ${Number(k.slice(5))}`),
-      datasets: [
-        { label: 'Thu nhập', data: income, backgroundColor: '#247a58', borderRadius: 4, maxBarThickness: 23 },
-        { label: 'Chi tiêu', data: expenses, backgroundColor: '#bed7c7', borderRadius: 4, maxBarThickness: 23 },
-        { label: 'Dự báo cuối tháng', data: months.map((k) => k === a.month && data.transactions.length ? a.forecast.blendedEomForecast : null), backgroundColor: '#f5e6ce', borderColor: '#c59650', borderWidth: 1, borderRadius: 4, maxBarThickness: 23 },
-      ],
-    } });
-    const scores = a.health.scores;
-    draw('health-chart', { type: 'bar', data: { labels: ['Tiết kiệm', 'Quỹ dự phòng', 'Chi cố định', 'Kiểm soát nợ', 'Chi mong muốn'], datasets: [{ label: 'Điểm', data: data.transactions.length ? [scores.sSavings, scores.sRunway, scores.sFixed, scores.sDebt, scores.sControl] : [0, 0, 0, 0, 0], backgroundColor: ['#247a58', '#78a98c', '#a5c0ae', '#b9c7a2', '#d4deb9'], borderRadius: 4, barThickness: 10 }] }, options: { indexAxis: 'y', scales: { x: { min: 0, max: 100, border: { display: false }, grid: { display: false }, ticks: { stepSize: 25, font: { size: 11 } } }, y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, padding: 8 } } }, plugins: { tooltip: { callbacks: { label: (c) => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(c.parsed.x)} / 100 điểm` } } } } });
+  effects(previous, -1); effects(next, 1);
+  if (profile.liquidSavings < 0) throw new Error('Quỹ không đủ tiền cho thay đổi này. Kiểm tra số dư quỹ trước.');
+  if (debts.some((d) => d.principal < 0)) throw new Error('Phần trả gốc lớn hơn số nợ còn lại.');
+  if (next) transactions.push(next);
+  // Recheck all links: editing/deleting a deposit must not orphan or overpay its refunds.
+  for (const refund of transactions.filter((t) => kindOf(t) === 'refund' && t.flow?.targetId)) {
+    const deposit = transactions.find((t) => t.id === refund.flow.targetId && kindOf(t) === 'deposit');
+    if (!deposit) throw new Error('Khoản cọc này đã có tiền hoàn liên kết. Gỡ liên kết ở khoản hoàn trước khi đổi hoặc xóa cọc.');
+    if (refund.date < deposit.date) throw new Error('Ngày nhận tiền hoàn phải từ ngày đặt cọc trở đi.');
+    const refunded = total(transactions.filter((t) => kindOf(t) === 'refund' && t.flow?.targetId === deposit.id));
+    if (refunded > deposit.amount) throw new Error('Tổng tiền hoàn vượt số tiền cọc. Kiểm tra khoản cọc được chọn.');
   }
-  if (tab === 'analysis') {
-    const categories = new Map();
-    for (const t of a.currentTs) if (t.type === 'expense' && ['needs', 'wants'].includes(t.group)) categories.set(t.category, (categories.get(t.category) || 0) + t.amount);
-    const entries = [...categories].sort((x, y) => y[1] - x[1]);
-    draw('category-chart', { type: 'doughnut', data: { labels: entries.map((x) => x[0]), datasets: [{ label: 'Chi tiêu', data: entries.map((x) => x[1]), backgroundColor: ['#247a58', '#78a98c', '#aecbba', '#d4deb9', '#c79651', '#8aa8bf', '#c2a6b2', '#91a575', '#8dbbb2', '#d9c28f'], borderWidth: 3, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(), hoverOffset: 5 }] }, options: { cutout: '70%', scales: {}, plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 9, boxHeight: 9, padding: 12, font: { size: 11 } } } } } });
-    let accumulated = 0;
-    const actual = Array.from({ length: a.daysInMonth }, (_, i) => {
-      if (i + 1 > a.elapsedDays) return null;
-      accumulated += sum(a.currentTs.filter((t) => t.type === 'expense' && !t.isFixedBill && ['needs', 'wants'].includes(t.group) && Number(t.date.slice(8)) === i + 1).map((t) => t.amount));
-      return accumulated;
+  return { transactions, debts, profile };
+}
+
+```
+
+### File: js/db.js
+
+```javascript
+import { DEFAULT_PROFILE, GROUP_LABELS, localDate } from './finance-engine.js';
+import { FLOW_LABELS, changeTransaction, kindOf } from './money-flow.js';
+
+const STORES = ['transactions', 'recurring_bills', 'debts', 'profile'];
+const memory = Object.fromEntries(STORES.map((s) => [s, new Map()]));
+let database = null;
+export const storageState = { mode: 'opening', persistent: false, message: '' };
+const clone = (v) => JSON.parse(JSON.stringify(v));
+export const uuid = () => globalThis.crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+
+export async function storageStatus(request = false) {
+  try {
+    if (request) await navigator.storage?.persist?.();
+    storageState.persistent = await navigator.storage?.persisted?.() || false;
+  } catch { storageState.persistent = false; }
+  return { ...storageState };
+}
+export async function initDB() {
+  try {
+    if (!globalThis.indexedDB) throw new Error('IndexedDB unavailable');
+    database = await new Promise((resolve, reject) => {
+      let done = false;
+      const request = indexedDB.open('vung_tai_chinh_db', 1);
+      const timeout = setTimeout(() => { done = true; reject(new Error('Database timeout')); }, 5000);
+      request.onupgradeneeded = () => { for (const name of STORES) if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: 'id' }); };
+      request.onsuccess = () => { clearTimeout(timeout); if (done) request.result.close(); else { done = true; resolve(request.result); } };
+      request.onerror = () => { clearTimeout(timeout); done = true; reject(request.error); };
+      request.onblocked = () => { storageState.message = 'Hãy đóng các thẻ Vững Tài Chính khác rồi tải lại trang.'; };
     });
-    draw('daily-chart', { type: 'line', data: { labels: Array.from({ length: a.daysInMonth }, (_, i) => i + 1), datasets: [{ label: 'Đã chi', data: actual, borderColor: '#247a58', backgroundColor: '#247a5810', borderWidth: 2, fill: true, pointRadius: 0, tension: .25 }, { label: 'Mức chi đều', data: actual.map((_, i) => Math.round(a.safe.variableBudgetTotal / a.daysInMonth * (i + 1))), borderColor: '#c59650', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 }] }, options: { plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, pointStyle: 'line', boxWidth: 20, padding: 20, font: { size: 11 } } } } } });
+    database.onversionchange = () => { database.close(); database = null; storageState.mode = 'memory'; storageState.message = 'Dữ liệu tạm thời trong thẻ này. Hãy tải lại để kết nối kho dữ liệu.'; };
+    storageState.mode = 'indexeddb';
+  } catch {
+    storageState.mode = 'memory';
+    storageState.message = 'Trình duyệt đang chặn lưu dữ liệu. Dữ liệu chỉ giữ trong thẻ này; hãy sao lưu trước khi đóng.';
   }
+  await storageStatus(true);
+  if (!(await getAll('profile')).length) await putRecord('profile', { ...DEFAULT_PROFILE });
+  return { ...storageState };
 }
+function storeRequest(name, method, argument, write = false) {
+  if (!STORES.includes(name)) return Promise.reject(new Error('Kho dữ liệu không hợp lệ.'));
+  if (!database) {
+    if (method === 'getAll') return Promise.resolve([...memory[name].values()].map(clone));
+    if (method === 'put') memory[name].set(argument.id, clone(argument));
+    if (method === 'delete') memory[name].delete(argument);
+    return Promise.resolve(argument);
+  }
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction(name, write ? 'readwrite' : 'readonly');
+    const request = tx.objectStore(name)[method](...(argument === undefined ? [] : [argument]));
+    let result;
+    request.onsuccess = () => { result = request.result; };
+    tx.oncomplete = () => resolve(result);
+    tx.onerror = () => reject(tx.error || new Error('Không thể lưu dữ liệu. Có thể bộ nhớ đã đầy.'));
+    tx.onabort = () => reject(tx.error || new Error('Thao tác chưa được lưu.'));
+  });
+}
+export const getAll = (name) => storeRequest(name, 'getAll');
+export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
+export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
+// Ledger changes and their fund/debt effects commit or roll back together.
+export async function saveTransaction(record, removingId = '', today = localDate()) {
+  const next = record ? validateRecord('transactions', record) : null, id = next?.id || removingId;
+  if (!id) throw new Error('Thiếu khoản cần cập nhật.');
+  const prepare = (data) => {
+    const result = changeTransaction(data, next, id, today);
+    return { ...result, profile: validateRecord('profile', result.profile), debts: result.debts.map((d) => validateRecord('debts', d)) };
+  };
+  if (!database) {
+    const result = prepare(await readData());
+    if (next) memory.transactions.set(id, clone(next)); else memory.transactions.delete(id);
+    memory.profile.set('default', clone(result.profile));
+    for (const d of result.debts) memory.debts.set(d.id, clone(d));
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(['transactions', 'profile', 'debts'], 'readwrite');
+    const data = {}, names = ['transactions', 'profile', 'debts']; let ready = 0, failure;
+    for (const name of names) {
+      const request = tx.objectStore(name).getAll();
+      request.onsuccess = () => {
+        data[name] = name === 'profile' ? { ...DEFAULT_PROFILE, ...(request.result.find((p) => p.id === 'default') || {}) } : request.result;
+        if (++ready !== names.length) return;
+        try {
+          const result = prepare(data);
+          if (next) tx.objectStore('transactions').put(next); else tx.objectStore('transactions').delete(id);
+          tx.objectStore('profile').put(result.profile);
+          for (const d of result.debts) tx.objectStore('debts').put(d);
+        } catch (error) { failure = error; tx.abort(); }
+      };
+    }
+    tx.oncomplete = resolve;
+    tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Chưa lưu được thay đổi. Các số dư cũ được giữ nguyên.'));
+  });
+}
+export function transactionFingerprint(t) {
+  const norm = (value) => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi-VN');
+  return JSON.stringify([t.date, t.type, t.amount, norm(t.category), norm(t.note)]);
+}
+/** Multiset comparison keeps legitimately repeated purchases in the source file. */
+export function markExistingTransactions(incoming, existing) {
+  return matchExistingTransactions(incoming, existing).map((i) => i !== -1);
+}
+export function matchExistingTransactions(incoming, existing) {
+  const exact = new Map(), any = new Map(), unclassified = new Map(), used = new Set();
+  const base = (t) => transactionFingerprint({ ...t, category: '' });
+  const add = (map, key, i) => { if (!map.has(key)) map.set(key, []); map.get(key).push(i); };
+  existing.forEach((t, i) => { add(exact, transactionFingerprint(t), i); add(any, base(t), i); if (t.category === 'Chưa phân loại') add(unclassified, base(t), i); });
+  const take = (map, key) => { const q = map.get(key) || []; while (q.length && used.has(q.at(-1))) q.pop(); if (!q.length) return -1; const i = q.pop(); used.add(i); return i; };
+  const matched = incoming.map((t) => take(exact, transactionFingerprint(t)));
+  incoming.forEach((t, i) => { if (matched[i] === -1) matched[i] = take(t.category === 'Chưa phân loại' ? any : unclassified, base(t)); });
+  return matched;
+}
+export function planImport(clean, existing, { skipDuplicates = true, updateDetails = true } = {}) {
+  const matches = matchExistingTransactions(clean, existing), accepted = [], updates = [], ids = new Set(existing.map((t) => t.id));
+  clean.forEach((t, i) => {
+    if (!skipDuplicates || matches[i] === -1) { if (ids.has(t.id)) throw new Error('Mã giao dịch đã tồn tại. Đọc lại tệp để thử lại.'); accepted.push(t); return; }
+    const old = existing[matches[i]], updated = { ...old };
+    if (updateDetails) {
+      if (old.category === 'Chưa phân loại' && t.category !== old.category) { updated.category = t.category; updated.group = t.group; }
+      if (kindOf(old) === 'regular' && ['deposit', 'refund'].includes(kindOf(t))) { updated.flow = t.flow; updated.isFixedBill = false; }
+      if (t.isFixedBill && !old.isFixedBill && kindOf(updated) === 'regular') updated.isFixedBill = true;
+      if (JSON.stringify(updated) !== JSON.stringify(old)) updates.push(updated);
+    }
+  });
+  return { accepted, updates, imported: accepted.length, updated: updates.length, skipped: clean.length - accepted.length };
+}
+export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null, liquidSavings = null, updateDetails = true } = {}) {
+  if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
+  const clean = records.map((record) => validateRecord('transactions', record));
+  if (clean.some((t) => !['regular', 'deposit', 'refund'].includes(kindOf(t)))) throw new Error('Ghi chuyển quỹ và trả nợ bằng chức năng trong sổ để cập nhật các số dư cùng lúc.');
+  const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
+  if (liquidSavings !== null) money(liquidSavings, 'Quỹ để dành từ Excel');
+  const profileChanges = !!opening || liquidSavings !== null;
+  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, ...(liquidSavings !== null ? { liquidSavings } : {}), ...(opening ? { openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } } : {}) });
+  if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
+  const select = (existing) => {
+    return planImport(clean, existing, { skipDuplicates, updateDetails });
+  };
+  if (!database) {
+    const result = select([...memory.transactions.values()]);
+    const nextProfile = profileChanges ? amendProfile(memory.profile.get('default')) : null;
+    for (const t of [...result.accepted, ...result.updates]) memory.transactions.set(t.id, clone(t));
+    if (nextProfile) memory.profile.set('default', clone(nextProfile));
+    return { imported: result.imported, skipped: result.skipped, updated: result.updated };
+  }
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction(profileChanges ? ['transactions', 'profile'] : ['transactions'], 'readwrite'), store = tx.objectStore('transactions');
+    let result, failure, existing, profile, rowsReady = false, profileReady = !profileChanges;
+    const save = () => {
+      if (!rowsReady || !profileReady) return;
+      try {
+        result = select(existing);
+        const nextProfile = profileChanges ? amendProfile(profile) : null;
+        for (const t of result.accepted) store.add(t);
+        for (const t of result.updates) store.put(t);
+        if (nextProfile) tx.objectStore('profile').put(nextProfile);
+      } catch (error) { failure = error; tx.abort(); }
+    };
+    const read = store.getAll();
+    read.onsuccess = () => { existing = read.result; rowsReady = true; save(); };
+    if (profileChanges) { const readProfile = tx.objectStore('profile').get('default'); readProfile.onsuccess = () => { profile = readProfile.result; profileReady = true; save(); }; }
+    tx.oncomplete = () => resolve({ imported: result.imported, skipped: result.skipped, updated: result.updated });
+    tx.onerror = () => reject(failure || tx.error || new Error('Không thể nhập dữ liệu. Có thể bộ nhớ đã đầy.'));
+    tx.onabort = () => reject(failure || tx.error || new Error('Chưa nhập giao dịch nào. Dữ liệu cũ được giữ nguyên.'));
+  });
+}
+export async function readData() {
+  const [transactions, recurring_bills, debts, profiles] = await Promise.all(STORES.map(getAll));
+  return { transactions, recurring_bills, debts, profile: { ...DEFAULT_PROFILE, ...(profiles.find((p) => p.id === 'default') || {}) } };
+}
+export async function replaceData(data) {
+  const clean = validateBackup({ app: 'vung-tai-chinh', version: 1, data });
+  if (!database) {
+    for (const s of STORES) { memory[s].clear(); for (const item of s === 'profile' ? [clean.profile] : clean[s]) memory[s].set(item.id, clone(item)); }
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(STORES, 'readwrite');
+    for (const s of STORES) { const store = tx.objectStore(s); store.clear(); for (const item of s === 'profile' ? [clean.profile] : clean[s]) store.put(item); }
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error || new Error('Không đủ bộ nhớ để khôi phục. Dữ liệu cũ được giữ nguyên.'));
+    tx.onabort = () => reject(tx.error || new Error('Khôi phục chưa thành công. Dữ liệu cũ được giữ nguyên.'));
+  });
+}
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+function text(value, label, max = 200) { assert(typeof value === 'string' && value.trim().length > 0 && value.length <= max, `${label} không hợp lệ.`); return value.trim(); }
+function money(value, label, allowZero = true) { assert(Number.isSafeInteger(value) && value >= (allowZero ? 0 : 1), `${label} phải là số nguyên ${allowZero ? 'không âm' : 'lớn hơn 0'}.`); return value; }
+function bool(value, label) { assert(typeof value === 'boolean', `${label} không hợp lệ.`); return value; }
+function day(value) { assert(Number.isInteger(value) && value >= 1 && value <= 31, 'Ngày phải từ 1 đến 31.'); return value; }
+export function validateOpeningBalance(value) {
+  assert(value && typeof value === 'object' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value.month) && Number(value.month.slice(0, 4)) >= 1900, 'Tháng của số dư đầu kỳ không hợp lệ.');
+  return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng đầu tháng'), cash: money(value.cash, 'Tiền mặt đầu tháng') };
+}
+export function validateRecord(store, value) {
+  assert(value && typeof value === 'object' && !Array.isArray(value), 'Bản ghi không hợp lệ.');
+  const id = text(value.id, 'Mã bản ghi', 100);
+  if (store === 'transactions') {
+    assert(/^\d{4}-\d{2}-\d{2}$/.test(value.date) && value.date.slice(0, 4) >= '1900' && new Date(`${value.date}T12:00:00Z`).toISOString().slice(0, 10) === value.date, 'Ngày giao dịch không hợp lệ.');
+    assert(['income', 'expense'].includes(value.type) && Object.hasOwn(GROUP_LABELS, value.group), 'Loại hoặc nhóm giao dịch không hợp lệ.');
+    assert((value.type === 'income') === (value.group === 'income'), 'Loại giao dịch không khớp với nhóm.');
+    assert(typeof value.note === 'string' && value.note.length <= 1000, 'Ghi chú tối đa 1.000 ký tự.');
+    money(value.createdAt, 'Thời điểm tạo');
+    const result = { id, date: value.date, type: value.type, amount: money(value.amount, 'Số tiền', false), group: value.group, category: text(value.category, 'Danh mục'), isFixedBill: bool(value.isFixedBill, 'Hóa đơn cố định'), note: value.note, createdAt: value.createdAt };
+    if (value.flow) {
+      const kind = value.flow.kind;
+      assert(Object.hasOwn(FLOW_LABELS, kind), 'Cách tính khoản tiền không hợp lệ.');
+      assert(!(['deposit', 'reserve-in', 'debt'].includes(kind) && value.type !== 'expense') && !(['refund', 'reserve-out'].includes(kind) && value.type !== 'income'), 'Cách tính không khớp khoản thu hoặc chi.');
+      assert(!['reserve-in', 'debt'].includes(kind) || value.group === 'savings_debt', 'Chuyển quỹ và trả nợ cần thuộc nhóm Để dành & Trả nợ.');
+      const flow = { kind };
+      if (value.flow.targetId) flow.targetId = text(value.flow.targetId, 'Khoản liên kết', 100);
+      if (value.flow.billId) { assert(kind === 'regular' && value.type === 'expense' && value.isFixedBill, 'Liên kết hóa đơn không hợp lệ.'); flow.billId = text(value.flow.billId, 'Hóa đơn liên kết', 100); }
+      if (kind === 'debt') { assert(flow.targetId, 'Hãy chọn khoản nợ được trả.'); flow.principal = money(value.flow.principal, 'Phần trả gốc'); assert(flow.principal <= result.amount, 'Phần trả gốc không được lớn hơn tổng tiền đã trả.'); }
+      if (kind !== 'regular' || flow.billId) result.flow = flow;
+    }
+    return result;
+  }
+  if (store === 'recurring_bills') {
+    assert(['needs', 'wants'].includes(value.group), 'Nhóm hóa đơn không hợp lệ.');
+    return { id, name: text(value.name, 'Tên hóa đơn'), amount: money(value.amount, 'Số tiền', false), dueDay: day(value.dueDay), category: text(value.category, 'Danh mục'), group: value.group, active: bool(value.active, 'Trạng thái hóa đơn') };
+  }
+  if (store === 'debts') {
+    assert(typeof value.apr === 'number' && Number.isFinite(value.apr) && value.apr >= 0 && value.apr <= 1000, 'Lãi suất phải từ 0 đến 1.000%/năm.');
+    return { id, name: text(value.name, 'Tên khoản nợ'), principal: money(value.principal, 'Dư nợ'), apr: value.apr, minMonthlyPayment: money(value.minMonthlyPayment, 'Tiền trả tối thiểu'), isHighInterest: value.apr > 10 };
+  }
+  assert(store === 'profile' && id === 'default', 'Hồ sơ không hợp lệ.');
+  assert(['AUTO', 'STABLE', 'IRREGULAR'].includes(value.incomeModeOverride) && ['light', 'dark'].includes(value.theme), 'Cài đặt không hợp lệ.');
+  assert(value.lastBackupAt === null || Number.isSafeInteger(value.lastBackupAt) && value.lastBackupAt >= 0, 'Ngày sao lưu không hợp lệ.');
+  const openingBalances = {}, rawBalances = value.openingBalances ?? {};
+  assert(rawBalances && typeof rawBalances === 'object' && !Array.isArray(rawBalances) && Object.keys(rawBalances).length <= 1200, 'Danh sách số dư đầu tháng không hợp lệ.');
+  for (const [month, amounts] of Object.entries(rawBalances)) { const entry = validateOpeningBalance({ ...amounts, month }); openingBalances[month] = { bank: entry.bank, cash: entry.cash }; }
+  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances };
+}
+export function validateBackup(input) {
+  assert(input && input.app === 'vung-tai-chinh' && input.version === 1 && input.data, 'Tệp không đúng định dạng sao lưu Vững Tài Chính (phiên bản 1).');
+  const clean = {};
+  for (const s of STORES.slice(0, 3)) {
+    assert(Array.isArray(input.data[s]) && input.data[s].length <= 100000, `Danh sách ${s} không hợp lệ hoặc quá lớn.`);
+    clean[s] = input.data[s].map((item) => validateRecord(s, item));
+    assert(new Set(clean[s].map((x) => x.id)).size === clean[s].length, 'Tệp có mã bản ghi trùng lặp.');
+  }
+  clean.profile = validateRecord('profile', input.data.profile);
+  return clean;
+}
+export function createBackup(data, timestamp = Date.now()) {
+  return JSON.stringify({ app: 'vung-tai-chinh', version: 1, exportedAt: new Date(timestamp).toISOString(), data: validateBackup({ app: 'vung-tai-chinh', version: 1, data }) }, null, 2);
+}
+export function createCSV(transactions) {
+  const cell = (v) => { let s = String(v ?? ''); if (/^\s*[=+\-@]|^[\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };
+  const rows = [['Ngày', 'Loại', 'Số tiền (VND)', 'Nhóm', 'Danh mục', 'Hóa đơn cố định', 'Ghi chú'], ...[...transactions].sort((a, b) => a.date.localeCompare(b.date)).map((t) => [t.date, t.type === 'income' ? 'Thu' : 'Chi', t.amount, GROUP_LABELS[t.group], t.category, t.isFixedBill ? 'Có' : 'Không', t.note])];
+  return '\uFEFF' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
+}
+
 ```
 
 ### File: js/seed-data.js
@@ -764,12 +938,15 @@ export function createSeedData(date = new Date()) {
     profile: { ...DEFAULT_PROFILE, liquidSavings: 10000000 },
   };
 }
+
 ```
 
 ### File: js/ui.js
 
 ```javascript
-import { CATEGORIES, GROUP_LABELS, clamp, sum, cashBalanceForMonth } from './finance-engine.js';
+import { CATEGORIES, GROUP_LABELS, clamp, sum, cashBalanceForMonth, localDate, analyzeFinance } from './finance-engine.js';
+
+import { monthlyMoney, kindOf, FLOW_LABELS, dateForMonth } from './money-flow.js';
 
 const paths = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
@@ -816,48 +993,60 @@ const btn = (label, action, cls = 'primary', symbol = '', attrs = '') => `<butto
 const empty = (title, text, action = '') => `<div class="empty-state">${icon('sprout')}<h3>${title}</h3><p>${text}</p>${action}</div>`;
 const canvas = (id, label, small = false) => `<div class="chart-wrap${small ? ' small' : ''}"><canvas id="${id}" role="img" aria-label="${E(label)}"></canvas></div>`;
 function heading(title, subtitle, a, primary = true) {
-  return `<div class="page-heading"><div><h1>${title}</h1><p>${subtitle}</p></div><div class="heading-actions"><span class="month-pill">${icon('calendar')}${formatMonth(a.month)}</span>${primary ? btn('Thêm giao dịch', 'add-transaction', 'primary', 'plus') : ''}</div></div>`;
+  return `<div class="page-heading"><div><h1>${title}</h1><p>${subtitle}</p></div><div class="heading-actions"><label class="month-picker">${icon('calendar')}<input type="month" id="focus-month" aria-label="Tháng đang xem" max="${localDate().slice(0, 7)}" value="${a.month}"></label>${primary ? btn('Ghi thu chi', 'add-transaction', 'primary', 'plus') : ''}</div></div>`;
 }
 export function transactionRows(transactions, editable = false) {
-  return transactions.map((t) => `<tr><td><div class="transaction-title"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><div><strong>${E(t.category)}</strong><small>${E(t.note || (t.isFixedBill ? 'Hóa đơn cố định' : GROUP_LABELS[t.group]))}</small></div></div></td><td><span class="badge ${t.group === 'wants' ? 'warning' : t.group === 'savings_debt' ? 'notice' : 'safe'}">${GROUP_LABELS[t.group]}</span></td><td class="muted">${dateText(t.date)}</td><td class="align-right money ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</td>${editable ? `<td><div class="row-actions"><button class="icon-button" data-action="edit-transaction" data-id="${E(t.id)}" aria-label="Sửa ${E(t.category)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-transaction" data-id="${E(t.id)}" aria-label="Xóa ${E(t.category)}">${icon('trash')}</button></div></td>` : ''}</tr>`).join('');
+  return transactions.map((t) => `<tr><td><div class="transaction-title"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><div><strong>${E(t.note || t.category)}</strong><small>${E(t.category)}${t.isFixedBill ? ' · Hóa đơn' : ''}${kindOf(t) !== 'regular' ? ` · ${FLOW_LABELS[kindOf(t)]}` : ''}</small></div></div></td><td><span class="badge ${t.group === 'wants' ? 'warning' : 'safe'}">${GROUP_LABELS[t.group]}</span></td><td class="muted">${dateText(t.date)}</td><td class="align-right money ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</td>${editable ? `<td><div class="row-actions"><button class="icon-button" data-action="edit-transaction" data-id="${E(t.id)}" aria-label="Sửa ${E(t.note || t.category)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-transaction" data-id="${E(t.id)}" aria-label="Xóa ${E(t.note || t.category)}">${icon('trash')}</button></div></td>` : ''}</tr>`).join('');
 }
 function transactionTable(ts, editable = false, recent = false) {
-  return `<div class="table-scroll ${recent ? 'recent-table' : ''}"><table><thead><tr><th>Giao dịch</th><th>Nhóm</th><th>Ngày</th><th class="align-right">Số tiền</th>${editable ? '<th class="align-right">Thao tác</th>' : ''}</tr></thead><tbody>${transactionRows(ts, editable)}</tbody></table></div>`;
+  return `<div class="table-scroll ${recent ? 'recent-table' : ''}"><table><thead><tr><th>Nội dung</th><th>Nhóm</th><th>Ngày</th><th class="align-right">Số tiền</th>${editable ? '<th class="align-right">Thao tác</th>' : ''}</tr></thead><tbody>${transactionRows(ts, editable)}</tbody></table></div>`;
+}
+function ledgerButton(label, category = '', extra = '', cls = 'text-link') {
+  return btn(E(label), 'open-ledger', cls, '', `data-category="${E(category)}" ${category ? 'data-scope="everyday"' : ''} ${extra}`);
+}
+function prioritySteps(data, a, m) {
+  const steps = [];
+  const add = (title, text, button, symbol = 'check') => steps.push(`<article class="next-step"><span class="step-icon">${icon(symbol)}</span><div><h3>${title}</h3><p>${text}</p>${button}</div></article>`);
+  if (!m.opening) add('Thêm tiền có sẵn đầu tháng', 'Điền tiền ngân hàng và tiền mặt để tính số còn dùng.', btn('Điền số dư đầu tháng', 'open-opening', 'secondary small'), 'wallet');
+  if (m.unmatchedRefunds.length) add('Gắn tiền hoàn với khoản cọc', `${m.unmatchedRefunds.length} khoản tiền hoàn chưa có khoản cọc đi kèm.`, btn('Chọn khoản cọc', 'edit-transaction', 'secondary small', '', `data-id="${E(m.unmatchedRefunds[0].id)}"`), 'receipt');
+  else if (m.review.length) add('Kiểm tra tiền cọc hoặc tiền hoàn', 'Tách khoản này để phần thu nhập và chi sinh hoạt dễ hiểu hơn.', btn('Xem khoản này', 'review-flow', 'secondary small', '', `data-id="${E(m.review[0].id)}"`), 'receipt');
+  const bill = a.bills.filter((b) => !b.paid).sort((x, y) => x.dueDay - y.dueDay)[0];
+  if (bill) add(E(bill.name), `Còn ${formatVND(bill.remaining)} · Hạn ngày ${Math.min(bill.dueDay, a.daysInMonth)}.`, btn('Ghi đã trả', 'pay-bill', 'secondary small', '', `data-id="${E(bill.id)}"`), 'calendar');
+  if (m.debtDue > 0) { const debt = data.debts.find((d) => d.principal > 0 && d.minMonthlyPayment > sum(m.rows.filter((t) => kindOf(t) === 'debt' && t.flow.targetId === d.id).map((t) => t.amount))); if (debt) add('Dành tiền trả nợ tháng này', `Cần giữ lại ${formatVND(m.debtDue)} theo mức trả bạn đã đặt.`, btn('Ghi trả nợ', 'pay-debt', 'secondary small', '', `data-id="${E(debt.id)}"`), 'layers'); }
+  if (!steps.length && a.cutbacks.actions.length && a.income.months >= 3) { const c = a.cutbacks.actions[0]; add(`Xem lại ${E(c.category)}`, `Gợi ý giảm khoảng ${formatVND(c.suggestedCut)} trong một tháng.`, ledgerButton('Xem các khoản này', c.category, '', 'secondary small'), 'bag'); }
+  if (!steps.length) add('Tiếp tục ghi những khoản trong ngày', 'Số dư và phân tích sẽ đổi ngay khi bạn lưu.', btn('Ghi khoản mới', 'add-transaction', 'secondary small', 'plus'), 'sprout');
+  return steps.slice(0, 3).join('');
+}
+function categoryList(m, limit = 8) {
+  return m.categories.length ? `<div class="category-breakdown">${m.categories.slice(0, limit).map((c, i) => `<button class="category-line" data-action="open-ledger" data-scope="everyday" data-category="${E(c.category)}"><span class="category-line-head"><span>${E(c.category)} <small>${c.count} khoản</small></span><strong class="money">${formatVND(c.amount)}</strong></span><span class="category-track"><i style="width:${m.everyday ? c.amount / m.everyday * 100 : 0}%;--bar-color:${['#247a58', '#729f85', '#93b6a1', '#bbcba8'][i % 4]}"></i></span></button>`).join('')}</div>` : '<p class="helper-text">Chưa có khoản chi sinh hoạt trong tháng này.</p>';
+}
+function recentList(rows) {
+  return `<div class="recent-list">${rows.map((t) => `<button class="recent-item" data-action="edit-transaction" data-id="${E(t.id)}"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><span class="recent-copy"><strong>${E(t.note || t.category)}</strong><small>${E(t.category)} · ${dateText(t.date)}</small></span><strong class="money ${t.type === 'income' ? 'amount-income' : ''}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</strong></button>`).join('')}</div>`;
 }
 export function renderOverview(data, a, installDismissed) {
-  const hasData = data.transactions.length > 0, { health: h, safe: s, income } = a;
-  const burnLabels = { safe: 'Trong hạn mức', notice: 'Đang chi hơi nhanh', warning: 'Cần giảm nhịp chi', danger: 'Nguy cơ vượt quỹ' };
-  const currentBalance = a.current.income - a.current.spent;
-  const recent = [...data.transactions].filter((t) => t.date <= a.today).sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt).slice(0, 4);
-  const incomeLabels = { NO_INCOME: 'Chưa có thu nhập', COLD_START: 'Đang tìm hiểu thu nhập', STABLE: 'Thu nhập ổn định', MODERATE: 'Thu nhập dao động vừa', IRREGULAR: 'Thu nhập biến động' };
+  const m = monthlyMoney(data, a), current = a.month === localDate().slice(0, 7);
+  const recent = [...m.rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt).slice(0, 4);
+  const outstanding = sum(m.deposits.map((d) => d.remaining));
   const sample = data.transactions.some((t) => t.note === 'Thu nhập minh họa');
-  return heading('Một chút rõ ràng, một ngày an tâm.', 'Cùng nhìn lại dòng tiền và vững vàng hơn với những lựa chọn hôm nay.', a) +
-    (sample ? `<div class="banner">Bạn đang xem dữ liệu minh họa. ${btn('Bắt đầu sổ của tôi', 'clear-data', 'ghost small')}</div>` : '') +
-    (hasData && income.months < 3 ? '<div class="banner">Kế hoạch hiện chỉ dựa trên khoản thu bạn đã ghi trong dưới 3 tháng. Tiền có sẵn đầu kỳ và số dư tài khoản không phải thu nhập mới; các chỉ số chưa phản ánh đầy đủ nếu bạn mới nhập một phần sổ.</div>' : '') +
-    (!hasData ? `<div class="panel welcome-panel"><div><h2>Chào mừng đến góc tài chính của bạn</h2><p>Bắt đầu bằng khoản thu đầu tiên, rồi ghi lại chi tiêu hằng ngày. Hoặc thử dữ liệu mẫu để khám phá dự báo và các gợi ý hành động.</p></div><div class="welcome-actions">${btn('Ghi khoản đầu tiên', 'add-transaction', 'primary', 'plus')}${btn('Nhập Excel của tôi', 'import-excel', 'secondary', 'upload')}${btn('Thử dữ liệu mẫu', 'seed-data', 'secondary')}</div></div>` : '') +
-    `<div class="section-label">BỨC TRANH TÀI CHÍNH THÁNG NÀY</div>
-    <section class="metrics-grid" aria-label="Các chỉ số chính">
-      <article class="metric-card featured"><div class="metric-top"><span>Hạn mức an toàn hôm nay</span><span class="metric-icon">${icon('wallet')}</span></div><div class="metric-value money">${formatVND(s.dailySafeToSpend)}</div><div class="metric-foot"><span class="badge ${s.status}">${burnLabels[s.status]}</span><span>Còn ${s.daysLeft} ngày</span></div></article>
-      <article class="metric-card"><div class="metric-top"><span>Sức khỏe tài chính · FHI</span><span class="metric-icon">${icon('heart')}</span></div><div class="metric-value tabular">${hasData ? N(h.fhi) : '—'} <span class="unit">/ 100</span></div><div class="score-ring" style="--score:${hasData ? h.fhi : 0}%">${icon('check')}</div><div class="metric-foot"><span class="badge">Cấp ${h.level}/5</span><span>${hasData ? h.label : 'Bắt đầu từ hôm nay'}</span></div></article>
-      <article class="metric-card"><div class="metric-top"><span>Mục tiêu tiết kiệm & Trả nợ</span><span class="metric-icon">${icon('target')}</span></div><div class="metric-value money">${formatVND(s.savingsTargetDaily)}<span class="savings-unit"> /ngày</span></div><div class="metric-foot">${icon('calendar')}<span>${formatVND(s.savingsTargetMonthly)} cho cả tháng</span></div></article>
-      <article class="metric-card"><div class="metric-top"><span>Quỹ dự phòng của bạn</span><span class="metric-icon">${icon('shield')}</span></div><div class="metric-value tabular">${N(h.runwayMonths)} <span class="unit">/ ${N(h.targetRunway)} tháng</span></div><div class="progress" role="progressbar" aria-label="Tiến độ quỹ dự phòng" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(clamp(h.runwayMonths / h.targetRunway * 100, 0, 100))}"><span style="width:${clamp(h.runwayMonths / h.targetRunway * 100, 0, 100)}%"></span></div><div class="metric-foot">${formatVND(data.profile.liquidSavings)} đang sẵn sàng</div></article>
-    </section>
-    ${renderOpeningBalance(data, a.month, a.today, false)}
-    <div class="main-grid"><section class="panel chart-panel"><div class="panel-header"><div><h2>Dòng tiền qua từng tháng</h2><p>6 tháng gần nhất · Đơn vị: triệu đồng</p></div><div class="chart-legend"><span class="legend-item"><i class="legend-dot income"></i>Thu nhập</span><span class="legend-item"><i class="legend-dot expense"></i>Chi tiêu</span><span class="legend-item"><i class="legend-dot forecast"></i>Dự báo</span></div></div>${canvas('cashflow-chart', 'Thu nhập, chi tiêu và dự báo chi tiêu sáu tháng gần nhất')}<div class="chart-summary"><div><span>Thu nhập tháng này</span><strong>${formatVND(a.current.income)}</strong></div><div><span>Thu trừ chi sinh hoạt</span><strong style="color:var(--${currentBalance >= 0 ? 'green' : 'red'})">${formatVND(currentBalance)}</strong></div><div><span>Dự báo chi cuối tháng</span><strong>${formatVND(a.forecast.blendedEomForecast)}</strong></div></div></section>
-      <section class="panel strategy-panel"><div class="panel-header"><div class="strategy-head">${icon('sparkles')}<h2>Chiến lược tháng này</h2></div><span class="badge">Cá nhân hóa</span></div><div><p class="level-label">BƯỚC ƯU TIÊN · CẤP ${h.level}/5</p><h3 class="strategy-title">${h.strategy.title}</h3><p class="strategy-copy">${h.strategy.description}</p></div><div><p class="allocation-label">PHÂN BỔ NGÂN SÁCH GỢI Ý</p><div class="allocation-bar" aria-label="Phân bổ ngân sách"><span style="width:${h.alloc.needs * 100}%"></span><span style="width:${h.alloc.wants * 100}%"></span><span style="width:${h.alloc.save * 100}%"></span></div><div class="allocation-legend"><span>Thiết yếu<strong>${N(h.alloc.needs * 100, 0)}%</strong></span><span>Mong muốn<strong>${N(h.alloc.wants * 100, 0)}%</strong></span><span>Tiết kiệm & Nợ<strong>${N(h.alloc.save * 100, 0)}%</strong></span></div><div class="strategy-callout">${icon('leaf')}<p>${income.mode === 'IRREGULAR' && income.surplusForBuffer > 0 ? `Dành ${formatVND(income.surplusForBuffer)} vượt thu nhập nền để làm dày quỹ đệm.` : `${incomeLabels[income.mode]}. ${income.yBase > 0 ? `Kế hoạch dựa trên ${formatVND(income.yBase)}/tháng.` : 'Thêm khoản thu để xây dựng kế hoạch riêng.'}`}</p></div></div></section></div>
-    <div class="main-grid"><section class="panel"><div class="panel-header recent-header"><div><h2>Những giao dịch gần đây</h2><p>Mỗi khoản nhỏ đều có một câu chuyện.</p></div><a class="text-link" href="#transactions">Xem tất cả</a></div>${recent.length ? transactionTable(recent, false, true) : empty('Chưa có khoản thu chi nào', 'Ghi khoản đầu tiên để bắt đầu hiểu dòng tiền của bạn.', btn('Thêm giao dịch', 'add-transaction', 'secondary', 'plus'))}</section><section class="panel"><div class="panel-header"><div><h2>Điểm vững vàng của bạn</h2><p>5 yếu tố tạo nên sức khỏe tài chính</p></div></div>${canvas('health-chart', 'Năm điểm thành phần sức khỏe tài chính, trên thang một trăm', true)}</section></div>
-    ${a.cutbacks.savingsGap > 0 ? `<section class="panel section-spaced"><div class="panel-header"><div><h2>Một vài điều chỉnh, gần mục tiêu hơn</h2><p>Dự báo còn thiếu ${formatVND(a.cutbacks.savingsGap)} so với mục tiêu tiết kiệm và trả nợ tháng này.</p></div>${icon('target')}</div>${a.cutbacks.actions.length ? `<div class="table-scroll cutback-table"><table><thead><tr><th>Danh mục</th><th class="align-right">Trung bình/tháng</th><th class="align-right">Giảm bớt</th><th class="align-right">Hạn mức mới</th><th class="align-right">Để dành thêm/ngày</th></tr></thead><tbody>${a.cutbacks.actions.map((c) => `<tr><td>${E(c.category)}</td><td class="align-right money">${formatVND(c.currentAvg)}</td><td class="align-right money amount-income">${formatVND(c.suggestedCut)} <span class="muted">(${N(c.cutPct)}%)</span></td><td class="align-right money">${formatVND(c.newCap)}</td><td class="align-right money">${formatVND(c.dailySaveGain)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted helper-text">Chưa đủ mức chi mong muốn để đề xuất cắt giảm theo nấc 50.000 ₫.</p>'}${a.cutbacks.unmetGap > 0 ? `<p class="insight-note">Còn ${formatVND(a.cutbacks.unmetGap)} cần bù thêm. Hãy rà soát hóa đơn cố định hoặc tìm thêm nguồn thu; mỗi danh mục chỉ được gợi ý giảm tối đa 35%.</p>` : ''}</section>` : ''}
-    ${!installDismissed ? `<aside class="install-banner">${icon('laptop')}<div><strong>Một góc tài chính, luôn ở gần bạn</strong><p>Cài lên laptop để mở nhanh, dùng cả khi mất mạng. Nhớ sao lưu định kỳ để giữ dữ liệu an toàn.</p></div><button class="text-link" data-action="install">Cách cài đặt</button><button class="icon-button" data-action="dismiss-install" aria-label="Ẩn gợi ý cài đặt">${icon('close')}</button></aside>` : ''}`;
+  return heading('Tiền của bạn, rõ từng ngày', `Một nơi để ghi, xem lại và biết mình cần làm gì.`, a) +
+    (sample ? `<div class="banner">Đây là sổ minh họa. ${btn('Bắt đầu sổ của tôi', 'clear-data', 'ghost small')}</div>` : '') +
+    (!data.transactions.length ? `<section class="panel welcome-panel"><div><h2>Mang sổ Excel của bạn vào đây</h2><p>Giữ tên khoản, danh mục và cách xem theo ngày như bạn đang ghi.</p></div><div class="welcome-actions">${btn('Nhập Excel', 'import-excel', 'primary', 'upload')}${btn('Ghi khoản đầu tiên', 'add-transaction', 'secondary', 'plus')}</div></section>` : '') +
+    `<section class="money-cards" aria-label="Tiền trong tháng"><article class="money-card balance-card"><span class="card-label">${current ? 'Tiền còn dùng' : 'Tiền cuối tháng'}</span><strong class="big-money">${m.available === null ? 'Chưa có số dư' : formatVND(m.available)}</strong><p>Ngân hàng + tiền mặt · sau các khoản đã ghi</p>${btn('Xem cách tính', 'show-balance', 'balance-link', '', 'aria-controls="balance-detail"')}</article><article class="money-card"><span class="card-label">Đã chi ra</span><strong class="big-money">${formatVND(m.paid)}</strong><p>${formatVND(m.everyday)} cho sinh hoạt${m.deposited ? ' · Có tiền cọc' : ''}</p>${ledgerButton('Xem sổ chi', '', 'data-type="expense"')}</article><article class="money-card daily-card"><span class="card-label">${current ? 'Tạm chia mỗi ngày' : 'Tiền nhận trong tháng'}</span><strong class="big-money">${current ? m.daily === null ? '—' : formatVND(m.daily) : formatVND(m.received)}</strong><p>${current ? `Cho ${a.safe.daysLeft} ngày còn lại, tính cả hôm nay` : 'Gồm thu nhập và các khoản tiền quay về'}</p><span class="daily-note">${current ? m.opening ? m.reserved > 0 ? `Đã giữ lại ${formatVND(m.reserved)} cho hóa đơn và trả nợ` : 'Chưa giữ lại khoản trả hằng tháng' : 'Điền tiền đầu tháng để xem gợi ý' : `Trong đó ${formatVND(m.refunds)} là tiền hoàn`}</span></article></section>
+    <details id="balance-detail" class="panel balance-detail"><summary>Tiền còn lại được tính thế nào?</summary><div class="money-equation"><span>Đầu tháng<strong>${m.opening ? formatVND(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Tiền nhận<strong>${formatVND(m.received)}</strong></span><span>− Tiền chi ra<strong>${formatVND(m.paid)}</strong></span><span>= Còn lại<strong>${m.available === null ? '—' : formatVND(m.available)}</strong></span></div><p class="helper-text">Quỹ để dành được theo dõi riêng. Số này tính theo các khoản đã ghi đến ${dateText(a.today)}.</p>${btn('Sửa tiền đầu tháng', 'open-opening', 'secondary small')}${current ? '<p class="fine-print">Gợi ý mỗi ngày chia tiền còn lại sau hóa đơn và mức trả nợ chưa ghi. Chưa trừ khoản mua sắm hoặc chi phí khác bạn chưa thêm; chưa tính khoản thu tương lai.</p>' : ''}</details>
+    <div class="overview-columns"><section class="panel next-panel"><div class="panel-header"><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2>${m.available !== null && m.available < m.reserved ? 'Giữ tiền cho các khoản cần trả' : 'Bạn có thể làm gì hôm nay?'}</h2></div>${icon('sparkles')}</div>${prioritySteps(data, a, m)}</section><section class="panel"><div class="panel-header"><div><h2>Chi nhiều ở đâu?</h2><p>Chạm vào danh mục để xem từng khoản.</p></div><a class="text-link" href="#analysis">Xem phân tích</a></div>${categoryList(m, 3)}${m.deposited ? `<p class="compact-note">${formatVND(m.deposited)} tiền cọc được tách riêng bên dưới.</p>` : ''}</section></div>
+    <div class="overview-columns"><section class="panel"><div class="panel-header"><div><h2>Vừa ghi gần đây</h2>${m.latest ? `<p>Ghi gần nhất ${dateText(m.latest)}</p>` : ''}</div>${ledgerButton('Mở sổ thu chi')}</div>${recent.length ? recentList(recent) : empty('Chưa có khoản nào trong tháng', 'Ghi một khoản hoặc nhập sổ Excel.', btn('Nhập Excel', 'import-excel', 'secondary', 'upload'))}</section><section class="panel separate-money"><div class="panel-header"><div><h2>Các khoản theo dõi riêng</h2><p>Không cộng vào tiền đang dùng.</p></div></div><button class="separate-row" data-action="open-planning" data-section="reserve-section"><span>${icon('shield')}Quỹ hiện có</span><strong>${formatVND(data.profile.liquidSavings)}</strong></button><button class="separate-row" data-action="open-deposits"><span>${icon('receipt')}Cọc còn chờ hoàn</span><strong>${formatVND(outstanding)}</strong></button><button class="separate-row" data-action="open-planning" data-section="debts-section"><span>${icon('layers')}Nợ gốc hiện còn</span><strong>${formatVND(sum(data.debts.map((d) => d.principal)))}</strong></button></section></div>
+    ${!installDismissed ? `<aside class="install-banner">${icon('laptop')}<div><strong>Mở nhanh trên laptop</strong><p>Cài ứng dụng và sao lưu sổ trong phần Cài đặt.</p></div>${btn('Cách cài', 'install', 'ghost small')}<button class="icon-button" data-action="dismiss-install" aria-label="Ẩn gợi ý cài đặt">${icon('close')}</button></aside>` : ''}`;
 }
 
 export function filteredTransactions(data, filters) {
-  return data.transactions.filter((t) => (!filters.month || t.date.startsWith(filters.month)) && (!filters.group || t.group === filters.group) && (!filters.category || t.category === filters.category) && (!filters.search || `${t.note} ${t.category}`.toLocaleLowerCase('vi-VN').includes(filters.search.toLocaleLowerCase('vi-VN')))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  const sources = filters.billId ? new Set([...(analyzeFinance(data, dateForMonth(filters.month)).bills.find((b) => b.id === filters.billId)?.payments || []).map((p) => p.id), ...data.transactions.filter((t) => t.flow?.billId === filters.billId).map((t) => t.id)]) : null;
+  return data.transactions.filter((t) => (!sources || sources.has(t.id)) && (!filters.month || filters.allMonths || t.date.startsWith(filters.month)) && (!filters.through || t.date <= filters.through) && (!filters.scope || (kindOf(t) === 'regular' && t.type === 'expense' && ['needs', 'wants'].includes(t.group))) && (!filters.type || t.type === filters.type) && (!filters.kind || (filters.kind === 'reserve' ? ['reserve-in', 'reserve-out'].includes(kindOf(t)) : kindOf(t) === filters.kind)) && (!filters.target || t.flow?.targetId === filters.target) && (!filters.group || t.group === filters.group) && (!filters.category || t.category === filters.category) && (!filters.search || `${t.note} ${t.category}`.toLocaleLowerCase('vi-VN').includes(filters.search.toLocaleLowerCase('vi-VN')))).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
 function renderOpeningBalance(data, month, today, editable = true) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) return '';
   const b = cashBalanceForMonth(data, month, today);
   if (!editable && !b.configured) return '';
-  return `<section class="panel wallet-panel"><div class="wallet-readout"><div><h2>Tiền còn lại trong tháng</h2><p class="helper-text">${b.configured ? `Đầu tháng ${formatVND(b.opening)} + Thu ${formatVND(b.income)} − Chi ${formatVND(b.expense)}` : 'Thêm số tiền có sẵn đầu tháng để biết số dư sau thu chi.'}</p></div><strong class="wallet-amount money">${b.configured ? formatVND(b.available) : 'Chưa có số dư đầu tháng'}</strong></div>${editable ? `<details ${b.configured ? '' : 'open'}><summary>${b.configured ? 'Chỉnh tiền có sẵn đầu tháng' : 'Thêm tiền có sẵn đầu tháng'}</summary><form id="opening-balance-form" class="opening-balance-form"><input type="hidden" name="month" value="${E(month)}"><label>Tiền ngân hàng đầu tháng (₫)<input name="bank" type="number" min="0" max="9000000000000" step="1" value="${b.bank ?? 0}" required></label><label>Tiền mặt đầu tháng (₫)<input name="cash" type="number" min="0" max="9000000000000" step="1" value="${b.cash ?? 0}" required></label><button type="submit" class="button primary">Lưu số dư đầu tháng</button></form></details>` : '<a class="text-link" href="#transactions">Xem sổ và số dư đầu tháng</a>'}<p class="fine-print">Tính từ tất cả giao dịch đã ghi của tháng đến hôm nay, không đổi theo bộ lọc nhóm hoặc từ khóa. Tiền có sẵn không phải thu nhập mới; quỹ dự phòng được theo dõi riêng.</p></section>`;
+  return `<section class="panel wallet-panel" id="opening-section"><div class="wallet-readout"><div><h2>Tiền còn lại trong tháng</h2><p class="helper-text">${b.configured ? `Đầu tháng ${formatVND(b.opening)} + Thu ${formatVND(b.income)} − Chi ${formatVND(b.expense)}` : 'Thêm số tiền có sẵn đầu tháng để biết số dư sau thu chi.'}</p></div><strong class="wallet-amount money">${b.configured ? formatVND(b.available) : 'Chưa có số dư đầu tháng'}</strong></div>${editable ? `<details ${b.configured ? '' : 'open'}><summary>${b.configured ? 'Chỉnh tiền có sẵn đầu tháng' : 'Thêm tiền có sẵn đầu tháng'}</summary><form id="opening-balance-form" class="opening-balance-form"><input type="hidden" name="month" value="${E(month)}"><label>Tiền ngân hàng đầu tháng (₫)<input name="bank" type="number" min="0" max="9000000000000" step="1" value="${b.bank ?? 0}" required></label><label>Tiền mặt đầu tháng (₫)<input name="cash" type="number" min="0" max="9000000000000" step="1" value="${b.cash ?? 0}" required></label><button type="submit" class="button primary">Lưu số dư đầu tháng</button></form></details>` : '<a class="text-link" href="#transactions">Xem sổ và số dư đầu tháng</a>'}<p class="fine-print">Số dư tính toàn bộ tháng đến ngày đang xem, không đổi khi lọc sổ. Quỹ để dành tính riêng.</p></section>`;
 }
 export function renderTransactions(data, a, filters, page, view = 'table') {
   const ts = filteredTransactions(data, filters), days = [...new Set(ts.map((t) => t.date))];
@@ -870,30 +1059,31 @@ export function renderTransactions(data, a, filters, page, view = 'table') {
     return `<details class="daily-ledger" open><summary><span><strong>${dateText(day)}</strong><small>${records.length} khoản</small></span><span class="daily-totals"><span>Thu <b class="amount-income">${formatVND(inc)}</b></span><span>Chi <b>${formatVND(out)}</b></span><span>Thu trừ chi <b class="${inc >= out ? 'amount-income' : ''}">${formatVND(inc - out)}</b></span></span></summary>${transactionTable(records, true)}</details>`;
   }).join('');
   const pageHeading = heading('Sổ thu chi', 'Ghi từng khoản, xem tổng từng ngày theo cách bạn vẫn quen.', a).replace('<div class="heading-actions">', `<div class="heading-actions">${btn('Nhập Excel', 'import-excel', 'secondary', 'upload')}`);
-  return pageHeading + renderOpeningBalance(data, filters.month, a.today) + `<section class="panel"><div class="ledger-view-tabs" role="group" aria-label="Cách xem sổ thu chi">${btn('Theo từng ngày', 'view-daily', view === 'daily' ? 'primary small' : 'secondary small', 'calendar')}${btn('Bảng tất cả khoản', 'view-table', view === 'table' ? 'primary small' : 'secondary small', 'grid')}</div><div class="filters"><label>Tháng<input type="month" id="filter-month" value="${E(filters.month)}"></label><label>Nhóm<select id="filter-group"><option value="">Tất cả nhóm</option>${Object.entries(GROUP_LABELS).map(([k, v]) => `<option value="${k}" ${filters.group === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Danh mục<select id="filter-category"><option value="">Tất cả danh mục</option>${categories.map((c) => `<option value="${E(c)}" ${filters.category === c ? 'selected' : ''}>${E(c)}</option>`).join('')}</select></label><label>Tìm giao dịch<input type="search" id="filter-search" value="${E(filters.search)}" placeholder="Tìm ghi chú, danh mục…" maxlength="1000"></label></div>
-    <div id="ledger-results"><div class="transactions-summary"><div><span>Tổng thu</span><strong class="amount-income">${formatVND(income)}</strong></div><div><span>Tổng chi & Chuyển tiết kiệm</span><strong>${formatVND(expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(income - expense)}</strong></div><div><span>Số giao dịch</span><strong>${ts.length}</strong></div></div>
+  return pageHeading + renderOpeningBalance(data, filters.month, a.today) + ((filters.category || filters.group || filters.search || filters.kind || filters.type || filters.allMonths || filters.billId) ? `<div class="ledger-context"><span>Đang xem: ${filters.allMonths ? 'Mọi tháng · ' : ''}${filters.scope ? 'Chi sinh hoạt · ' : ''}${E(filters.billName || filters.category || FLOW_LABELS[filters.kind] || (filters.kind === 'reserve' ? 'Chuyển quỹ' : GROUP_LABELS[filters.group]) || (filters.type === 'expense' ? 'Các khoản chi' : filters.search) || 'Các khoản đã chọn')}</span>${btn('Bỏ lọc', 'clear-filters', 'ghost small')}<a class="text-link" href="#analysis">Về phân tích</a></div>` : '') + `<section class="panel"><div class="ledger-view-tabs" role="group" aria-label="Cách xem sổ thu chi">${btn('Theo từng ngày', 'view-daily', view === 'daily' ? 'primary small' : 'secondary small', 'calendar')}${btn('Bảng tất cả khoản', 'view-table', view === 'table' ? 'primary small' : 'secondary small', 'grid')}</div><div class="filters"><label>Tháng<input type="month" id="filter-month" value="${E(filters.month)}"></label><label>Nhóm<select id="filter-group"><option value="">Tất cả nhóm</option>${Object.entries(GROUP_LABELS).map(([k, v]) => `<option value="${k}" ${filters.group === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label>Danh mục<select id="filter-category"><option value="">Tất cả danh mục</option>${categories.map((c) => `<option value="${E(c)}" ${filters.category === c ? 'selected' : ''}>${E(c)}</option>`).join('')}</select></label><label>Tìm giao dịch<input type="search" id="filter-search" value="${E(filters.search)}" placeholder="Tìm tên khoản, danh mục…" maxlength="1000"></label></div>
+    ${filters.billId ? '' : `<label class="checkbox-label all-months-toggle"><input id="filter-all-months" type="checkbox" ${filters.allMonths ? 'checked' : ''}>Xem mọi tháng</label>`}<div id="ledger-results"><div class="transactions-summary"><div><span>Tổng tiền nhận</span><strong class="amount-income">${formatVND(income)}</strong></div><div><span>Tổng tiền chi ra</span><strong>${formatVND(expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(income - expense)}</strong></div><div><span>Số giao dịch</span><strong>${ts.length}</strong></div></div>
     ${ts.length ? view === 'daily' ? daily : transactionTable(ts.slice((page - 1) * size, page * size), true) : empty('Chưa tìm thấy giao dịch', 'Thêm khoản mới, nhập tệp Excel hoặc đổi bộ lọc để xem lại giao dịch.', btn('Nhập Excel', 'import-excel', 'secondary', 'upload'))}
-    <div class="pagination"><span>${total ? `${(page - 1) * size + 1}–${Math.min(page * size, total)} / ${total} ${view === 'daily' ? 'ngày' : 'giao dịch'}` : '0 giao dịch'}</span><div class="pagination-controls">${btn('Trước', 'prev-page', 'secondary small', '', page <= 1 ? 'disabled' : '')}<span class="month-pill">${page} / ${pages}</span>${btn('Sau', 'next-page', 'secondary small', '', page >= pages ? 'disabled' : '')}</div></div><p class="fine-print">Tổng thu, tổng chi và thu trừ chi được tính riêng từ từng khoản theo bộ lọc. Khoản chuyển tiết kiệm/trả nợ không tính là chi sinh hoạt trong dự báo. Giao dịch tương lai chỉ tính vào chỉ số khi đến ngày đó.</p></div></section>`;
+    <div class="pagination"><span>${total ? `${(page - 1) * size + 1}–${Math.min(page * size, total)} / ${total} ${view === 'daily' ? 'ngày' : 'giao dịch'}` : '0 giao dịch'}</span><div class="pagination-controls">${btn('Trước', 'prev-page', 'secondary small', '', page <= 1 ? 'disabled' : '')}<span class="month-pill">${page} / ${pages}</span>${btn('Sau', 'next-page', 'secondary small', '', page >= pages ? 'disabled' : '')}</div></div><p class="fine-print">Tổng ở trên theo bộ lọc đang chọn. Tiền cọc, tiền hoàn và chuyển quỹ vẫn xuất hiện đúng ngày; được tách riêng khi phân tích sinh hoạt. Khoản ghi ở ngày tương lai chưa cộng vào số dư hiện tại.</p></div></section>`;
 }
 
 export function renderAnalysis(data, a) {
-  const p = a.payday, l = a.lifestyle;
-  const psiText = p.psi === null ? 'Chưa đủ dữ liệu' : Number.isFinite(p.psi) ? `${N(p.psi)} lần` : 'Chỉ chi sau ngày lương';
-  return heading('Hiểu thói quen, giữ nhịp chi tiêu.', 'Nhận ra những thay đổi nhỏ trước khi chúng trở thành áp lực lớn.', a) +
-    `<div class="diagnostics-grid"><article class="panel"><div class="panel-header"><h2>Chi tiêu sau ngày lương · PSI</h2><span class="badge ${p.warning ? 'warning' : 'safe'}">${p.warning ? 'Cần chú ý' : 'Đang theo dõi'}</span></div><div class="diagnostic-value">${psiText}</div><p class="diagnostic-copy">${p.psi === null ? 'Ghi thêm giao dịch để so sánh chi tiêu 5 ngày từ ngày lương với những ngày còn lại.' : `Chi biến đổi mỗi ngày sau lương: ${formatVND(p.paydayAvg)}; ngày còn lại: ${formatVND(p.otherAvg)}. ${p.warning ? 'Thử giữ cùng một hạn mức chi mỗi ngày, kể cả khi vừa nhận lương.' : 'Nhịp chi sau lương đang tương đối cân bằng.'}`}</p><p class="fine-print">So sánh trên tối đa 3 tháng gần nhất, có tính cả ngày không chi. Ngưỡng cần chú ý: từ 1,5 lần.</p></article>
-    <article class="panel"><div class="panel-header"><h2>Chi mong muốn đang tăng?</h2><span class="badge ${l.warning ? 'warning' : 'safe'}">${l.available ? l.warning ? 'Đang tăng nhanh' : 'Trong tầm kiểm soát' : 'Cần thêm lịch sử'}</span></div><div class="diagnostic-value">${l.available ? `${l.driftPP > 0 ? '+' : ''}${N(l.driftPP)} điểm %` : 'Chưa đủ 4 tháng'}</div><p class="diagnostic-copy">${l.available ? `Tỷ trọng chi mong muốn/thu nhập chuyển từ ${N(l.ratioPrev * 100)}% lên ${N(l.ratioCurr * 100)}%. ${l.warning ? 'Giữ lại những khoản thật sự đem đến niềm vui và đặt trần cho phần còn lại.' : 'Chi mong muốn đang tăng phù hợp với thu nhập.'}` : 'Sau ít nhất 4 tháng hoàn chỉnh có thu nhập, bạn sẽ thấy chi mong muốn tăng nhanh hơn thu nhập hay không.'}</p><p class="fine-print">So sánh hai giai đoạn liền nhau, mỗi giai đoạn 2 hoặc 3 tháng; không dùng tháng đang dở.</p></article></div>
-    <div class="main-grid"><section class="panel"><div class="panel-header"><div><h2>Tiền đang đi về đâu?</h2><p>Cơ cấu chi sinh hoạt trong ${formatMonth(a.month).toLowerCase()}</p></div></div>${canvas('category-chart', 'Tỷ trọng chi tiêu theo danh mục trong tháng')}</section><section class="panel"><div class="panel-header"><div><h2>Nhịp chi trong tháng</h2><p>Chi biến đổi lũy kế và mức chi đều dự kiến</p></div></div>${canvas('daily-chart', 'Chi tiêu biến đổi lũy kế từng ngày so với đường ngân sách tuyến tính')}</section></div>
-    <section class="panel"><div class="panel-header"><div><h2>Những khoản chi đáng nhìn lại</h2><p>So với mức thường thấy trong cùng danh mục · 90 ngày gần nhất</p></div><span class="badge ${a.anomalies.length ? 'warning' : 'safe'}">${a.anomalies.length} khoản</span></div>${a.anomalies.length ? `<div class="alert-list">${a.anomalies.slice(0, 30).map((t) => `<article class="alert-row ${t.severity === 'CRITICAL' ? 'critical' : ''}"><span class="alert-icon">${icon('alert')}</span><div class="alert-body"><strong>${E(t.category)}</strong> <span class="badge ${t.severity === 'CRITICAL' ? 'danger' : 'warning'}">${t.severity === 'CRITICAL' ? 'Bất thường cao' : 'Cần xem lại'}</span><p>${dateText(t.date)} · ${t.multiple === null ? 'Mức thường thấy bằng 0' : `Gấp ${N(t.multiple)} lần mức thường thấy (${formatVND(t.median)})`}${t.note ? ` · ${E(t.note)}` : ''}</p></div><span class="alert-amount money">${formatVND(t.amount)}</span><button class="icon-button" data-action="edit-transaction" data-id="${E(t.id)}" aria-label="Xem và sửa giao dịch">${icon('edit')}</button></article>`).join('')}</div>${a.anomalies.length > 30 ? '<p class="fine-print">Hiển thị 30 khoản mới nhất. Xem toàn bộ giao dịch trong Sổ thu chi.</p>' : ''}` : empty('Chưa có khoản chi bất thường', 'Mỗi danh mục cần ít nhất 5 giao dịch để so sánh. Chỉ những chênh lệch đủ lớn mới được nhắc tới.')}<p class="fine-print">Một khoản chi khác thường có thể hoàn toàn hợp lý. Gợi ý này giúp bạn nhìn lại, không tự thay đổi hay xóa giao dịch.</p></section>
-    <details class="panel section-spaced"><summary>Cách các chỉ số được tính</summary><div class="method-content"><p><strong>Thu nhập nền:</strong> dùng tối đa 12 tháng. Thu nhập ổn định lấy trung bình; thu nhập biến động dùng mức thận trọng hơn. Hiện có ${a.income.months} tháng quan sát.</p><p><strong>Dự báo:</strong> ${E(a.forecast.tier)}; phối hợp xu hướng lịch sử với nhịp chi thực tế trong tháng. Hóa đơn đã trả và chưa trả được cộng đúng một lần.</p><p><strong>Hạn mức hôm nay:</strong> lấy thu nhập nền, trừ hóa đơn cố định và mục tiêu tiết kiệm/trả nợ, trừ chi biến đổi đã dùng, rồi chia cho số ngày còn lại (tính cả hôm nay).</p><p><strong>Điểm sức khỏe FHI:</strong> tiết kiệm 25%, quỹ dự phòng 30%, chi cố định 20%, nợ 15%, kiểm soát chi mong muốn 10%. Đây là thang điểm của ứng dụng, giúp theo dõi thói quen; không phải xếp hạng tín dụng hay chứng nhận tài chính.</p><p><strong>Quỹ dự phòng:</strong> ${formatVND(data.profile.liquidSavings)} chia cho ${formatVND(a.health.essentialMonthly)} chi thiết yếu ước tính/tháng. Mục tiêu ${N(a.health.targetRunway)} tháng theo quy tắc trong ứng dụng.</p></div></details>`;
+  const m = monthlyMoney(data, a), top = m.categories[0], current = a.month === localDate().slice(0, 7);
+  const linked = m.deposits.filter((d) => d.date.startsWith(a.month) || d.remaining > 0 || m.rows.some((t) => t.flow?.targetId === d.id));
+  return heading('Hiểu tiền của mình', 'Xem khoản lớn, tìm chỗ điều chỉnh, rồi mở đúng ghi chép cần xem.', a) +
+    `<section class="analysis-lead panel"><span class="category-icon">${icon('chart')}</span><div><h2>${top ? `${E(top.category)} là mục bạn chi nhiều nhất` : 'Bắt đầu từ những khoản bạn đã ghi'}</h2><p>${top ? `${formatVND(top.amount)} · khoảng ${N(top.amount / m.everyday * 100, 0)}% tiền sinh hoạt tháng này.` : 'Có khoản thu chi thì phần này sẽ tự cập nhật.'}${m.refunds ? ` ${formatVND(m.refunds)} tiền hoàn đã tách khỏi thu nhập mới.` : ''}</p></div>${top ? ledgerButton('Xem các khoản này', top.category, '', 'secondary small') : ''}</section>
+    <div class="overview-columns analysis-columns"><section class="panel"><div class="panel-header"><div><h2>Tiền sinh hoạt đã dùng</h2><p>${formatVND(m.everyday)} · không gồm cọc, chuyển quỹ và trả nợ</p></div></div>${categoryList(m, m.categories.length)}${m.categories.length ? '<p class="fine-print">Bấm một danh mục để xem, sửa hoặc xóa các khoản trong sổ.</p>' : ''}</section><section class="panel next-panel"><div class="panel-header"><div><h2>Việc nên xem trước</h2><p>Từ những gì bạn đã ghi trong sổ.</p></div>${icon('target')}</div>${prioritySteps(data, a, m)}${a.income.months < 3 ? '<p class="compact-note">Bạn mới có ít tháng ghi chép. Chưa đủ để kết luận thói quen chi tiêu dài hạn.</p>' : ''}</section></div>
+    <section class="panel section-spaced" id="deposit-section"><div class="panel-header"><div><h2>Cọc và tiền được hoàn</h2><p>Vẫn tính đúng tiền ra vào, tách khỏi thu nhập và chi hằng ngày.</p></div>${btn('Ghi tiền cọc', 'new-deposit', 'secondary small', 'plus')}</div>${linked.length ? `<div class="deposit-list">${linked.map((d) => `<article class="deposit-row"><div><h3>${E(d.note || d.category)}</h3><p>Cọc ${formatVND(d.amount)} · Đã nhận lại ${formatVND(d.refunded)}</p></div><span class="badge ${d.remaining ? 'warning' : 'safe'}">${d.remaining ? `Chờ ${formatVND(d.remaining)}` : 'Đã nhận đủ'}</span><div class="row-actions">${d.remaining ? btn('Ghi nhận hoàn', 'refund-deposit', 'secondary small', '', `data-id="${E(d.id)}"`) : ''}${btn('Xem', 'edit-transaction', 'ghost small', '', `data-id="${E(d.id)}"`)}</div></article>`).join('')}</div>` : '<p class="helper-text">Khi ghi cọc, chọn “Tiền cọc chờ hoàn”. Lúc nhận lại, chọn đúng khoản cọc để thấy số còn chờ.</p>'}${m.unmatchedRefunds.length ? `<div class="compact-note">Có ${m.unmatchedRefunds.length} khoản hoàn chưa liên kết. ${btn('Chọn khoản cọc', 'edit-transaction', 'ghost small', '', `data-id="${E(m.unmatchedRefunds[0].id)}"`)}</div>` : ''}</section>
+    <section class="panel section-spaced"><div class="panel-header"><div><h2>Khoản lớn đáng nhìn lại</h2><p>Chi cao hơn những lần trước cùng danh mục; có thể hoàn toàn hợp lý.</p></div></div>${a.anomalies.length ? recentList(a.anomalies.slice(0, 4)) + ledgerButton('Mở sổ để xem thêm') : '<p class="helper-text">Chưa thấy khoản nào cần nhắc riêng. Mỗi danh mục cần ít nhất 5 khoản để so sánh.</p>'}</section>
+    ${a.cutbacks.actions.length && a.income.months >= 3 ? `<section class="panel section-spaced"><div class="panel-header"><div><h2>Có thể giảm ở đâu?</h2><p>Gợi ý cho cả tháng, dựa trên mức chi đã ghi trước đây.</p></div></div><div class="adjustment-list">${a.cutbacks.actions.slice(0, 3).map((c) => `<article><h3>${E(c.category)}</h3><strong>Giảm khoảng ${formatVND(c.suggestedCut)}</strong><p>Thử giữ trong ${formatVND(c.newCap)}/tháng.</p>${ledgerButton('Xem lại các khoản', c.category)}</article>`).join('')}</div></section>` : ''}
+    <details class="panel section-spaced advanced-analysis"><summary>Xem thêm xu hướng và cách tính</summary><div class="method-content"><div class="plain-insights"><article><h3>Chi sau ngày nhận lương</h3><p>${a.payday.psi === null ? 'Chưa đủ dữ liệu để so sánh.' : a.payday.warning ? 'Bạn thường chi nhiều hơn trong 5 ngày sau ngày lương. Thử chia đều tiền cho từng tuần.' : 'Chưa thấy nhịp chi tăng mạnh sau ngày lương.'}</p>${btn('Đổi ngày nhận lương', 'open-planning', 'ghost small', '', 'data-section="reserve-section"')}</article><article><h3>Mua sắm và giải trí</h3><p>${!a.lifestyle.available ? 'Cần ít nhất 4 tháng hoàn chỉnh để xem thay đổi dài hạn.' : a.lifestyle.warning ? 'Phần tiền dành cho mua sắm và giải trí đang tăng nhanh hơn thu nhập.' : 'Chưa thấy phần tiền mua sắm và giải trí tăng quá nhanh.'}</p>${ledgerButton('Xem nhóm này', '', 'data-group="wants"')}</article></div><div class="trend-charts"><section><h3>Thu và chi qua các tháng</h3><p class="helper-text">Đơn vị: triệu đồng · không gồm cọc, tiền hoàn, chuyển quỹ và trả nợ.</p>${canvas('cashflow-chart', 'Thu nhập mới và chi sinh hoạt sáu tháng gần nhất')}</section><section><h3>Nhịp chi trong tháng</h3><p class="helper-text">Chi sinh hoạt cộng dồn so với kế hoạch theo thu nhập.</p>${canvas('daily-chart', 'Chi tiêu lũy kế so với kế hoạch theo thu nhập')}</section></div><p><strong>Chia tiền hiện có mỗi ngày:</strong> (tiền còn dùng − hóa đơn chưa trả − mức trả nợ tháng này còn thiếu) ÷ ${a.safe.daysLeft} ngày. Chưa tính thu nhập tương lai và các chi phí chưa ghi.</p><p><strong>Kế hoạch theo thu nhập:</strong> ${a.income.months ? `Dựa trên ${a.income.months} tháng đã ghi, mức tham chiếu ${formatVND(a.income.yBase)}/tháng. Hạn mức từ kế hoạch: ${formatVND(a.safe.dailySafeToSpend)}/ngày.` : 'Chưa có thu nhập để lập kế hoạch.'} Khác với cách chia tiền hiện có ở Tổng quan.</p><p><strong>Dự báo chi sinh hoạt:</strong> ${formatVND(a.forecast.blendedEomForecast)} đến cuối tháng theo lịch sử và nhịp chi đã ghi${current ? '' : ', tại thời điểm cuối tháng được chọn'}.</p><p><strong>Điểm theo dõi của ứng dụng:</strong> ${N(a.health.fhi)}/100. Gồm để dành 25%, quỹ 30%, hóa đơn 20%, nợ 15%, kiểm soát mua sắm 10%; không dùng để kết luận khi sổ còn thiếu.</p></div></details>`;
 }
 
 export function renderPlanning(data, a, extraPayment) {
-  const activeDebts = [...data.debts].sort((x, y) => y.apr - x.apr || x.principal - y.principal);
-  return heading('Ít áp lực hơn. Nhiều chủ động hơn.', 'Sắp xếp hóa đơn, trả nợ có kế hoạch và làm dày lớp đệm an tâm.', a, false) +
-  `<div class="planning-grid"><div class="stack"><section class="panel"><div class="panel-header"><div><h2>Hóa đơn cố định</h2><p>Chủ động dành ${formatVND(a.totalActiveFixedBills)} mỗi tháng</p></div>${btn('Thêm', 'add-bill', 'secondary small', 'plus')}</div>${data.recurring_bills.length ? [...data.recurring_bills].sort((x, y) => x.dueDay - y.dueDay).map((b) => { const status = a.bills.find((x) => x.id === b.id); return `<article class="bill-row"><span class="category-icon">${icon('receipt')}</span><div class="record-info"><h3>${E(b.name)}</h3><p>Ngày ${b.dueDay} hằng tháng · ${!b.active ? 'Đã tạm dừng' : status?.paid ? 'Đã thanh toán tháng này' : `Còn ${formatVND(status?.remaining || b.amount)}`}</p></div><div class="record-money money">${formatVND(b.amount)}<small>${GROUP_LABELS[b.group]}</small></div><div class="record-actions">${b.active && !status?.paid ? `<button class="icon-button" data-action="pay-bill" data-id="${E(b.id)}" aria-label="Ghi thanh toán ${E(b.name)}" title="Ghi thanh toán">${icon('check')}</button>` : ''}<button class="icon-button" data-action="edit-bill" data-id="${E(b.id)}" aria-label="Sửa hóa đơn">${icon('edit')}</button><button class="icon-button delete" data-action="delete-bill" data-id="${E(b.id)}" aria-label="Xóa hóa đơn">${icon('trash')}</button></div></article>`; }).join('') : empty('Chưa có hóa đơn cố định', 'Thêm tiền nhà, điện nước hoặc những khoản trả đều đặn để tính đúng hạn mức chi tiêu.')}<p class="fine-print">Dấu ✓ ghi khoản thanh toán vào sổ thu chi. Hóa đơn chỉ được dự trù, không tự tạo giao dịch. Ngày vượt số ngày thực tế của tháng được hiểu là ngày cuối tháng.</p></section>
-    <section class="panel"><div class="panel-header"><div><h2>Các khoản nợ</h2><p>Ưu tiên lãi cao trước để giảm tổng tiền lãi</p></div>${btn('Thêm', 'add-debt', 'secondary small', 'plus')}</div>${activeDebts.length ? activeDebts.map((d, i) => `<article class="debt-row"><span class="debt-priority">${i + 1}</span><div class="record-info"><h3>${E(d.name)} ${d.apr > 10 && d.principal > 0 ? '<span class="badge warning">Lãi cao</span>' : ''}</h3><p>${N(d.apr, 2)}%/năm · Trả tối thiểu ${formatVND(d.minMonthlyPayment)}/tháng</p></div><div class="record-money money">${formatVND(d.principal)}</div><div class="record-actions"><button class="icon-button" data-action="edit-debt" data-id="${E(d.id)}" aria-label="Sửa khoản nợ">${icon('edit')}</button><button class="icon-button delete" data-action="delete-debt" data-id="${E(d.id)}" aria-label="Xóa khoản nợ">${icon('trash')}</button></div></article>`).join('') : empty('Một khoảng trống thật nhẹ nhàng', 'Nếu đang có khoản vay, thêm vào đây để có thứ tự ưu tiên và ước tính trả nợ.')}<p class="fine-print">Số dư nợ được cập nhật tại đây. Ghi giao dịch trả nợ trong sổ không tự trừ số dư để tránh tính nhầm phần gốc và lãi.</p></section></div>
-    <div class="stack"><section class="panel"><div class="panel-header"><div><h2>Lớp đệm an tâm</h2><p>Khoản tiền sẵn sàng dùng khi cần thiết</p></div>${icon('shield')}</div><form id="profile-form" class="profile-form"><label>Quỹ dự phòng hiện có (₫)<input name="liquidSavings" type="number" min="0" max="9000000000000" step="1" value="${data.profile.liquidSavings}" required></label><div class="form-grid"><label>Ngày nhận lương<input name="paydayDay" type="number" min="1" max="31" value="${data.profile.paydayDay}" required></label><label>Kiểu thu nhập<select name="incomeModeOverride"><option value="AUTO" ${data.profile.incomeModeOverride === 'AUTO' ? 'selected' : ''}>Tự nhận diện</option><option value="STABLE" ${data.profile.incomeModeOverride === 'STABLE' ? 'selected' : ''}>Ổn định</option><option value="IRREGULAR" ${data.profile.incomeModeOverride === 'IRREGULAR' ? 'selected' : ''}>Biến động</option></select></label></div><button class="button primary" type="submit">${icon('check')}Cập nhật kế hoạch</button></form><p class="insight-note">Quỹ hiện đủ khoảng <strong>${N(a.health.runwayMonths)} tháng</strong> chi thiết yếu. Mốc tiếp theo: <strong>${formatVND(a.health.essentialMonthly * a.health.targetRunway)}</strong> (${N(a.health.targetRunway)} tháng).</p><p class="fine-print">Đây là số dư bạn cập nhật thủ công, không tự cộng lại các giao dịch chuyển vào quỹ.</p></section>
-    <section class="panel"><div class="panel-header"><div><h2>Thử trả nợ nhanh hơn</h2><p>Dồn phần dư vào khoản có lãi suất cao nhất</p></div>${icon('sparkles')}</div><label>Có thể trả thêm mỗi tháng (₫)<input type="number" id="extra-payment" min="0" max="9000000000000" step="50000" value="${extraPayment}"></label><div id="debt-simulation"></div><p class="fine-print">Ước tính lãi gộp theo tháng từ lãi suất năm, giữ nguyên tổng ngân sách trả nợ khi một khoản đã hết. Chưa tính phí, ưu đãi hoặc thay đổi lãi suất thực tế.</p></section></div></div>`;
+  const debts = [...data.debts].sort((x, y) => y.apr - x.apr || x.principal - y.principal);
+  return heading('Khoản cần lo', 'Hóa đơn, nợ và quỹ để dành đều nối với sổ thu chi.', a, false) +
+    `<div class="planning-grid"><div class="stack"><section class="panel" id="bills-section"><div class="panel-header"><div><h2>Hóa đơn mỗi tháng</h2><p>Còn ${formatVND(a.unpaidFixedBills)} chưa ghi đã trả</p></div>${btn('Thêm', 'add-bill', 'secondary small', 'plus')}</div>${data.recurring_bills.length ? [...data.recurring_bills].sort((x, y) => x.dueDay - y.dueDay).map((b) => { const status = a.bills.find((x) => x.id === b.id); return `<article class="bill-row"><div class="record-info"><h3>${E(b.name)}</h3><p>Ngày ${Math.min(b.dueDay, a.daysInMonth)} · ${!b.active ? 'Tạm dừng' : status?.paid ? 'Đã trả tháng này' : `Còn ${formatVND(status?.remaining ?? b.amount)}`}</p></div><div class="record-actions">${b.active && !status?.paid ? btn('Ghi đã trả', 'pay-bill', 'secondary small', '', `data-id="${E(b.id)}"`) : ''}${b.active && !status?.paid ? btn('Dùng khoản đã ghi', 'link-bill-payment', 'ghost small', '', `data-id="${E(b.id)}"`) : ''}${ledgerButton('Xem sổ', '', `data-bill-id="${E(b.id)}" data-bill-name="${E(b.name)}"`, 'ghost small')}<button class="icon-button" data-action="edit-bill" data-id="${E(b.id)}" aria-label="Sửa hóa đơn ${E(b.name)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-bill" data-id="${E(b.id)}" aria-label="Xóa hóa đơn ${E(b.name)}">${icon('trash')}</button></div></article>`; }).join('') : '<p class="helper-text">Thêm tiền trọ, mạng hoặc khoản trả đều đặn để ứng dụng giữ lại tiền trước.</p>'}<p class="fine-print">“Ghi đã trả” thêm khoản chi mới. Nếu đã ghi hoặc đã nhập Excel, chọn “Dùng khoản đã ghi” để không trừ tiền hai lần.</p></section>
+    <section class="panel" id="debts-section"><div class="panel-header"><div><h2>Nợ còn lại</h2><p>Ghi cả tiền trả gốc và lãi trong cùng một lần.</p></div>${btn('Thêm nợ', 'add-debt', 'secondary small', 'plus')}</div>${debts.length ? debts.map((d) => `<article class="debt-row"><div class="record-info"><h3>${E(d.name)}</h3><p>${N(d.apr, 2)}%/năm · Mỗi tháng ${formatVND(d.minMonthlyPayment)}</p><strong class="money">${formatVND(d.principal)}</strong></div><div class="record-actions">${d.principal > 0 ? btn('Ghi trả nợ', 'pay-debt', 'secondary small', '', `data-id="${E(d.id)}"`) : '<span class="badge safe">Đã hết nợ</span>'}${btn('Xem lần trả', 'open-ledger', 'ghost small', '', `data-all-months="true" data-kind="debt" data-target="${E(d.id)}"`)}<button class="icon-button" data-action="edit-debt" data-id="${E(d.id)}" aria-label="Sửa khoản nợ ${E(d.name)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-debt" data-id="${E(d.id)}" aria-label="Xóa khoản nợ ${E(d.name)}">${icon('trash')}</button></div></article>`).join('') : '<p class="helper-text">Nếu có khoản vay, điền số nợ thực tế và mức trả mỗi tháng.</p>'}<p class="fine-print">Ghi trả nợ sẽ thêm khoản chi và giảm nợ đúng phần gốc bạn nhập. Sửa hoặc xóa lần trả sẽ tính lại số nợ.</p></section></div>
+    <div class="stack"><section class="panel" id="reserve-section"><div class="panel-header"><div><h2>Quỹ để dành</h2><p>Tách khỏi tiền tiêu hằng ngày.</p></div>${icon('shield')}</div><strong class="reserve-amount money">${formatVND(data.profile.liquidSavings)}</strong><div class="fund-actions">${btn('Chuyển vào quỹ', 'reserve-in', 'primary small')}${btn('Rút từ quỹ', 'reserve-out', 'secondary small')}${btn('Xem lịch sử', 'open-ledger', 'ghost small', '', 'data-kind="reserve" data-all-months="true"')}</div><p class="helper-text">Mỗi lần chuyển quỹ được ghi vào sổ và cập nhật số dư cùng lúc.</p><details><summary>Đối chiếu số dư và cài đặt</summary><form id="profile-form" class="profile-form"><label>Số dư quỹ thực tế (₫)<input name="liquidSavings" type="number" min="0" max="9000000000000" step="1" value="${data.profile.liquidSavings}" required></label><p class="fine-print">Chỉ đối chiếu khi bắt đầu hoặc cần sửa số dư. Chuyển tiền hằng ngày dùng hai nút phía trên.</p><div class="form-grid"><label>Ngày nhận lương<input name="paydayDay" type="number" min="1" max="31" value="${data.profile.paydayDay}" required></label><label>Thu nhập<select name="incomeModeOverride"><option value="AUTO" ${data.profile.incomeModeOverride === 'AUTO' ? 'selected' : ''}>Để ứng dụng xem</option><option value="STABLE" ${data.profile.incomeModeOverride === 'STABLE' ? 'selected' : ''}>Đều hằng tháng</option><option value="IRREGULAR" ${data.profile.incomeModeOverride === 'IRREGULAR' ? 'selected' : ''}>Không đều</option></select></label></div><button class="button primary" type="submit">Lưu đối chiếu</button></form></details></section>
+    <details class="panel"><summary>Thử trả nợ nhanh hơn</summary><div class="method-content"><label>Có thể trả thêm mỗi tháng (₫)<input type="number" id="extra-payment" min="0" max="9000000000000" step="50000" value="${extraPayment}"></label><div id="debt-simulation"></div><p class="fine-print">Ước tính theo lãi suất đã nhập, chưa tính phí hoặc thay đổi lãi thực tế.</p></div></details></div></div>`;
 }
 export function renderDebtSimulation(plan) {
   if (!plan.orderedDebts.length) return '<p class="insight-note">Thêm khoản nợ để ước tính thời gian và tiền lãi có thể tiết kiệm.</p>';
@@ -913,6 +1103,437 @@ export function renderSettings(data, a, storage) {
 export function categoryOptions(group, selected = '', extra = []) {
   return [...new Set([...(CATEGORIES[group] || []), ...extra, ...(selected ? [selected] : [])])].map((c) => `<option value="${E(c)}" ${c === selected ? 'selected' : ''}>${E(c)}</option>`).join('');
 }
+
+```
+
+### File: js/charts.js
+
+```javascript
+import { monthKeys, sum } from './finance-engine.js';
+import { formatVND } from './ui.js';
+
+const instances = new Map();
+export function destroyCharts() { for (const chart of instances.values()) chart.destroy(); instances.clear(); }
+function draw(id, config) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (instances.has(id)) { instances.get(id).destroy(); instances.delete(id); }
+  if (!globalThis.Chart) {
+    const fallback = document.createElement('div'); fallback.className = 'no-chart';
+    fallback.textContent = 'Biểu đồ sẽ xuất hiện khi tải được thư viện. Các chỉ số vẫn được cập nhật.';
+    canvas.replaceWith(fallback); return;
+  }
+  const css = getComputedStyle(document.documentElement), ink = css.getPropertyValue('--muted').trim(), line = css.getPropertyValue('--line').trim();
+  Chart.defaults.font.family = "'Be Vietnam Pro', system-ui, sans-serif";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = ink;
+  const base = {
+    responsive: true, maintainAspectRatio: false,
+    animation: matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 300 },
+    interaction: { intersect: false, mode: 'index' },
+    plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#1c302b', titleFont: { size: 12 }, bodyFont: { size: 12 }, callbacks: { label: (context) => `${context.dataset.label || context.label}: ${formatVND(typeof context.parsed === 'number' ? context.parsed : context.parsed.y)}` } } },
+    scales: { x: { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0 } }, y: { beginAtZero: true, suggestedMax: 1000000, border: { display: false }, grid: { color: line, drawTicks: false }, ticks: { padding: 10, callback: (v) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(v / 1000000) } } },
+  };
+  instances.set(id, new Chart(canvas, { ...config, options: { ...base, ...(config.options || {}), plugins: { ...base.plugins, ...(config.options?.plugins || {}) } } }));
+}
+export function renderCharts(tab, data, a) {
+  destroyCharts();
+  const date = new Date(`${a.today}T12:00:00`);
+  if (tab === 'overview' || tab === 'analysis') {
+    const months = monthKeys(date, 6), totals = [...a.history, a.current];
+    const income = months.map((k) => totals.find((m) => m.month === k)?.income || 0);
+    const expenses = months.map((k) => totals.find((m) => m.month === k)?.spent || 0);
+    draw('cashflow-chart', { type: 'bar', data: {
+      labels: months.map((k) => `Thg ${Number(k.slice(5))}`),
+      datasets: [
+        { label: 'Thu nhập', data: income, backgroundColor: '#247a58', borderRadius: 4, maxBarThickness: 23 },
+        { label: 'Chi tiêu', data: expenses, backgroundColor: '#bed7c7', borderRadius: 4, maxBarThickness: 23 },
+        { label: 'Dự báo cuối tháng', data: months.map((k) => k === a.month && data.transactions.length ? a.forecast.blendedEomForecast : null), backgroundColor: '#f5e6ce', borderColor: '#c59650', borderWidth: 1, borderRadius: 4, maxBarThickness: 23 },
+      ],
+    } });
+    const scores = a.health.scores;
+    draw('health-chart', { type: 'bar', data: { labels: ['Tiết kiệm', 'Quỹ dự phòng', 'Chi cố định', 'Kiểm soát nợ', 'Chi mong muốn'], datasets: [{ label: 'Điểm', data: data.transactions.length ? [scores.sSavings, scores.sRunway, scores.sFixed, scores.sDebt, scores.sControl] : [0, 0, 0, 0, 0], backgroundColor: ['#247a58', '#78a98c', '#a5c0ae', '#b9c7a2', '#d4deb9'], borderRadius: 4, barThickness: 10 }] }, options: { indexAxis: 'y', scales: { x: { min: 0, max: 100, border: { display: false }, grid: { display: false }, ticks: { stepSize: 25, font: { size: 11 } } }, y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, padding: 8 } } }, plugins: { tooltip: { callbacks: { label: (c) => `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(c.parsed.x)} / 100 điểm` } } } } });
+  }
+  if (tab === 'analysis') {
+    const categories = new Map();
+    for (const t of a.currentTs) if (t.type === 'expense' && ['needs', 'wants'].includes(t.group)) categories.set(t.category, (categories.get(t.category) || 0) + t.amount);
+    const entries = [...categories].sort((x, y) => y[1] - x[1]);
+    draw('category-chart', { type: 'doughnut', data: { labels: entries.map((x) => x[0]), datasets: [{ label: 'Chi tiêu', data: entries.map((x) => x[1]), backgroundColor: ['#247a58', '#78a98c', '#aecbba', '#d4deb9', '#c79651', '#8aa8bf', '#c2a6b2', '#91a575', '#8dbbb2', '#d9c28f'], borderWidth: 3, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(), hoverOffset: 5 }] }, options: { cutout: '70%', scales: {}, plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 9, boxHeight: 9, padding: 12, font: { size: 11 } } } } } });
+    let accumulated = 0;
+    const actual = Array.from({ length: a.daysInMonth }, (_, i) => {
+      if (i + 1 > a.elapsedDays) return null;
+      accumulated += sum(a.currentTs.filter((t) => t.type === 'expense' && !t.isFixedBill && ['needs', 'wants'].includes(t.group) && Number(t.date.slice(8)) === i + 1).map((t) => t.amount));
+      return accumulated;
+    });
+    draw('daily-chart', { type: 'line', data: { labels: Array.from({ length: a.daysInMonth }, (_, i) => i + 1), datasets: [{ label: 'Đã chi', data: actual, borderColor: '#247a58', backgroundColor: '#247a5810', borderWidth: 2, fill: true, pointRadius: 0, tension: .25 }, { label: 'Mức chi đều', data: actual.map((_, i) => Math.round(a.safe.variableBudgetTotal / a.daysInMonth * (i + 1))), borderColor: '#c59650', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 }] }, options: { plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, pointStyle: 'line', boxWidth: 20, padding: 20, font: { size: 11 } } } } } });
+  }
+}
+
+```
+
+### File: js/app.js
+
+```javascript
+import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, simulateDebtPayoff } from './finance-engine.js';
+import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions, saveTransaction } from './db.js';
+import { createSeedData } from './seed-data.js';
+import { fillIcons, icon, escapeHtml as E, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions, formatVND } from './ui.js';
+import { categoryHabits, depositBalances, dateForMonth, kindOf, suggestFlow, monthAfterDayChange } from './money-flow.js';
+import { renderCharts, destroyCharts } from './charts.js';
+import { openExcelImporter } from './excel-ui.js';
+
+const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích', planning: 'Khoản cần lo', settings: 'Sao lưu & Cài đặt' };
+const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false, importHints: null };
+const content = document.getElementById('app-content');
+let toastTimer, installPrompt, calendarDay = localDate();
+try { state.installDismissed = sessionStorage.getItem('vung-install-dismissed') === '1'; } catch { /* Optional preference, unrelated to saved financial data. */ }
+
+function toast(message, error = false) {
+  const el = document.getElementById('toast'); clearTimeout(toastTimer); el.textContent = message; el.classList.toggle('error', error); el.hidden = false;
+  toastTimer = setTimeout(() => { el.hidden = true; }, error ? 7000 : 3500);
+}
+async function confirmChange(title, description, label = 'Xác nhận', danger = false) {
+  const dialog = document.getElementById('confirm-dialog');
+  document.getElementById('confirm-title').textContent = title; document.getElementById('confirm-description').textContent = description;
+  const button = document.getElementById('confirm-button'); button.textContent = label; button.className = `button ${danger ? 'danger' : 'primary'}`;
+  dialog.returnValue = ''; dialog.showModal();
+  return new Promise((resolve) => dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true }));
+}
+function applyTheme() {
+  document.documentElement.dataset.theme = state.data.profile.theme;
+  document.getElementById('theme-toggle').innerHTML = `${icon(state.data.profile.theme === 'dark' ? 'sun' : 'moon')}<span>${state.data.profile.theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}</span>`;
+  document.querySelector('meta[name="theme-color"]').content = state.data.profile.theme === 'dark' ? '#192a23' : '#0f6f50';
+}
+function render() {
+  if (!state.data) return;
+  state.analysis = analyzeFinance(state.data, dateForMonth(state.filters.month));
+  const a = state.analysis;
+  applyTheme(); destroyCharts();
+  document.querySelectorAll('[data-tab]').forEach((el) => { const active = el.dataset.tab === state.tab; el.classList.toggle('active', active); if (active) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
+  document.getElementById('breadcrumb-title').textContent = tabs[state.tab];
+  document.title = `${tabs[state.tab]} · Vững Tài Chính`;
+  const alerts = a.anomalies.length + Number(a.payday.warning) + Number(a.lifestyle.warning), count = document.getElementById('nav-alert-count');
+  count.textContent = alerts; count.hidden = !alerts;
+  const warning = document.getElementById('storage-warning'); warning.textContent = state.storage.message; warning.hidden = !state.storage.message;
+  document.getElementById('chart-warning').hidden = !!globalThis.Chart;
+  if (state.tab === 'overview') content.innerHTML = renderOverview(state.data, a, state.installDismissed);
+  if (state.tab === 'transactions') {
+    const filtered = filteredTransactions(state.data, state.filters);
+    const pages = state.ledgerView === 'daily' ? Math.ceil(new Set(filtered.map((t) => t.date)).size / 10) : Math.ceil(filtered.length / 15);
+    state.page = Math.min(state.page, Math.max(1, pages));
+    content.innerHTML = renderTransactions(state.data, a, state.filters, state.page, state.ledgerView);
+  }
+  if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a);
+  if (state.tab === 'planning') { content.innerHTML = renderPlanning(state.data, a, state.extraPayment); updateSimulation(); }
+  if (state.tab === 'settings') content.innerHTML = renderSettings(state.data, a, state.storage);
+  if (state.importHints?.debt !== null && state.importHints && !state.data.debts.length) content.insertAdjacentHTML('afterbegin', `<aside class="banner"><strong>Ghi chú trong Excel có dư nợ ${formatVND(state.importHints.debt)}.</strong> Thêm mức trả mỗi tháng và lãi suất để giữ lại đúng tiền. <button class="button secondary small" data-action="setup-import-debt">Bổ sung khoản nợ</button><button class="icon-button" data-action="dismiss-import-hint" aria-label="Ẩn ghi chú từ Excel">${icon('close')}</button></aside>`);
+  renderCharts(state.tab, state.data, a);
+}
+async function refresh() { state.data = await readData(); state.storage = await storageStatus(); render(); }
+async function mutation(work, success = '') {
+  if (state.busy) return;
+  state.busy = true;
+  const submitters = [...document.querySelectorAll('dialog[open] button[type="submit"], #profile-form button[type="submit"]')];
+  submitters.forEach((b) => { b.disabled = true; });
+  try { await work(); await refresh(); if (success) toast(success); return true; }
+  catch (error) { toast(error.message || 'Chưa thể lưu thay đổi. Hãy thử lại.', true); return false; }
+  finally { state.busy = false; submitters.forEach((b) => { b.disabled = false; }); }
+}
+function navigate() {
+  const tab = location.hash.slice(1) || 'overview'; state.tab = Object.hasOwn(tabs, tab) ? tab : 'overview'; render();
+}
+function transactionType(type) {
+  const form = document.getElementById('transaction-form'); form.elements.type.value = type;
+  form.querySelectorAll('[data-tx-type]').forEach((el) => { el.classList.toggle('selected', el.dataset.txType === type); el.setAttribute('aria-pressed', el.dataset.txType === type); });
+  const group = form.elements.group;
+  group.innerHTML = (type === 'income' ? ['income'] : ['needs', 'wants', 'savings_debt']).map((k) => `<option value="${k}">${GROUP_LABELS[k]}</option>`).join('');
+  form.elements.isFixedBill.disabled = type === 'income'; if (type === 'income') form.elements.isFixedBill.checked = false;
+  updateCategories(form);
+  form.elements.billId.value = ''; flowOptions(form); flowFields();
+}
+function updateCategories(form, selected = '') {
+  const group = form.elements.group.value;
+  if (form.getAttribute('id') !== 'transaction-form') { form.elements.category.innerHTML = categoryOptions(group, selected, state.data?.transactions.filter((t) => t.group === group).map((t) => t.category)); return; }
+  const type = form.elements.type.value, habits = categoryHabits(state.data.transactions, type);
+  const defaults = (type === 'income' ? CATEGORIES.income : [...CATEGORIES.needs, ...CATEGORIES.wants, ...CATEGORIES.savings_debt]);
+  document.getElementById('category-suggestions').innerHTML = [...new Set([...habits.map((h) => h.category), ...defaults])].map((c) => `<option value="${E(c)}"></option>`).join('');
+  document.getElementById('category-shortcuts').innerHTML = habits.slice(0, 5).map((h) => `<button type="button" data-category-shortcut="${E(h.category)}" data-group="${h.group}">${E(h.category)}</button>`).join('');
+  const notes = [...new Set([...state.data.transactions].filter((t) => t.type === type && t.note).sort((x, y) => y.date.localeCompare(x.date)).map((t) => t.note))].slice(0, 35);
+  document.getElementById('note-suggestions').innerHTML = notes.map((n) => `<option value="${E(n)}"></option>`).join('');
+  form.elements.category.value = selected;
+}
+function fillForm(form, record) {
+  for (const [key, value] of Object.entries(record)) {
+    const el = form.elements.namedItem(key); if (!el) continue;
+    if (el.type === 'checkbox') el.checked = value; else el.value = value;
+  }
+}
+function flowFields(selectedTarget = '') {
+  const form = document.getElementById('transaction-form'), kind = form.elements.flowKind.value;
+  const target = form.elements.targetId;
+  const isDebt = kind === 'debt', isRefund = kind === 'refund';
+  document.getElementById('tx-link-fields').hidden = !isDebt && !isRefund;
+  document.getElementById('tx-principal-label').hidden = !isDebt;
+  form.elements.principal.required = isDebt;
+  target.required = isDebt;
+  const deposits = depositBalances(state.data.transactions, form.elements.date.value || localDate(), form.elements.id.value);
+  target.innerHTML = isDebt ? '<option value="">Chọn khoản nợ</option>' + state.data.debts.map((d) => `<option value="${E(d.id)}">${E(d.name)} · còn ${formatVND(d.principal)}</option>`).join('') : '<option value="">Chưa liên kết khoản cọc</option>' + deposits.map((d) => `<option value="${E(d.id)}">${E(d.note || d.category)} · còn ${formatVND(d.remaining)}</option>`).join('');
+  target.value = selectedTarget;
+  if (['reserve-in', 'debt'].includes(kind)) form.elements.group.value = 'savings_debt';
+  if (isRefund || kind === 'reserve-out') form.elements.group.value = 'income';
+  if (kind === 'deposit' && form.elements.group.value === 'savings_debt') form.elements.group.value = 'needs';
+  const copies = { regular: 'Lưu vào sổ và cập nhật số dư, tổng thu chi.', deposit: 'Tiền đã ra khỏi ví nhưng còn chờ nhận lại. Tách khỏi chi sinh hoạt.', refund: 'Tiền quay về ví, không cộng vào thu nhập mới. Chọn khoản cọc để cập nhật số còn chờ.', 'reserve-in': 'Thêm khoản chi vào sổ và tăng quỹ cùng một lần lưu.', 'reserve-out': 'Thêm tiền vào ví và giảm quỹ cùng lúc; không tính là thu nhập mới.', debt: 'Thêm khoản chi vào sổ, đồng thời trừ nợ đúng phần tiền gốc bạn nhập.' };
+  document.getElementById('tx-flow-explanation').textContent = copies[kind];
+  const regular = kind === 'regular'; form.elements.isFixedBill.disabled = !regular || form.elements.type.value === 'income';
+  if (form.elements.isFixedBill.disabled) { form.elements.isFixedBill.checked = false; form.elements.billId.value = ''; }
+  billFields(form.elements.billId.value);
+}
+function billFields(selected = '') {
+  const form = document.getElementById('transaction-form'), visible = form.elements.isFixedBill.checked && !form.elements.isFixedBill.disabled;
+  document.getElementById('tx-bill-label').hidden = !visible;
+  form.elements.billTarget.innerHTML = '<option value="">Đối chiếu theo danh mục</option>' + state.data.recurring_bills.map((b) => `<option value="${E(b.id)}">${E(b.name)}</option>`).join('');
+  form.elements.billTarget.value = selected;
+}
+function flowOptions(form, kind = 'regular') {
+  const options = form.elements.type.value === 'income' ? [['regular', 'Thu nhập mới'], ['refund', 'Tiền được hoàn'], ['reserve-out', 'Rút từ quỹ để dành']] : [['regular', 'Chi tiêu bình thường'], ['deposit', 'Tiền cọc chờ hoàn'], ['reserve-in', 'Chuyển vào quỹ để dành'], ['debt', 'Trả nợ']];
+  form.elements.flowKind.innerHTML = options.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+  form.elements.flowKind.value = options.some(([k]) => k === kind) ? kind : 'regular';
+}
+function openTransaction(record) {
+  const form = document.getElementById('transaction-form'); form.reset(); transactionType(record?.type || 'expense');
+  form.elements.id.value = record?.id || ''; form.elements.date.value = state.analysis.today;
+  if (record) { form.elements.group.value = record.group; updateCategories(form, record.category); fillForm(form, record); }
+  flowOptions(form, record ? kindOf(record) : 'regular');
+  form.elements.billId.value = record?.flow?.billId || '';
+  form.elements.principal.value = record?.flow?.principal ?? '';
+  flowFields(record?.flow?.targetId || '');
+  document.getElementById('transaction-error').hidden = true;
+  document.getElementById('transaction-dialog-title').textContent = record?.id ? 'Sửa khoản đã ghi' : 'Ghi thu chi';
+  document.getElementById('transaction-dialog').showModal(); form.elements.amount.focus();
+}
+function openBill(record) {
+  const form = document.getElementById('bill-form'); form.reset(); form.elements.id.value = '';
+  if (record) form.elements.group.value = record.group;
+  updateCategories(form, record?.category); if (record) fillForm(form, record);
+  document.getElementById('bill-error').hidden = true; document.getElementById('bill-dialog').showModal();
+}
+function openDebt(record) {
+  const form = document.getElementById('debt-form'); form.reset(); form.elements.id.value = '';
+  if (record) fillForm(form, record); document.getElementById('debt-error').hidden = true;
+  document.getElementById('debt-dialog').showModal();
+}
+function download(name, contentValue, type) {
+  const blob = new Blob([contentValue], { type }), url = URL.createObjectURL(blob), link = document.createElement('a');
+  link.href = url; link.download = name; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function updateSimulation() {
+  const element = document.getElementById('debt-simulation');
+  if (element) element.innerHTML = renderDebtSimulation(simulateDebtPayoff(state.data.debts, state.extraPayment));
+}
+async function install() {
+  if (installPrompt) { await installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; }
+  else document.getElementById('install-dialog').showModal();
+}
+function goTo(tab, section = '') {
+  state.tab = tab;
+  if (location.hash !== `#${tab}`) history.pushState(null, '', `#${tab}`);
+  render();
+  if (section) { const target = document.getElementById(section); target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  else document.getElementById('main').scrollIntoView({ block: 'start' });
+}
+async function handleAction(action, id, attrs = {}) {
+  const find = (store) => state.data[store].find((x) => x.id === id);
+  if (action === 'add-transaction') openTransaction();
+  else if (action === 'open-ledger') {
+    state.filters = { month: state.filters.month, group: attrs.group || '', category: attrs.category || '', search: '', kind: attrs.kind || '', type: attrs.type || '', target: attrs.target || '', scope: attrs.scope || '', through: attrs.scope || attrs.type ? state.analysis.today : '', allMonths: attrs.allMonths === 'true', billId: attrs.billId || '', billName: attrs.billName || '' };
+    state.page = 1; goTo('transactions');
+  }
+  else if (action === 'clear-filters') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; state.page = 1; render(); }
+  else if (action === 'open-opening') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; goTo('transactions', 'opening-section'); const details = document.querySelector('#opening-section details'); if (details) details.open = true; document.querySelector('#opening-balance-form [name=bank]')?.focus({ preventScroll: true }); }
+  else if (action === 'show-balance') { const el = document.getElementById('balance-detail'); el.open = !el.open; }
+  else if (action === 'open-planning') goTo('planning', attrs.section);
+  else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
+  else if (action === 'new-deposit') openTransaction({ type: 'expense', group: 'needs', category: '', note: '', date: state.analysis.today, flow: { kind: 'deposit' } });
+  else if (action === 'refund-deposit') { const d = depositBalances(state.data.transactions, state.analysis.today).find((d) => d.id === id); if (d?.remaining) openTransaction({ type: 'income', group: 'income', category: d.category, note: `Hoàn cọc: ${d.note || d.category}`.slice(0, 1000), amount: d.remaining, date: state.analysis.today, flow: { kind: 'refund', targetId: d.id } }); }
+  else if (action === 'reserve-in' || action === 'reserve-out') openTransaction({ type: action === 'reserve-in' ? 'expense' : 'income', group: action === 'reserve-in' ? 'savings_debt' : 'income', category: 'Quỹ để dành', note: action === 'reserve-in' ? 'Chuyển vào quỹ' : 'Rút từ quỹ', date: state.analysis.today, flow: { kind: action } });
+  else if (action === 'pay-debt') { const debt = find('debts'); if (debt) openTransaction({ type: 'expense', group: 'savings_debt', category: 'Trả nợ', note: `Trả nợ: ${debt.name}`, amount: Math.min(debt.principal, debt.minMonthlyPayment) || '', date: state.analysis.today, flow: { kind: 'debt', targetId: debt.id } }); }
+  else if (action === 'setup-import-debt') { openDebt({ name: 'Khoản nợ từ sổ Excel', principal: state.importHints.debt }); }
+  else if (action === 'dismiss-import-hint') { state.importHints = null; render(); }
+  else if (action === 'review-flow') { const t = find('transactions'); if (t) openTransaction({ ...t, flow: { kind: suggestFlow(t) } }); }
+  else if (action === 'link-bill-payment') {
+    const bill = find('recurring_bills'); if (!bill) return;
+    const candidates = state.data.transactions.filter((t) => t.date.startsWith(state.analysis.month) && t.date <= state.analysis.today && t.type === 'expense' && kindOf(t) === 'regular' && ['needs', 'wants'].includes(t.group) && !t.flow?.billId).sort((x, y) => Number(y.category === bill.category) - Number(x.category === bill.category) || y.date.localeCompare(x.date));
+    if (!candidates.length) { toast('Chưa có khoản chi phù hợp trong tháng. Chọn Ghi đã trả khi bạn thanh toán.'); return; }
+    const form = document.getElementById('link-payment-form'); form.elements.billId.value = bill.id;
+    form.elements.transactionId.innerHTML = '<option value="">Chọn khoản đã thanh toán</option>' + candidates.map((t) => `<option value="${E(t.id)}">${E(t.date.split('-').reverse().join('/'))} · ${E(t.note || t.category)} · ${formatVND(t.amount)}</option>`).join('');
+    document.getElementById('link-payment-title').textContent = `Khoản đã trả: ${bill.name}`;
+    document.getElementById('link-payment-dialog').showModal();
+  }
+  else if (action === 'import-excel') {
+    await openExcelImporter({
+      getExisting: () => state.data.transactions,
+      onImport: async (records, options) => {
+        let receipt;
+        const ok = await mutation(async () => { receipt = await appendTransactions(records, options); });
+        if (ok) {
+          state.importHints = { debt: options.debtHint ?? null };
+          state.filters = { month: options.openingBalance?.month || records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
+          state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
+          toast(`${receipt.imported ? `Đã nhập ${receipt.imported} khoản` : 'Không thêm khoản trùng'}${receipt.updated ? `, cập nhật cách phân loại ${receipt.updated} khoản cũ` : ''}${options.openingBalance ? '. Đã lưu tiền đầu tháng' : ''}${options.liquidSavings !== null ? '. Đã đối chiếu quỹ để dành' : ''}.`);
+        }
+        return ok;
+      },
+    });
+  }
+  else if (action === 'view-daily' || action === 'view-table') { state.ledgerView = action === 'view-daily' ? 'daily' : 'table'; state.page = 1; render(); }
+  else if (action === 'edit-transaction') { const t = find('transactions'); if (t) openTransaction(t); }
+  else if (action === 'add-bill') openBill();
+  else if (action === 'edit-bill') { const b = find('recurring_bills'); if (b) openBill(b); }
+  else if (action === 'add-debt') openDebt();
+  else if (action === 'edit-debt') { const d = find('debts'); if (d) openDebt(d); }
+  else if (action.startsWith('delete-')) {
+    const store = action === 'delete-transaction' ? 'transactions' : action === 'delete-bill' ? 'recurring_bills' : 'debts';
+    if (!find(store)) return;
+    if (store === 'debts' && state.data.transactions.some((t) => t.flow?.kind === 'debt' && t.flow.targetId === id)) throw new Error('Khoản nợ đã có lần trả trong sổ. Giữ khoản nợ để xem đúng lịch sử; khi trả hết, số nợ sẽ về 0.');
+    if (await confirmChange('Xóa mục này?', 'Các số dư liên quan sẽ được tính lại cùng với sổ thu chi.', 'Xóa mục này', true)) await mutation(() => store === 'transactions' ? saveTransaction(null, id) : deleteRecord(store, id), 'Đã xóa và cập nhật các số dư liên quan.');
+  } else if (action === 'pay-bill') {
+    const b = state.analysis.bills.find((x) => x.id === id);
+    if (!b || b.paid) return;
+    openTransaction({ id: '', type: 'expense', date: state.analysis.today, amount: b.remaining, group: b.group, category: b.category, isFixedBill: true, note: `Thanh toán: ${b.name}`, flow: { kind: 'regular', billId: b.id } });
+  } else if (action === 'theme') {
+    await mutation(() => putRecord('profile', { ...state.data.profile, theme: state.data.profile.theme === 'dark' ? 'light' : 'dark' }));
+  } else if (action === 'seed-data') {
+    const proceed = !state.data.transactions.length && !state.data.debts.length && !state.data.recurring_bills.length && !state.data.profile.liquidSavings || await confirmChange('Thử một bức tranh tài chính mẫu?', 'Dữ liệu mẫu sẽ thay thế toàn bộ sổ hiện tại. Hãy sao lưu trước nếu bạn muốn giữ các khoản đã ghi.', 'Nạp dữ liệu mẫu');
+    if (proceed) await mutation(() => replaceData(createSeedData()), 'Đã nạp dữ liệu minh họa. Hãy thử xem Tổng quan và Phân tích.');
+  } else if (action === 'clear-data') {
+    if (await confirmChange('Bắt đầu một sổ hoàn toàn mới?', 'Toàn bộ giao dịch, hóa đơn, nợ, quỹ dự phòng và cài đặt sẽ bị xóa. Chỉ khôi phục được nếu bạn đã giữ tệp sao lưu.', 'Xóa toàn bộ', true)) {
+      await mutation(() => replaceData({ transactions: [], recurring_bills: [], debts: [], profile: { ...DEFAULT_PROFILE } }), 'Sổ đã được làm mới. Bắt đầu từ khoản đầu tiên nhé.');
+    }
+  } else if (action === 'backup') {
+    await mutation(async () => {
+      const timestamp = Date.now(), profile = { ...state.data.profile, lastBackupAt: timestamp };
+      const json = createBackup({ ...state.data, profile }, timestamp);
+      download(`vung-tai-chinh-${localDate()}.json`, json, 'application/json;charset=utf-8');
+      await putRecord('profile', profile);
+    }, 'Đã tạo tệp sao lưu. Kiểm tra thư mục tải xuống trên máy bạn.');
+  } else if (action === 'restore') document.getElementById('restore-file').click();
+  else if (action === 'export-csv') { download(`so-thu-chi-${localDate()}.csv`, createCSV(state.data.transactions), 'text/csv;charset=utf-8'); toast('Đã xuất báo cáo CSV có đầy đủ dấu tiếng Việt.'); }
+  else if (action === 'persist') { state.storage = await storageStatus(true); render(); toast(state.storage.persistent ? 'Đã được cấp lưu trữ bền vững.' : 'Trình duyệt chưa cấp quyền. Hãy giữ bản sao lưu định kỳ.'); }
+  else if (action === 'install') await install();
+  else if (action === 'dismiss-install') { state.installDismissed = true; try { sessionStorage.setItem('vung-install-dismissed', '1'); } catch { /* Nonessential preference. */ } render(); }
+  else if (action === 'prev-page') { state.page = Math.max(1, state.page - 1); render(); }
+  else if (action === 'next-page') { state.page++; render(); }
+}
+
+document.addEventListener('click', (event) => {
+  const close = event.target.closest('[data-close-dialog]'); if (close) { close.closest('dialog').close(); return; }
+  const quick = event.target.closest('[data-amount]'); if (quick) { document.getElementById('transaction-form').elements.amount.value = quick.dataset.amount; return; }
+  const type = event.target.closest('[data-tx-type]'); if (type) { transactionType(type.dataset.txType); return; }
+  const shortcut = event.target.closest('[data-category-shortcut]'); if (shortcut) { const form = document.getElementById('transaction-form'); form.elements.category.value = shortcut.dataset.categoryShortcut; form.elements.group.value = shortcut.dataset.group; flowFields(form.elements.targetId.value); return; }
+  const action = event.target.closest('[data-action]'); if (action) handleAction(action.dataset.action, action.dataset.id, action.dataset).catch((e) => toast(e.message, true));
+});
+document.getElementById('theme-toggle').addEventListener('click', () => handleAction('theme'));
+document.addEventListener('change', (event) => {
+  const el = event.target;
+  if (el.matches('#bill-form [name=group]')) updateCategories(el.form);
+  if (el.matches('#transaction-form [name=category]')) {
+    const form = el.form, habit = categoryHabits(state.data.transactions, form.elements.type.value).find((h) => h.category === el.value);
+    const known = Object.entries(CATEGORIES).find(([, cats]) => cats.includes(el.value))?.[0];
+    if (form.elements.type.value !== 'income') form.elements.group.value = habit?.group || (known === 'income' ? 'needs' : known) || 'needs';
+    flowFields(form.elements.targetId.value);
+  }
+  if (el.matches('#transaction-form [name=group]')) flowFields(el.form.elements.targetId.value);
+  if (el.matches('#transaction-form [name=note]') && !el.form.elements.category.value) {
+    const previous = [...state.data.transactions].filter((t) => t.type === el.form.elements.type.value && t.note === el.value).sort((x, y) => y.date.localeCompare(x.date))[0];
+    if (previous) { el.form.elements.category.value = previous.category; el.form.elements.group.value = previous.group; }
+  }
+  if (el.id === 'tx-flow-kind' || el.matches('#transaction-form [name=date]')) flowFields(el.form.elements.targetId.value);
+  if (el.matches('#transaction-form [name=isFixedBill]')) { if (!el.checked) el.form.elements.billId.value = ''; billFields(el.form.elements.billId.value); }
+  if (el.id === 'tx-bill-target') el.form.elements.billId.value = el.value;
+  if (el.id === 'focus-month' || el.id === 'filter-month') {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(el.value) || el.value > localDate().slice(0, 7)) { toast('Chọn tháng hiện tại hoặc một tháng trước đó.'); render(); return; }
+    state.filters.month = el.value; state.filters.allMonths = false; if (state.filters.through) state.filters.through = localDate(dateForMonth(el.value)); state.page = 1; render(); return;
+  }
+  if (el.id === 'filter-all-months') { state.filters.allMonths = el.checked; state.page = 1; render(); return; }
+  const filters = { 'filter-month': 'month', 'filter-group': 'group', 'filter-category': 'category' };
+  if (Object.hasOwn(filters, el.id)) { state.filters[filters[el.id]] = el.value; if (el.id === 'filter-group') state.filters.category = ''; state.page = 1; render(); }
+});
+document.addEventListener('input', (event) => {
+  const el = event.target;
+  if (el.id === 'filter-search') {
+    state.filters.search = el.value; state.page = 1;
+    const template = document.createElement('template');
+    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page, state.ledgerView);
+    // Preserve the actual search input, caret, and IME composition while typing.
+    document.getElementById('ledger-results').replaceChildren(...template.content.querySelector('#ledger-results').childNodes);
+  }
+  if (el.id === 'extra-payment') { state.extraPayment = Math.max(0, Math.round(Number(el.value) || 0)); updateSimulation(); }
+});
+document.addEventListener('submit', async (event) => {
+  const form = event.target;
+  // Named form controls can shadow native properties (including an input named "id").
+  const formId = form.getAttribute('id');
+  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form', 'opening-balance-form', 'link-payment-form'].includes(formId)) return;
+  event.preventDefault();
+  const values = new FormData(form), value = (key) => String(values.get(key) ?? ''), amount = (key) => Math.round(Number(value(key)));
+  if (formId === 'link-payment-form') {
+    const transaction = state.data.transactions.find((t) => t.id === value('transactionId'));
+    if (!transaction || !state.data.recurring_bills.some((b) => b.id === value('billId'))) { toast('Khoản chi hoặc hóa đơn đã thay đổi. Mở lại để chọn.', true); return; }
+    const ok = await mutation(() => saveTransaction({ ...transaction, isFixedBill: true, flow: { kind: 'regular', billId: value('billId') } }), 'Đã gắn khoản đã ghi. Số tiền trong sổ giữ nguyên.');
+    if (ok) form.closest('dialog').close(); return;
+  }
+  if (formId === 'opening-balance-form') {
+    await mutation(() => putRecord('profile', { ...state.data.profile, openingBalances: { ...(state.data.profile.openingBalances || {}), [value('month')]: { bank: amount('bank'), cash: amount('cash') } } }), 'Đã lưu tiền có sẵn đầu tháng, tách riêng với thu nhập mới.'); return;
+  }
+  if (formId === 'profile-form') {
+    await mutation(() => putRecord('profile', { ...state.data.profile, liquidSavings: amount('liquidSavings'), paydayDay: amount('paydayDay'), incomeModeOverride: value('incomeModeOverride') }), 'Đã cập nhật quỹ dự phòng và kế hoạch.'); return;
+  }
+  let store, record;
+  const id = value('id') || uuid();
+  if (formId === 'transaction-form') {
+    store = 'transactions'; const existing = state.data.transactions.find((t) => t.id === id);
+    record = { id, type: value('type'), date: value('date'), amount: amount('amount'), group: value('group'), category: value('category'), isFixedBill: values.get('isFixedBill') === 'on', note: value('note'), createdAt: existing?.createdAt || Date.now() };
+    const kind = value('flowKind');
+    if (kind !== 'regular') record.flow = { kind, ...(value('targetId') && ['refund', 'debt'].includes(kind) ? { targetId: value('targetId') } : {}), ...(kind === 'debt' ? { principal: amount('principal') } : {}) };
+    else if (record.isFixedBill && value('billId')) record.flow = { kind, billId: value('billId') };
+  } else if (formId === 'bill-form') {
+    store = 'recurring_bills'; record = { id, name: value('name'), amount: amount('amount'), dueDay: amount('dueDay'), group: value('group'), category: value('category'), active: values.get('active') === 'on' };
+  } else {
+    store = 'debts'; record = { id, name: value('name'), principal: amount('principal'), apr: Number(value('apr')), minMonthlyPayment: amount('minMonthlyPayment'), isHighInterest: Number(value('apr')) > 10 };
+  }
+  const error = document.getElementById(formId.replace('-form', '-error')); error.hidden = true;
+  const ok = await mutation(() => store === 'transactions' ? saveTransaction(record) : putRecord(store, record), 'Đã lưu vào sổ và cập nhật các số liên quan.');
+  if (ok) form.closest('dialog').close(); else { error.textContent = 'Chưa thể lưu. Kiểm tra các trường và thử lại; dữ liệu cũ vẫn được giữ.'; error.hidden = false; }
+});
+document.getElementById('restore-file').addEventListener('change', async (event) => {
+  const file = event.target.files[0]; event.target.value = ''; if (!file) return;
+  try {
+    if (file.size > 20 * 1024 * 1024) throw new Error('Tệp sao lưu quá lớn (tối đa 20 MB).');
+    const parsed = JSON.parse(await file.text()), clean = validateBackup(parsed);
+    if (await confirmChange('Khôi phục từ bản sao lưu?', `Tệp chứa ${clean.transactions.length} giao dịch, ${clean.recurring_bills.length} hóa đơn và ${clean.debts.length} khoản nợ. Toàn bộ dữ liệu hiện có sẽ được thay thế.`, 'Khôi phục dữ liệu')) await mutation(() => replaceData(clean), 'Đã khôi phục đầy đủ dữ liệu.');
+  } catch (error) { toast(error instanceof SyntaxError ? 'Tệp JSON không đọc được. Hãy chọn đúng tệp sao lưu.' : error.message, true); }
+});
+window.addEventListener('hashchange', navigate);
+window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; });
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !state.data || document.querySelector('dialog[open]') || state.busy) return;
+  try {
+    const fresh = await readData();
+    if (JSON.stringify(fresh) === JSON.stringify(state.data) && calendarDay === localDate()) return;
+    if (document.querySelector('dialog[open]') || state.busy || document.activeElement?.matches('input, textarea, select')) return;
+    state.filters.month = monthAfterDayChange(state.filters.month, calendarDay, localDate()); calendarDay = localDate();
+    state.data = fresh; state.storage = await storageStatus(); render();
+  } catch (error) { toast(error.message, true); }
+});
+async function boot() {
+  fillIcons();
+  document.getElementById('today-label').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  state.storage = await initDB(); state.data = await readData(); navigate();
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => { toast('Chưa bật được chế độ ngoại tuyến. Bạn vẫn có thể dùng khi có mạng.'); });
+  setInterval(() => { if (calendarDay !== localDate() && !document.querySelector('dialog[open]')) { state.filters.month = monthAfterDayChange(state.filters.month, calendarDay, localDate()); calendarDay = localDate(); refresh().catch((e) => toast(e.message, true)); } }, 30000);
+}
+boot().catch((error) => { content.replaceChildren(); const box = document.createElement('div'); box.className = 'banner warning'; box.textContent = `Chưa mở được sổ thu chi. ${error.message} Hãy tải lại trang hoặc thử trình duyệt khác.`; content.append(box); });
+
 ```
 
 ### File: js/excel-import.js
@@ -920,6 +1541,7 @@ export function categoryOptions(group, selected = '', extra = []) {
 ```javascript
 import { CATEGORIES, GROUP_LABELS, localDate } from './finance-engine.js';
 import { validateRecord, uuid } from './db.js';
+import { suggestFlow } from './money-flow.js';
 
 export const MAX_IMPORT_ROWS = 10000;
 const blank = (x) => x === undefined || x === null || x === '';
@@ -1065,6 +1687,19 @@ export function detectOpeningBalance(sheet, multiplier = 1) {
   }
   return bank !== null && cash !== null ? { bank, cash } : null;
 }
+export function detectSideBalances(sheet, multiplier = 1) {
+  let liquidSavings = null, debt = null;
+  for (const row of sheet.rows.slice(0, 40)) for (let c = 0; c < row.length - 1; c++) {
+    const label = normalizeLabel(val(row[c]));
+    if (!['tietkiem', 'quyduphong', 'quydedanh', 'duno'].includes(label)) continue;
+    try {
+      const amount = parseMoney(row[c + 1], multiplier).amount;
+      if (amount < 0) continue;
+      if (label === 'duno') debt = amount; else liquidSavings = amount;
+    } catch { /* Side notes are suggestions only, never financial transactions. */ }
+  }
+  return { liquidSavings, debt };
+}
 export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {} } = {}) {
   if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };
   if (mapping.date === mapping.amount) return { rows: [], errors: [{ row: headerRow + 1, message: 'Cột ngày và cột số tiền phải khác nhau.' }], skipped: 0, categories: [] };
@@ -1090,7 +1725,8 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const rawType = normalizeLabel(val(get(cells, 'type')));
       let type = ['income', 'thu', 'khoanthu'].includes(rawType) ? 'income' : ['expense', 'chi', 'khoanchi'].includes(rawType) ? 'expense' : mode === 'income' ? 'income' : mode === 'expense' ? 'expense' : signed > 0 ? 'income' : 'expense';
       const rawGroup = String(val(get(cells, 'group')) ?? '').trim();
-      const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup));
+      const legacyGroups = { thunhap: 'income', thietyeu: 'needs', mongmuon: 'wants', tietkiemtrano: 'savings_debt' };
+      const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup)) || legacyGroups[normalizeLabel(rawGroup)];
       let group = type === 'income' ? 'income' : explicitGroup || categoryGroups[rawCategory || 'Chưa phân loại'] || suggestedGroup(rawCategory);
       if (type === 'expense' && group === 'income') group = 'needs';
       const category = rawCategory || (type === 'income' ? 'Thu nhập khác' : 'Chưa phân loại');
@@ -1099,22 +1735,25 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const warnings = [];
       if (!rawCategory) warnings.push('Chưa có danh mục trong tệp.');
       if (parsedMoney.cachedFormula) warnings.push('Dùng kết quả công thức đã lưu trong tệp.');
-      if (/(coc|hoantra|hoantien)/.test(normalizeLabel(note))) warnings.push('Có thể là tiền cọc hoặc khoản hoàn. Hiện vẫn tính vào dòng tiền; kiểm tra trước khi nhập.');
-      const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now() });
+      const kind = suggestFlow({ type, note });
+      if (kind !== 'regular') warnings.push(kind === 'deposit' ? 'Gợi ý tách tiền cọc khỏi chi sinh hoạt. Có thể đổi cách tính ở cột bên phải.' : 'Gợi ý tách tiền hoàn khỏi thu nhập mới. Sau khi nhập, chọn khoản cọc liên quan.');
+      const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: kind === 'regular' && type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now(), ...(kind !== 'regular' ? { flow: { kind } } : {}) });
       categories.add(rawCategory || 'Chưa phân loại');
       records.push({ row: r + 1, transaction, warnings, selected: true });
     } catch (error) { errors.push({ row: r + 1, message: error.message }); }
   }
   return { rows: records, errors, skipped, categories: [...categories] };
 }
+
 ```
 
 ### File: js/excel-ui.js
 
 ```javascript
 import { GROUP_LABELS, localDate } from './finance-engine.js';
-import { markExistingTransactions } from './db.js';
-import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns, detectOpeningBalance, excelDate } from './excel-import.js';
+import { markExistingTransactions, planImport } from './db.js';
+import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns, detectOpeningBalance, detectSideBalances, excelDate } from './excel-import.js';
+import { kindOf } from './money-flow.js';
 import { escapeHtml as E, formatVND, icon } from './ui.js';
 
 let libraryPromise;
@@ -1139,7 +1778,7 @@ export async function openExcelImporter({ getExisting, onImport }) {
     <p id="excel-error" class="form-error" role="alert" hidden></p><div id="excel-config"></div><div id="excel-preview"></div>
     <div class="dialog-actions excel-actions"><span id="excel-ready" class="helper-text"></span><button type="button" class="button secondary" data-excel-action="close">Để sau</button><button type="button" class="button primary" data-excel-action="commit" id="excel-commit" disabled>Nhập vào sổ thu chi</button></div>`;
   document.body.append(dialog); dialog.showModal();
-  const state = { sheets: [], sheetIndex: 0, result: null, options: null, excluded: new Set(), fixed: new Map(), skipDuplicates: true, allowPartial: false, importOpening: false, openingBalance: null, busy: false, page: 1, ready: [] };
+  const state = { sheets: [], sheetIndex: 0, result: null, options: null, excluded: new Set(), fixed: new Map(), kinds: new Map(), skipDuplicates: true, updateDetails: true, allowPartial: false, importOpening: false, importSavings: false, openingBalance: null, busy: false, page: 1, ready: [], incoming: [], updates: 0, liquidSavings: null };
   const errorBox = dialog.querySelector('#excel-error'), config = dialog.querySelector('#excel-config'), preview = dialog.querySelector('#excel-preview');
   const showError = (message) => { errorBox.textContent = message; errorBox.hidden = !message; };
   const currentSheet = () => state.sheets[state.sheetIndex];
@@ -1156,6 +1795,8 @@ export async function openExcelImporter({ getExisting, onImport }) {
   function rebuild() {
     state.result = buildImport(currentSheet(), state.options);
     for (const row of state.result.rows) if (state.fixed.has(row.row)) row.transaction.isFixedBill = state.fixed.get(row.row);
+    for (const row of state.result.rows) if (state.kinds.has(row.row)) { const kind = state.kinds.get(row.row); if (kind === 'regular') delete row.transaction.flow; else { row.transaction.flow = { kind }; row.transaction.isFixedBill = false; } }
+    for (const row of state.result.rows) if (row.transaction.type === 'income' || kindOf(row.transaction) !== 'regular') row.transaction.isFixedBill = false;
     state.page = 1; previewView();
   }
   function readiness() {
@@ -1163,11 +1804,15 @@ export async function openExcelImporter({ getExisting, onImport }) {
     const selected = result.rows.filter((r) => !state.excluded.has(r.row));
     const duplicate = markExistingTransactions(selected.map((r) => r.transaction), getExisting());
     selected.forEach((row, i) => { row.duplicate = duplicate[i]; });
-    state.ready = selected.filter((r) => !state.skipDuplicates || !r.duplicate).map((r) => r.transaction);
+    state.incoming = selected.map((r) => r.transaction);
+    const planned = planImport(state.incoming, getExisting(), { skipDuplicates: state.skipDuplicates, updateDetails: state.updateDetails });
+    state.ready = planned.accepted; state.updates = planned.updated;
     const foundOpening = detectOpeningBalance(currentSheet(), state.options.multiplier);
     state.openingBalance = state.importOpening && foundOpening ? { month: state.options.month, ...foundOpening } : null;
+    const side = detectSideBalances(currentSheet(), state.options.multiplier);
+    state.liquidSavings = state.importSavings ? side.liquidSavings : null;
     const importedIncome = state.ready.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0), importedExpense = state.ready.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense, foundOpening };
+    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense, foundOpening, side };
   }
   function previewView() {
     const result = state.result, totals = readiness(); if (!result || !totals) return;
@@ -1181,17 +1826,20 @@ export async function openExcelImporter({ getExisting, onImport }) {
     preview.innerHTML = `<div class="excel-summary"><div><span>Sẵn sàng nhập</span><strong>${state.ready.length} khoản</strong></div><div><span>Tổng thu được chọn</span><strong class="amount-income">${formatVND(totals.income)}</strong></div><div><span>Tổng chi được chọn</span><strong>${formatVND(totals.expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(totals.income - totals.expense)}</strong></div></div>
       ${totals.foundOpening ? `<aside class="banner excel-opening-banner"><label class="checkbox-label"><input id="excel-import-opening" type="checkbox" ${state.importOpening ? 'checked' : ''}>Lưu cả tiền có sẵn đầu tháng ${E(state.options.month)}</label><p>Ngân hàng: <strong>${formatVND(totals.foundOpening.bank)}</strong> · Tiền mặt: <strong>${formatVND(totals.foundOpening.cash)}</strong>. Tổng: <strong>${formatVND(totals.foundOpening.bank + totals.foundOpening.cash)}</strong>.</p><p class="fine-print">Chỉ chọn nếu đây là số dư đầu tháng. Lưu riêng để tính tiền còn lại, không cộng vào thu nhập mới và không cộng quỹ tiết kiệm. Sẽ thay số dư đầu tháng đang lưu cho tháng này.</p></aside>` : ''}
       <details class="excel-mapping"><summary>Phân nhóm theo danh mục của bạn</summary><p class="helper-text">Giữ nguyên tên danh mục trong Excel. Kiểm tra nhóm Thiết yếu / Mong muốn trước khi xác nhận; các khoản nhận tiền luôn được ghi là thu.</p><div class="excel-column-grid">${categoryGroups}</div></details>
-      <div class="excel-import-options"><label class="checkbox-label"><input id="excel-skip-duplicates" type="checkbox" ${state.skipDuplicates ? 'checked' : ''}>Bỏ qua khoản giống giao dịch đã có (${totals.duplicateCount})</label>${result.errors.length ? `<label class="checkbox-label"><input id="excel-allow-partial" type="checkbox" ${state.allowPartial ? 'checked' : ''}>Chỉ nhập các dòng hợp lệ; bỏ ${result.errors.length} dòng lỗi</label>` : ''}</div>
+      ${totals.side.liquidSavings !== null ? `<aside class="banner"><label class="checkbox-label"><input id="excel-import-savings" type="checkbox" ${state.importSavings ? 'checked' : ''}>Đối chiếu quỹ để dành: ${formatVND(totals.side.liquidSavings)}</label><p class="fine-print">Thay số dư quỹ đang lưu bằng số này, không tạo khoản thu chi. Chỉ chọn nếu đây là số quỹ thực tế hiện tại.</p></aside>` : ''}
+      ${totals.side.debt !== null ? `<p class="compact-note">Tệp có ghi dư nợ ${formatVND(totals.side.debt)}. Sau khi nhập, bạn có thể bổ sung lãi suất và mức trả trong Khoản cần lo; ứng dụng chưa tự tạo nợ.</p>` : ''}
+      <p class="fine-print">Cọc và tiền hoàn được gợi ý tách riêng ở cột “Cách tính”. Kiểm tra trước khi lưu; tiền ra vào vẫn giữ nguyên.</p>
+      <div class="excel-import-options"><label class="checkbox-label"><input id="excel-skip-duplicates" type="checkbox" ${state.skipDuplicates ? 'checked' : ''}>Bỏ qua khoản giống giao dịch đã có (${totals.duplicateCount})</label>${state.skipDuplicates ? `<label class="checkbox-label"><input id="excel-update-details" type="checkbox" ${state.updateDetails ? 'checked' : ''}>Bổ sung danh mục trống, loại cọc/hoàn cho khoản đã có (${state.updates} khoản)</label>` : ''}${result.errors.length ? `<label class="checkbox-label"><input id="excel-allow-partial" type="checkbox" ${state.allowPartial ? 'checked' : ''}>Chỉ nhập các dòng hợp lệ; bỏ ${result.errors.length} dòng lỗi</label>` : ''}</div>
       ${result.errors.length ? `<div class="form-error"><strong>${result.errors.length} dòng cần kiểm tra</strong><ul>${result.errors.slice(0, 10).map((r) => `<li>Dòng ${r.row}: ${E(r.message)}</li>`).join('')}</ul>${result.errors.length > 10 ? '<p>Chỉ hiển thị 10 lỗi đầu. Hãy kiểm tra lại tệp trước khi nhập.</p>' : ''}</div>` : ''}
-      ${result.rows.length ? `<div class="table-scroll excel-preview-table"><table><thead><tr><th><input id="excel-select-all" type="checkbox" aria-label="Chọn tất cả giao dịch Excel" ${result.rows.every((r) => !state.excluded.has(r.row)) ? 'checked' : ''}></th><th>Ngày</th><th>Nội dung & Lưu ý</th><th>Danh mục</th><th class="align-right">Số tiền</th><th>Hóa đơn<br>cố định</th></tr></thead><tbody>${result.rows.slice((state.page - 1) * perPage, state.page * perPage).map((r) => `<tr class="${r.duplicate && state.skipDuplicates && !state.excluded.has(r.row) ? 'excel-duplicate' : ''}"><td><input type="checkbox" data-excel-row="${r.row}" aria-label="Chọn dòng ${r.row}" ${state.excluded.has(r.row) ? '' : 'checked'}></td><td class="tabular">${E(r.transaction.date.split('-').reverse().join('/'))}<small class="excel-row-number">Dòng ${r.row}</small></td><td><span class="excel-note">${E(r.transaction.note)}</span>${r.warnings.map((w) => `<small class="excel-row-warning">${E(w)}</small>`).join('')}${r.duplicate && !state.excluded.has(r.row) ? '<small class="excel-row-warning">Giống giao dịch đã có trong sổ.</small>' : ''}</td><td>${E(r.transaction.category)}<small class="excel-row-number">${GROUP_LABELS[r.transaction.group]}</small></td><td class="align-right money ${r.transaction.type === 'income' ? 'amount-income' : ''}">${r.transaction.type === 'income' ? '+' : '−'}${formatVND(r.transaction.amount)}</td><td><input type="checkbox" data-excel-fixed="${r.row}" aria-label="Dòng ${r.row} là hóa đơn cố định" ${r.transaction.isFixedBill ? 'checked' : ''} ${r.transaction.type === 'income' ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div><div class="pagination"><span>${result.rows.length} dòng hợp lệ · ${result.skipped} dòng tổng hoặc bằng 0 được bỏ qua</span><div class="pagination-controls"><button type="button" class="button secondary small" data-excel-action="previous" ${state.page === 1 ? 'disabled' : ''}>Trước</button><span>${state.page}/${pages}</span><button type="button" class="button secondary small" data-excel-action="next" ${state.page === pages ? 'disabled' : ''}>Sau</button></div></div>` : '<div class="empty-state"><h3>Chưa có giao dịch để nhập</h3><p>Kiểm tra trang tính, dòng tiêu đề và cột ngày / số tiền ở trên.</p></div>'}
-      <p class="fine-print">Các ô tổng ngày, số dư ngân hàng, tiền mặt và quỹ tiết kiệm nằm ngoài cột giao dịch sẽ không được cộng lại. Khoản cọc chờ hoàn vẫn được giữ đúng dòng tiền; có thể bỏ chọn nếu cần xem riêng trước khi nhập.</p>`;
-    const button = dialog.querySelector('#excel-commit'); button.textContent = !state.ready.length && state.openingBalance ? 'Lưu số dư đầu tháng' : `Nhập ${state.ready.length} giao dịch vào sổ`;
-    button.disabled = state.busy || !state.ready.length && !state.openingBalance || result.errors.length > 0 && !state.allowPartial;
+      ${result.rows.length ? `<div class="table-scroll excel-preview-table"><table><thead><tr><th><input id="excel-select-all" type="checkbox" aria-label="Chọn tất cả giao dịch Excel" ${result.rows.every((r) => !state.excluded.has(r.row)) ? 'checked' : ''}></th><th>Ngày</th><th>Nội dung & Lưu ý</th><th>Danh mục</th><th class="align-right">Số tiền</th><th>Cách tính</th><th>Hóa đơn<br>cố định</th></tr></thead><tbody>${result.rows.slice((state.page - 1) * perPage, state.page * perPage).map((r) => `<tr class="${r.duplicate && state.skipDuplicates && !state.excluded.has(r.row) ? 'excel-duplicate' : ''}"><td><input type="checkbox" data-excel-row="${r.row}" aria-label="Chọn dòng ${r.row}" ${state.excluded.has(r.row) ? '' : 'checked'}></td><td class="tabular">${E(r.transaction.date.split('-').reverse().join('/'))}<small class="excel-row-number">Dòng ${r.row}</small></td><td><span class="excel-note">${E(r.transaction.note)}</span>${r.warnings.map((w) => `<small class="excel-row-warning">${E(w)}</small>`).join('')}${r.duplicate && !state.excluded.has(r.row) ? '<small class="excel-row-warning">Giống giao dịch đã có trong sổ.</small>' : ''}</td><td>${E(r.transaction.category)}<small class="excel-row-number">${GROUP_LABELS[r.transaction.group]}</small></td><td class="align-right money ${r.transaction.type === 'income' ? 'amount-income' : ''}">${r.transaction.type === 'income' ? '+' : '−'}${formatVND(r.transaction.amount)}</td><td><select class="excel-kind-select" data-excel-kind="${r.row}" aria-label="Cách tính dòng ${r.row}">${(r.transaction.type === 'income' ? [['regular','Thu nhập mới'],['refund','Tiền được hoàn']] : [['regular','Chi sinh hoạt'],['deposit','Tiền cọc']]).map(([kind,label]) => `<option value="${kind}" ${kindOf(r.transaction) === kind ? 'selected' : ''}>${label}</option>`).join('')}</select></td><td><input type="checkbox" data-excel-fixed="${r.row}" aria-label="Dòng ${r.row} là hóa đơn cố định" ${r.transaction.isFixedBill ? 'checked' : ''} ${r.transaction.type === 'income' || kindOf(r.transaction) !== 'regular' ? 'disabled' : ''}></td></tr>`).join('')}</tbody></table></div><div class="pagination"><span>${result.rows.length} dòng hợp lệ · ${result.skipped} dòng tổng hoặc bằng 0 được bỏ qua</span><div class="pagination-controls"><button type="button" class="button secondary small" data-excel-action="previous" ${state.page === 1 ? 'disabled' : ''}>Trước</button><span>${state.page}/${pages}</span><button type="button" class="button secondary small" data-excel-action="next" ${state.page === pages ? 'disabled' : ''}>Sau</button></div></div>` : '<div class="empty-state"><h3>Chưa có giao dịch để nhập</h3><p>Kiểm tra trang tính, dòng tiêu đề và cột ngày / số tiền ở trên.</p></div>'}
+      <p class="fine-print">Các ô tổng ngày và ghi chú số dư bên cạnh bảng không trở thành giao dịch. Quỹ và tiền đầu tháng chỉ được lưu khi bạn chọn ở trên.</p>`;
+    const button = dialog.querySelector('#excel-commit'); button.textContent = !state.ready.length ? state.updates ? `Cập nhật ${state.updates} khoản đã có` : state.openingBalance ? 'Lưu số dư đầu tháng' : state.liquidSavings !== null ? 'Lưu số dư quỹ' : 'Không có khoản mới' : `Nhập ${state.ready.length} giao dịch vào sổ`;
+    button.disabled = state.busy || !state.ready.length && !state.updates && !state.openingBalance && state.liquidSavings === null || result.errors.length > 0 && !state.allowPartial;
     dialog.querySelector('#excel-ready').textContent = `${result.rows.length - state.excluded.size} khoản được chọn${state.openingBalance ? ' · Lưu cả số dư đầu tháng' : ' · Dữ liệu cũ được giữ'}`;
   }
   function selectSheet(index) {
-    state.sheetIndex = index; state.excluded.clear(); state.fixed.clear();
-    state.importOpening = false; state.openingBalance = null;
+    state.sheetIndex = index; state.excluded.clear(); state.fixed.clear(); state.kinds.clear();
+    state.importOpening = false; state.importSavings = false; state.liquidSavings = null; state.openingBalance = null;
     const sheet = currentSheet();
     const hasNegative = sheet.rows.slice(sheet.header.index + 1).some((row) => { try { return parseMoney(row[sheet.header.mapping.amount]).amount < 0; } catch { return false; } });
     const firstDate = sheet.rows.slice(sheet.header.index + 1).map((row) => excelDate(row[sheet.header.mapping.date], localDate().slice(0, 7), sheet.date1904)).find(Boolean);
@@ -1226,12 +1874,15 @@ export async function openExcelImporter({ getExisting, onImport }) {
     if (el.id === 'excel-skip-duplicates') state.skipDuplicates = el.checked;
     if (el.id === 'excel-allow-partial') state.allowPartial = el.checked;
     if (el.id === 'excel-import-opening') state.importOpening = el.checked;
+    if (el.id === 'excel-import-savings') state.importSavings = el.checked;
+    if (el.id === 'excel-update-details') state.updateDetails = el.checked;
     if (el.id === 'excel-select-all') { if (el.checked) state.excluded.clear(); else state.result.rows.forEach((r) => state.excluded.add(r.row)); }
     if (el.dataset.excelColumn) { state.options.mapping[el.dataset.excelColumn] = Number(el.value); state.excluded.clear(); }
     if (el.dataset.excelCategory) state.options.categoryGroups[el.dataset.excelCategory] = el.value;
     if (el.dataset.excelRow) { if (el.checked) state.excluded.delete(Number(el.dataset.excelRow)); else state.excluded.add(Number(el.dataset.excelRow)); }
     if (el.dataset.excelFixed) state.fixed.set(Number(el.dataset.excelFixed), el.checked);
-    if (el.dataset.excelRow || el.id === 'excel-skip-duplicates' || el.id === 'excel-allow-partial' || el.id === 'excel-select-all' || el.id === 'excel-import-opening') previewView(); else rebuild();
+    if (el.dataset.excelKind) state.kinds.set(Number(el.dataset.excelKind), el.value);
+    if (el.dataset.excelRow || el.id === 'excel-skip-duplicates' || el.id === 'excel-allow-partial' || el.id === 'excel-select-all' || el.id === 'excel-import-opening' || el.id === 'excel-import-savings' || el.id === 'excel-update-details') previewView(); else rebuild();
   });
   dialog.addEventListener('cancel', (event) => { if (state.busy) event.preventDefault(); });
   dialog.addEventListener('click', async (event) => {
@@ -1253,271 +1904,980 @@ export async function openExcelImporter({ getExisting, onImport }) {
     }
     if (action === 'commit') {
       readiness();
-      if (!state.ready.length && !state.openingBalance || state.result.errors.length && !state.allowPartial) return;
+      if (!state.ready.length && !state.updates && !state.openingBalance && state.liquidSavings === null || state.result.errors.length && !state.allowPartial) return;
       state.busy = true; dialog.querySelector('#excel-commit').disabled = true; showError('');
       try {
-        const result = await onImport(state.ready, { skipDuplicates: state.skipDuplicates, openingBalance: state.openingBalance });
+        const result = await onImport(state.incoming, { skipDuplicates: state.skipDuplicates, updateDetails: state.updateDetails, openingBalance: state.openingBalance, liquidSavings: state.liquidSavings, debtHint: detectSideBalances(currentSheet(), state.options.multiplier).debt });
         if (result) dialog.close();
       } catch (error) { showError(error.message || 'Chưa nhập được. Dữ liệu cũ được giữ nguyên.'); }
       finally { state.busy = false; if (dialog.open) previewView(); }
     }
   });
 }
+
 ```
 
-### File: js/app.js
+### File: sw.js
 
 ```javascript
-import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, simulateDebtPayoff } from './finance-engine.js';
-import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions } from './db.js';
-import { createSeedData } from './seed-data.js';
-import { fillIcons, icon, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions } from './ui.js';
-import { renderCharts, destroyCharts } from './charts.js';
-import { openExcelImporter } from './excel-ui.js';
-
-const tabs = { overview: 'Tổng quan', transactions: 'Sổ thu chi', analysis: 'Phân tích', planning: 'Nợ & Quỹ dự phòng', settings: 'Sao lưu & Cài đặt' };
-const state = { data: null, analysis: null, storage: null, tab: 'overview', page: 1, ledgerView: 'daily', filters: { month: localDate().slice(0, 7), group: '', category: '', search: '' }, extraPayment: 1000000, busy: false, installDismissed: false };
-const content = document.getElementById('app-content');
-let toastTimer, installPrompt;
-try { state.installDismissed = sessionStorage.getItem('vung-install-dismissed') === '1'; } catch { /* Optional preference, unrelated to saved financial data. */ }
-
-function toast(message, error = false) {
-  const el = document.getElementById('toast'); clearTimeout(toastTimer); el.textContent = message; el.classList.toggle('error', error); el.hidden = false;
-  toastTimer = setTimeout(() => { el.hidden = true; }, error ? 7000 : 3500);
-}
-async function confirmChange(title, description, label = 'Xác nhận', danger = false) {
-  const dialog = document.getElementById('confirm-dialog');
-  document.getElementById('confirm-title').textContent = title; document.getElementById('confirm-description').textContent = description;
-  const button = document.getElementById('confirm-button'); button.textContent = label; button.className = `button ${danger ? 'danger' : 'primary'}`;
-  dialog.returnValue = ''; dialog.showModal();
-  return new Promise((resolve) => dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true }));
-}
-function applyTheme() {
-  document.documentElement.dataset.theme = state.data.profile.theme;
-  document.getElementById('theme-toggle').innerHTML = `${icon(state.data.profile.theme === 'dark' ? 'sun' : 'moon')}<span>${state.data.profile.theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}</span>`;
-  document.querySelector('meta[name="theme-color"]').content = state.data.profile.theme === 'dark' ? '#192a23' : '#0f6f50';
-}
-function render() {
-  if (!state.data) return;
-  state.analysis = analyzeFinance(state.data);
-  const a = state.analysis;
-  applyTheme(); destroyCharts();
-  document.querySelectorAll('[data-tab]').forEach((el) => { const active = el.dataset.tab === state.tab; el.classList.toggle('active', active); if (active) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
-  document.getElementById('breadcrumb-title').textContent = tabs[state.tab];
-  document.title = `${tabs[state.tab]} · Vững Tài Chính`;
-  const alerts = a.anomalies.length + Number(a.payday.warning) + Number(a.lifestyle.warning), count = document.getElementById('nav-alert-count');
-  count.textContent = alerts; count.hidden = !alerts;
-  const warning = document.getElementById('storage-warning'); warning.textContent = state.storage.message; warning.hidden = !state.storage.message;
-  document.getElementById('chart-warning').hidden = !!globalThis.Chart;
-  if (state.tab === 'overview') content.innerHTML = renderOverview(state.data, a, state.installDismissed);
-  if (state.tab === 'transactions') {
-    const filtered = filteredTransactions(state.data, state.filters);
-    const pages = state.ledgerView === 'daily' ? Math.ceil(new Set(filtered.map((t) => t.date)).size / 10) : Math.ceil(filtered.length / 15);
-    state.page = Math.min(state.page, Math.max(1, pages));
-    content.innerHTML = renderTransactions(state.data, a, state.filters, state.page, state.ledgerView);
-  }
-  if (state.tab === 'analysis') content.innerHTML = renderAnalysis(state.data, a);
-  if (state.tab === 'planning') { content.innerHTML = renderPlanning(state.data, a, state.extraPayment); updateSimulation(); }
-  if (state.tab === 'settings') content.innerHTML = renderSettings(state.data, a, state.storage);
-  renderCharts(state.tab, state.data, a);
-}
-async function refresh() { state.data = await readData(); state.storage = await storageStatus(); render(); }
-async function mutation(work, success = '') {
-  if (state.busy) return;
-  state.busy = true;
-  const submitters = [...document.querySelectorAll('dialog[open] button[type="submit"], #profile-form button[type="submit"]')];
-  submitters.forEach((b) => { b.disabled = true; });
-  try { await work(); await refresh(); if (success) toast(success); return true; }
-  catch (error) { toast(error.message || 'Chưa thể lưu thay đổi. Hãy thử lại.', true); return false; }
-  finally { state.busy = false; submitters.forEach((b) => { b.disabled = false; }); }
-}
-function navigate() {
-  const tab = location.hash.slice(1) || 'overview'; state.tab = Object.hasOwn(tabs, tab) ? tab : 'overview'; render();
-}
-function transactionType(type) {
-  const form = document.getElementById('transaction-form'); form.elements.type.value = type;
-  form.querySelectorAll('[data-tx-type]').forEach((el) => { el.classList.toggle('selected', el.dataset.txType === type); el.setAttribute('aria-pressed', el.dataset.txType === type); });
-  const group = form.elements.group;
-  group.innerHTML = (type === 'income' ? ['income'] : ['needs', 'wants', 'savings_debt']).map((k) => `<option value="${k}">${GROUP_LABELS[k]}</option>`).join('');
-  form.elements.isFixedBill.disabled = type === 'income'; if (type === 'income') form.elements.isFixedBill.checked = false;
-  updateCategories(form);
-}
-function updateCategories(form, selected = '') {
-  const group = form.elements.group.value;
-  form.elements.category.innerHTML = categoryOptions(group, selected, state.data?.transactions.filter((t) => t.group === group).map((t) => t.category));
-}
-function fillForm(form, record) {
-  for (const [key, value] of Object.entries(record)) {
-    const el = form.elements.namedItem(key); if (!el) continue;
-    if (el.type === 'checkbox') el.checked = value; else el.value = value;
-  }
-}
-function openTransaction(record) {
-  const form = document.getElementById('transaction-form'); form.reset(); transactionType(record?.type || 'expense');
-  form.elements.id.value = record?.id || ''; form.elements.date.value = localDate();
-  if (record) { form.elements.group.value = record.group; updateCategories(form, record.category); fillForm(form, record); }
-  document.getElementById('transaction-error').hidden = true;
-  document.getElementById('transaction-dialog-title').textContent = record ? 'Chỉnh lại giao dịch' : 'Ghi một giao dịch';
-  document.getElementById('transaction-dialog').showModal(); form.elements.amount.focus();
-}
-function openBill(record) {
-  const form = document.getElementById('bill-form'); form.reset(); form.elements.id.value = '';
-  if (record) form.elements.group.value = record.group;
-  updateCategories(form, record?.category); if (record) fillForm(form, record);
-  document.getElementById('bill-error').hidden = true; document.getElementById('bill-dialog').showModal();
-}
-function openDebt(record) {
-  const form = document.getElementById('debt-form'); form.reset(); form.elements.id.value = '';
-  if (record) fillForm(form, record); document.getElementById('debt-error').hidden = true;
-  document.getElementById('debt-dialog').showModal();
-}
-function download(name, contentValue, type) {
-  const blob = new Blob([contentValue], { type }), url = URL.createObjectURL(blob), link = document.createElement('a');
-  link.href = url; link.download = name; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
-}
-function updateSimulation() {
-  const element = document.getElementById('debt-simulation');
-  if (element) element.innerHTML = renderDebtSimulation(simulateDebtPayoff(state.data.debts, state.extraPayment));
-}
-async function install() {
-  if (installPrompt) { await installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; }
-  else document.getElementById('install-dialog').showModal();
-}
-async function handleAction(action, id) {
-  const find = (store) => state.data[store].find((x) => x.id === id);
-  if (action === 'add-transaction') openTransaction();
-  else if (action === 'import-excel') {
-    await openExcelImporter({
-      getExisting: () => state.data.transactions,
-      onImport: async (records, options) => {
-        let receipt;
-        const ok = await mutation(async () => { receipt = await appendTransactions(records, options); });
-        if (ok) {
-          state.filters = { month: options.openingBalance?.month || records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
-          state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
-          toast(`${receipt.imported ? `Đã nhập ${receipt.imported} giao dịch` : 'Không thêm giao dịch trùng'}${receipt.skipped ? `, bỏ qua ${receipt.skipped} khoản đã có` : ''}${options.openingBalance ? '. Đã lưu tiền đầu tháng để tính số dư' : '. Dữ liệu cũ được giữ nguyên'}.`);
-        }
-        return ok;
-      },
-    });
-  }
-  else if (action === 'view-daily' || action === 'view-table') { state.ledgerView = action === 'view-daily' ? 'daily' : 'table'; state.page = 1; render(); }
-  else if (action === 'edit-transaction') { const t = find('transactions'); if (t) openTransaction(t); }
-  else if (action === 'add-bill') openBill();
-  else if (action === 'edit-bill') { const b = find('recurring_bills'); if (b) openBill(b); }
-  else if (action === 'add-debt') openDebt();
-  else if (action === 'edit-debt') { const d = find('debts'); if (d) openDebt(d); }
-  else if (action.startsWith('delete-')) {
-    const store = action === 'delete-transaction' ? 'transactions' : action === 'delete-bill' ? 'recurring_bills' : 'debts';
-    if (!find(store)) return;
-    if (await confirmChange('Xóa mục này?', 'Thao tác sẽ xóa mục đã chọn và tính lại kế hoạch của bạn.', 'Xóa mục này', true)) await mutation(() => deleteRecord(store, id), 'Đã xóa và cập nhật kế hoạch.');
-  } else if (action === 'pay-bill') {
-    const b = state.analysis.bills.find((x) => x.id === id);
-    if (!b || b.paid) return;
-    openTransaction({ id: '', type: 'expense', date: localDate(), amount: b.remaining, group: b.group, category: b.category, isFixedBill: true, note: `Thanh toán: ${b.name}` });
-  } else if (action === 'theme') {
-    await mutation(() => putRecord('profile', { ...state.data.profile, theme: state.data.profile.theme === 'dark' ? 'light' : 'dark' }));
-  } else if (action === 'seed-data') {
-    const proceed = !state.data.transactions.length && !state.data.debts.length && !state.data.recurring_bills.length && !state.data.profile.liquidSavings || await confirmChange('Thử một bức tranh tài chính mẫu?', 'Dữ liệu mẫu sẽ thay thế toàn bộ sổ hiện tại. Hãy sao lưu trước nếu bạn muốn giữ các khoản đã ghi.', 'Nạp dữ liệu mẫu');
-    if (proceed) await mutation(() => replaceData(createSeedData()), 'Đã nạp dữ liệu minh họa. Hãy thử xem Tổng quan và Phân tích.');
-  } else if (action === 'clear-data') {
-    if (await confirmChange('Bắt đầu một sổ hoàn toàn mới?', 'Toàn bộ giao dịch, hóa đơn, nợ, quỹ dự phòng và cài đặt sẽ bị xóa. Chỉ khôi phục được nếu bạn đã giữ tệp sao lưu.', 'Xóa toàn bộ', true)) {
-      await mutation(() => replaceData({ transactions: [], recurring_bills: [], debts: [], profile: { ...DEFAULT_PROFILE } }), 'Sổ đã được làm mới. Bắt đầu từ khoản đầu tiên nhé.');
+const CACHE = 'vung-tai-chinh-v4-everyday';
+const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/db.js', './js/finance-engine.js', './js/money-flow.js', './js/charts.js', './js/seed-data.js', './js/excel-import.js', './js/excel-ui.js', './vendor/xlsx.full.min.js', './manifest.webmanifest', './icon.svg'];
+const CHART_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+self.addEventListener('install', (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(STATIC);
+    try { const response = await fetch(CHART_URL, { mode: 'cors' }); if (response.ok) await cache.put(CHART_URL, response); } catch { /* The application still works without charts. */ }
+    await self.skipWaiting();
+  })());
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => { for (const name of await caches.keys()) if (name.startsWith('vung-tai-chinh-') && name !== CACHE) await caches.delete(name); await self.clients.claim(); })());
+});
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin && event.request.url !== CHART_URL) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    if (event.request.url === CHART_URL) {
+      const saved = await cache.match(event.request);
+      if (saved) return saved;
+      try { const response = await fetch(event.request); if (response.ok) await cache.put(event.request, response.clone()); return response; } catch { return Response.error(); }
     }
-  } else if (action === 'backup') {
-    await mutation(async () => {
-      const timestamp = Date.now(), profile = { ...state.data.profile, lastBackupAt: timestamp };
-      const json = createBackup({ ...state.data, profile }, timestamp);
-      download(`vung-tai-chinh-${localDate()}.json`, json, 'application/json;charset=utf-8');
-      await putRecord('profile', profile);
-    }, 'Đã tạo tệp sao lưu. Kiểm tra thư mục tải xuống trên máy bạn.');
-  } else if (action === 'restore') document.getElementById('restore-file').click();
-  else if (action === 'export-csv') { download(`so-thu-chi-${localDate()}.csv`, createCSV(state.data.transactions), 'text/csv;charset=utf-8'); toast('Đã xuất báo cáo CSV có đầy đủ dấu tiếng Việt.'); }
-  else if (action === 'persist') { state.storage = await storageStatus(true); render(); toast(state.storage.persistent ? 'Đã được cấp lưu trữ bền vững.' : 'Trình duyệt chưa cấp quyền. Hãy giữ bản sao lưu định kỳ.'); }
-  else if (action === 'install') await install();
-  else if (action === 'dismiss-install') { state.installDismissed = true; try { sessionStorage.setItem('vung-install-dismissed', '1'); } catch { /* Nonessential preference. */ } render(); }
-  else if (action === 'prev-page') { state.page = Math.max(1, state.page - 1); render(); }
-  else if (action === 'next-page') { state.page++; render(); }
+    try {
+      const response = await fetch(event.request);
+      if (response.ok) await cache.put(event.request, response.clone());
+      return response;
+    } catch {
+      return await cache.match(event.request) || (event.request.mode === 'navigate' ? await cache.match('./index.html') : null) || new Response('Tài nguyên chưa có khi ngoại tuyến.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    }
+  })());
+});
+
+```
+
+### File: manifest.webmanifest
+
+```json
+{
+  "id": "./",
+  "name": "Vững Tài Chính",
+  "short_name": "Vững",
+  "description": "Tiền rõ ràng. Sống nhẹ nhàng.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f6",
+  "theme_color": "#0f6f50",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }
 
-document.addEventListener('click', (event) => {
-  const close = event.target.closest('[data-close-dialog]'); if (close) { close.closest('dialog').close(); return; }
-  const quick = event.target.closest('[data-amount]'); if (quick) { document.getElementById('transaction-form').elements.amount.value = quick.dataset.amount; return; }
-  const type = event.target.closest('[data-tx-type]'); if (type) { transactionType(type.dataset.txType); return; }
-  const action = event.target.closest('[data-action]'); if (action) handleAction(action.dataset.action, action.dataset.id).catch((e) => toast(e.message, true));
-});
-document.getElementById('theme-toggle').addEventListener('click', () => handleAction('theme'));
-document.addEventListener('change', (event) => {
-  const el = event.target;
-  if (el.matches('#transaction-form [name=group], #bill-form [name=group]')) updateCategories(el.form);
-  const filters = { 'filter-month': 'month', 'filter-group': 'group', 'filter-category': 'category' };
-  if (Object.hasOwn(filters, el.id)) { state.filters[filters[el.id]] = el.value; if (el.id === 'filter-group') state.filters.category = ''; state.page = 1; render(); }
-});
-document.addEventListener('input', (event) => {
-  const el = event.target;
-  if (el.id === 'filter-search') {
-    state.filters.search = el.value; state.page = 1;
-    const template = document.createElement('template');
-    template.innerHTML = renderTransactions(state.data, state.analysis, state.filters, state.page, state.ledgerView);
-    // Preserve the actual search input, caret, and IME composition while typing.
-    document.getElementById('ledger-results').replaceChildren(...template.content.querySelector('#ledger-results').childNodes);
-  }
-  if (el.id === 'extra-payment') { state.extraPayment = Math.max(0, Math.round(Number(el.value) || 0)); updateSimulation(); }
-});
-document.addEventListener('submit', async (event) => {
-  const form = event.target;
-  // Named form controls can shadow native properties (including an input named "id").
-  const formId = form.getAttribute('id');
-  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form', 'opening-balance-form'].includes(formId)) return;
-  event.preventDefault();
-  const values = new FormData(form), value = (key) => String(values.get(key) ?? ''), amount = (key) => Math.round(Number(value(key)));
-  if (formId === 'opening-balance-form') {
-    await mutation(() => putRecord('profile', { ...state.data.profile, openingBalances: { ...(state.data.profile.openingBalances || {}), [value('month')]: { bank: amount('bank'), cash: amount('cash') } } }), 'Đã lưu tiền có sẵn đầu tháng, tách riêng với thu nhập mới.'); return;
-  }
-  if (formId === 'profile-form') {
-    await mutation(() => putRecord('profile', { ...state.data.profile, liquidSavings: amount('liquidSavings'), paydayDay: amount('paydayDay'), incomeModeOverride: value('incomeModeOverride') }), 'Đã cập nhật quỹ dự phòng và kế hoạch.'); return;
-  }
-  let store, record;
-  const id = value('id') || uuid();
-  if (formId === 'transaction-form') {
-    store = 'transactions'; const existing = state.data.transactions.find((t) => t.id === id);
-    record = { id, type: value('type'), date: value('date'), amount: amount('amount'), group: value('group'), category: value('category'), isFixedBill: values.get('isFixedBill') === 'on', note: value('note'), createdAt: existing?.createdAt || Date.now() };
-  } else if (formId === 'bill-form') {
-    store = 'recurring_bills'; record = { id, name: value('name'), amount: amount('amount'), dueDay: amount('dueDay'), group: value('group'), category: value('category'), active: values.get('active') === 'on' };
-  } else {
-    store = 'debts'; record = { id, name: value('name'), principal: amount('principal'), apr: Number(value('apr')), minMonthlyPayment: amount('minMonthlyPayment'), isHighInterest: Number(value('apr')) > 10 };
-  }
-  const error = document.getElementById(formId.replace('-form', '-error')); error.hidden = true;
-  const ok = await mutation(() => putRecord(store, record), 'Đã lưu. Các chỉ số đã được cập nhật.');
-  if (ok) form.closest('dialog').close(); else { error.textContent = 'Chưa thể lưu. Kiểm tra các trường và thử lại; dữ liệu cũ vẫn được giữ.'; error.hidden = false; }
-});
-document.getElementById('restore-file').addEventListener('change', async (event) => {
-  const file = event.target.files[0]; event.target.value = ''; if (!file) return;
-  try {
-    if (file.size > 20 * 1024 * 1024) throw new Error('Tệp sao lưu quá lớn (tối đa 20 MB).');
-    const parsed = JSON.parse(await file.text()), clean = validateBackup(parsed);
-    if (await confirmChange('Khôi phục từ bản sao lưu?', `Tệp chứa ${clean.transactions.length} giao dịch, ${clean.recurring_bills.length} hóa đơn và ${clean.debts.length} khoản nợ. Toàn bộ dữ liệu hiện có sẽ được thay thế.`, 'Khôi phục dữ liệu')) await mutation(() => replaceData(clean), 'Đã khôi phục đầy đủ dữ liệu.');
-  } catch (error) { toast(error instanceof SyntaxError ? 'Tệp JSON không đọc được. Hãy chọn đúng tệp sao lưu.' : error.message, true); }
-});
-window.addEventListener('hashchange', navigate);
-window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; });
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible' || !state.data || document.querySelector('dialog[open]') || state.busy) return;
-  try {
-    const fresh = await readData();
-    if (JSON.stringify(fresh) === JSON.stringify(state.data) && state.analysis?.today === localDate()) return;
-    if (document.querySelector('dialog[open]') || state.busy || document.activeElement?.matches('input, textarea, select')) return;
-    state.data = fresh; state.storage = await storageStatus(); render();
-  } catch (error) { toast(error.message, true); }
-});
-async function boot() {
-  fillIcons();
-  document.getElementById('today-label').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  state.storage = await initDB(); state.data = await readData(); navigate();
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => { toast('Chưa bật được chế độ ngoại tuyến. Bạn vẫn có thể dùng khi có mạng.'); });
-  setInterval(() => { if (state.analysis?.today !== localDate() && !document.querySelector('dialog[open]')) { state.filters.month = localDate().slice(0, 7); refresh().catch((e) => toast(e.message, true)); } }, 30000);
+```
+
+### File: icon.svg
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="44" fill="#0f6f50"/><path d="M48 136V88h24v48m24 0V64h24v72m24 0V40" fill="none" stroke="#c6f5ad" stroke-width="14" stroke-linecap="round"/><path d="m45 55 28-15" stroke="#c6f5ad" stroke-width="10" stroke-linecap="round"/></svg>
+
+```
+
+### File: package.json
+
+```json
+{
+  "name": "vung-tai-chinh",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test tests/*.test.js" },
+  "description": "Sổ thu chi cá nhân tiếng Việt, không cần máy chủ hay bước biên dịch"
 }
-boot().catch((error) => { content.replaceChildren(); const box = document.createElement('div'); box.className = 'banner warning'; box.textContent = `Chưa mở được sổ thu chi. ${error.message} Hãy tải lại trang hoặc thử trình duyệt khác.`; content.append(box); });
+
+```
+
+### File: .gitignore
+
+```
+dist/
+.openai/
+node_modules/
+test-results/
+*.xlsx
+*.xls
+*.csv
+vung-tai-chinh-*.json
+
+```
+
+### File: README.md
+
+````markdown
+# Vững Tài Chính
+
+Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên laptop. Chạy trực tiếp bằng HTML, CSS và JavaScript; không cần máy chủ riêng, tài khoản hay bước biên dịch.
+
+**Mở ứng dụng:** https://bao-hann.github.io/moneywall/
+
+## Bắt đầu
+
+1. Mở ứng dụng trên laptop, vào **Sổ thu chi → Nhập Excel** để mang ghi chép đang dùng vào sổ.
+2. Kiểm tra cách tính cọc/tiền hoàn và chọn lưu số dư ngân hàng, tiền mặt đầu tháng nếu đúng. Có thể đối chiếu quỹ để dành riêng.
+3. Ở **Tổng quan**, xem tiền còn dùng, tiền đã chi ra và gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
+4. Ở **Phân tích**, bấm một danh mục để xem đúng các khoản sinh hoạt tạo nên tổng đó. Xu hướng và công thức nằm trong phần mở rộng.
+5. Ở **Khoản cần lo**, thêm hóa đơn, nợ hoặc quỹ. Ghi thanh toán, chuyển quỹ và trả nợ tại đây sẽ cập nhật cùng sổ thu chi.
+6. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
+
+Không tự nạp dữ liệu mẫu. Mục thử mẫu trong Cài đặt luôn hỏi trước khi thay sổ.
+
+## Cách ghi quen thuộc
+
+Tên khoản là nội dung chính, danh mục nằm ngay dưới. Biểu mẫu gợi lại danh mục và nội dung từng dùng, cho phép nhập danh mục mới. Nhóm dùng cho phân tích nằm trong phần mở rộng. Sổ mặc định gom theo ngày, cộng riêng thu, chi và chênh lệch; có thể chuyển sang bảng toàn bộ.
+
+Tháng được chọn thống nhất giữa Tổng quan, Phân tích và Sổ thu chi. Lịch sử chuyển quỹ/trả nợ có thể xem mọi tháng. Bộ lọc từ phân tích được ghi rõ và có nút bỏ lọc.
+
+## Các khoản nối với nhau
+
+| Việc ghi | Cập nhật cùng lúc |
+| --- | --- |
+| Thu hoặc chi thường | Sổ, số dư, danh mục và phân tích |
+| Tiền cọc | Tiền chi ra và số cọc đang chờ; tách khỏi chi sinh hoạt |
+| Nhận hoàn cọc | Tiền nhận và số còn chờ của khoản cọc đã chọn; tách khỏi thu nhập mới |
+| Chuyển vào/rút khỏi quỹ | Sổ và số dư quỹ; không tính thành thu nhập hay chi sinh hoạt |
+| Trả nợ | Toàn bộ tiền chi trong sổ; giảm nợ đúng phần gốc được nhập, phần còn lại là lãi/phí |
+| Thanh toán hóa đơn | Một khoản chi trong sổ và trạng thái đã trả/mức còn thiếu |
+| Dùng khoản Excel đã ghi để trả hóa đơn | Gắn chính khoản có sẵn, giữ nguyên số lượng giao dịch và tiền ra vào |
+| Sửa/xóa chuyển quỹ hoặc trả nợ | Hoàn lại tác động cũ rồi áp dụng thay đổi; lưu nguyên vẹn hoặc hủy toàn bộ |
+
+Không cho hoàn vượt tiền cọc, rút vượt quỹ hoặc trả gốc vượt nợ. Muốn bỏ khoản cọc đã gắn tiền hoàn, cần gỡ liên kết tại khoản hoàn trước. Khoản nợ có lịch sử trả được giữ lại để truy vết; trả hết thì số nợ về 0. Các lần chuyển quỹ/trả nợ chỉ ghi khi đã thực hiện, không đặt ngày tương lai.
+
+**Tạm chia mỗi ngày** dùng tiền hiện còn, trừ hóa đơn chưa trả và mức trả nợ tháng này còn thiếu, rồi chia số ngày còn lại (kể cả hôm nay). Không dự đoán khoản thu tương lai, không bao gồm chi phí chưa ghi hoặc chưa khai báo. Đây là cách chia tiền hiện có, tách với kế hoạch theo thu nhập trong phần phân tích mở rộng.
+
+## Nhập sổ Excel đang dùng
+
+Mở **Sổ thu chi → Nhập Excel** hoặc **Sao lưu & Cài đặt → Chọn tệp Excel**. Ứng dụng đọc `.xlsx`, `.xls` và `.csv` ngay trên laptop, tối đa 10 MB và 10.000 dòng giao dịch mỗi lần.
+
+1. Chọn tệp, sau đó kiểm tra trang tính và dòng tiêu đề được nhận diện. Có thể đổi cột nếu tệp của bạn khác mẫu.
+2. Kiểm tra cách ghi tiền: âm là chi/dương là thu, tất cả là chi, hoặc tất cả là thu. Có thể đổi đơn vị từ nghìn/triệu đồng sang đồng.
+3. Xem trước tổng thu, tổng chi và từng khoản. Ngày trong ô gộp được nhận tự động; ô ngày bỏ trống ngoài vùng gộp chỉ được lấy ngày dòng trước khi bạn bật tùy chọn đó.
+4. Giữ nguyên danh mục từ Excel, chọn lại nhóm Thiết yếu/Mong muốn/Tiết kiệm nếu cần, đánh dấu hóa đơn cố định và bỏ chọn khoản không muốn nhập.
+5. Bấm **Nhập ... giao dịch vào sổ**. Chỉ thêm giao dịch, không xóa sổ hay tự tạo khoản nợ. Có thể bổ sung danh mục trống và cách tính cọc/hoàn của khoản đã có, có hiển thị số khoản cập nhật trước khi lưu. Nếu chọn lưu tiền đầu tháng, ứng dụng lưu riêng số dư của tháng đó.
+
+Một bảng có hai cột cùng tên “Danh mục” được hiểu là tên khoản ở cột đầu, phân loại ở cột cuối. Cột tổng ngày và các ô số dư bên cạnh không được nhập lại thành giao dịch. Các phép cộng/trừ/nhân/chia đơn giản trong ô số tiền được tính bằng bộ phân tích giới hạn; công thức khác chỉ dùng kết quả số đã lưu trong tệp, có lưu ý ở bản xem trước. Ứng dụng không chạy mã hoặc hàm từ tệp Excel.
+
+Các dòng lỗi phải được sửa trong tệp, hoặc bạn chủ động cho phép chỉ nhập dòng hợp lệ. Các khoản giống sổ hiện có được bỏ qua mặc định, có đối chiếu số lần xuất hiện để giữ đúng những lần mua trùng nhau thực sự. Có thể bỏ tùy chọn này nếu cần nhập cả khoản giống nhau.
+
+Sổ thu chi có hai cách xem: **Theo từng ngày** và **Bảng tất cả khoản**. Theo từng ngày hiển thị tổng thu, tổng chi và chênh lệch riêng, cộng từ từng giao dịch để tránh lỗi vùng tính tổng trong bảng tính.
+
+Thư viện đọc Excel được đóng gói trong `vendor/`, không cần gọi dịch vụ để xử lý tệp. Xem [thông tin giấy phép](./vendor/NOTICE.md). Không đưa sổ Excel cá nhân hoặc dữ liệu thật vào kho GitHub.
+
+## Tiền có sẵn đầu tháng và số tiền còn lại
+
+Sổ thu chi có phần **Tiền còn lại trong tháng**. Điền tiền ngân hàng và tiền mặt ở đầu tháng rồi lưu, hoặc trong phần nhập Excel chọn **Lưu cả tiền có sẵn đầu tháng** khi ứng dụng nhận được hai ô ngân hàng và tiền mặt riêng.
+
+Công thức: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Các khoản thu mới − Các khoản chi đã ghi**. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, không tự coi là thu nhập và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
+
+Không thể tách chính xác số dư ngân hàng hiện tại và tiền mặt hiện tại nếu giao dịch chưa ghi phương thức thanh toán; ứng dụng chỉ hiển thị tổng hai nguồn tiền sau thu chi. Không tự chuyển số cuối tháng sang đầu tháng kế tiếp khi chưa đối chiếu; bạn có thể cập nhật riêng từng tháng. Tệp JSON cũ vẫn khôi phục được khi chưa có trường số dư đầu tháng.
+
+## Dữ liệu được lưu ở đâu?
+
+Mọi giao dịch, hóa đơn, khoản nợ và cài đặt được lưu bằng IndexedDB trong trình duyệt trên máy đang dùng. Ứng dụng không có máy chủ nhận các dữ liệu này. Mỗi trình duyệt và mỗi địa chỉ web có một sổ riêng, không tự đồng bộ giữa các thiết bị.
+
+Đóng và mở lại trang vẫn còn dữ liệu nếu trình duyệt cho phép lưu. Khi IndexedDB bị chặn, ứng dụng hiện cảnh báo dùng bộ nhớ tạm; hãy xuất JSON trước khi đóng thẻ. Quyền lưu trữ bền vững được yêu cầu tự động nhưng trình duyệt quyết định có cấp hay không.
+
+JSON giữ đủ bốn nhóm dữ liệu để khôi phục. CSV dùng UTF-8 BOM, giữ tiếng Việt khi mở Excel và vô hiệu hóa ghi chú có thể bị bảng tính hiểu là công thức. **Không lưu dữ liệu thật hoặc tệp sao lưu cá nhân vào kho mã nguồn công khai này.**
+
+## Năm khu vực
+
+| Khu vực | Chức năng |
+| --- | --- |
+| Tổng quan | Tiền còn dùng, tiền đã chi, tạm chia mỗi ngày, bước tiếp theo và khoản ghi gần đây |
+| Sổ thu chi | Thêm/sửa/xóa, chọn nhanh mệnh giá, nhóm và danh mục, lọc tháng/nhóm/danh mục/ghi chú, phân trang |
+| Phân tích | Danh mục chi lớn, việc cần xem, cọc và tiền hoàn; xu hướng và cách tính mở khi cần |
+| Khoản cần lo | Hóa đơn, dùng khoản đã ghi để đánh dấu đã trả, trả nợ gốc/lãi, chuyển quỹ và đối chiếu số dư |
+| Sao lưu & Cài đặt | Xuất/nhập JSON, xuất CSV, trạng thái lưu trữ, sáng/tối, dữ liệu mẫu và xóa sổ |
+
+Các quy tắc phân tích được viết độc lập với giao diện trong `js/finance-engine.js`; liên kết dòng tiền và thay đổi số dư ở `js/money-flow.js`. Số tiền lưu dưới dạng số nguyên VND. Lãi suất và các tỷ lệ được phép có phần thập phân.
+
+### Một số quy ước quan trọng
+
+- Dự báo chi sinh hoạt gồm nhóm thiết yếu và mong muốn, không cộng lại cọc, hoàn tiền và chuyển quỹ/trả nợ. Tất cả vẫn có trong dòng tiền thực tế.
+- Hóa đơn định kỳ dùng để dành trước ngân sách; không tự tạo giao dịch. Nút ✓ mở giao dịch thanh toán để bạn kiểm tra rồi lưu. Thanh toán một phần chỉ dành trước số còn thiếu.
+- Hóa đơn có liên kết rõ được đối chiếu trước; khoản cũ chưa liên kết được đối chiếu theo danh mục. Một khoản thanh toán không dùng hai lần.
+- Đối chiếu số dư quỹ/nợ dùng khi thiết lập hoặc sửa số thực tế. Chuyển quỹ và ghi trả nợ hằng ngày dùng các chức năng liên kết với sổ; sửa/xóa giao dịch sẽ đảo đúng tác động cũ.
+- Dự báo chỉ dùng các tháng đã kết thúc; tháng có khoảng trống được tính là 0. Tháng hiện tại chỉ tham gia thu nhập nền khi đã có khoản thu.
+- Giao dịch có ngày tương lai được lưu trong sổ nhưng chưa cộng vào các chỉ số của hôm nay.
+- Mỗi mức giảm chi là bội số 50.000 ₫, không vượt 35% mức trung bình danh mục, không vượt phần hụt. Nếu làm tròn gần nhất vượt trần thì hạ về bội số lớn nhất còn nằm trong giới hạn.
+- Điểm FHI, ngưỡng nợ lãi cao và các cấp độ là quy tắc của ứng dụng theo bản yêu cầu, không phải một chứng nhận hay bộ tiêu chuẩn tài chính chính thức.
+- Mô phỏng trả nợ dùng lãi suất năm chia 12, lãi gộp mỗi tháng; chưa tính phí hoặc thay đổi lãi. Nếu mức trả không đủ giảm dư nợ, giao diện báo không thể tất toán thay vì hiển thị kết quả sai.
+
+## Chạy trên máy và kiểm tra
+
+Không mở `index.html` bằng đường dẫn `file://`, vì trình duyệt chặn mô-đun JavaScript và chế độ ngoại tuyến. Dùng địa chỉ GitHub Pages hoặc một máy chủ tệp tĩnh, ví dụ:
+
+```sh
+python -m http.server 8000
+```
+
+Sau đó mở `http://localhost:8000/`.
+
+Các phép kiểm tra dùng Node.js 20 trở lên, không cần cài thêm thư viện:
+
+```sh
+npm test
+```
+
+## GitHub Pages
+
+Trong **Settings → Pages**, chọn **Deploy from a branch**, nhánh **main**, thư mục **/(root)**, rồi **Save**. Các đường dẫn đều tương đối, có `.nojekyll`, nên hoạt động tại thư mục con `/moneywall/`.
+
+Service Worker dùng ưu tiên mạng cho tệp nội bộ, ưu tiên bộ đệm cho Chart.js. Sau lần tải thành công, ứng dụng dùng được khi mất mạng. Lần đầu chưa tải được Chart.js thì hiện thông báo; các chức năng ghi chép và tính toán vẫn dùng được. Phông chữ từ Google Fonts có phông hệ thống dự phòng.
+
+Khi cập nhật nguồn sau này, đổi phiên bản `CACHE` trong `sw.js` để dọn các bộ đệm cũ. Đừng đổi địa chỉ trang nếu chưa sao lưu: IndexedDB gắn với địa chỉ trang đang dùng.
+
+Xem bảng kiểm chứng tại [docs/KIEM_CHUNG.md](./docs/KIEM_CHUNG.md) và toàn bộ các tệp theo thứ tự bản yêu cầu tại [docs/MA_NGUON_DAY_DU.md](./docs/MA_NGUON_DAY_DU.md).
+
+````
+
+### File: tests/finance-engine.test.js
+
+```javascript
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { classifyIncome, forecastSpending, detectAnomalies, paydaySpike, lifestyleCreep, financialHealth, safeToSpend, cutbackPlan, analyzeFinance, DEFAULT_PROFILE, simulateDebtPayoff, localDate } from '../js/finance-engine.js';
+import { createSeedData } from '../js/seed-data.js';
+import { validateBackup, createBackup, createCSV, validateRecord, initDB, readData, replaceData, putRecord, deleteRecord } from '../js/db.js';
+import { escapeHtml, filteredTransactions, renderOverview, renderAnalysis, renderPlanning, renderSettings, renderTransactions } from '../js/ui.js';
+
+const date = new Date(2026, 10, 21), today = localDate(date);
+const tx = (overrides = {}) => ({ id: crypto.randomUUID(), date: today, type: 'expense', group: 'wants', category: 'Ăn ngoài & Cafe', amount: 50000, isFixedBill: false, note: '', createdAt: 100, ...overrides });
+const empty = () => ({ transactions: [], recurring_bills: [], debts: [], profile: { ...DEFAULT_PROFILE } });
+const approximate = (actual, expected, tolerance = 1e-7) => assert.ok(Math.abs(actual - expected) < tolerance, `${actual} ≠ ${expected}`);
+
+test('income: no observations and cold start', () => {
+  assert.equal(classifyIncome([]).mode, 'NO_INCOME');
+  assert.equal(classifyIncome([10, 20]).yBase, 10);
+  assert.equal(classifyIncome([10, 20]).mode, 'COLD_START');
+});
+test('income: sample CV thresholds, conservative mean and P25', () => {
+  assert.equal(classifyIncome([1000000, 1000000, 1000000]).yBase, 1000000);
+  const moderate = classifyIncome([800000, 1000000, 1200000]);
+  approximate(moderate.cv, .2); assert.equal(moderate.mode, 'MODERATE'); assert.equal(moderate.yBase, 900000);
+  const irregular = classifyIncome([0, 1000000, 2000000]); assert.equal(irregular.mode, 'IRREGULAR'); assert.equal(irregular.yBase, 500000);
+});
+test('income: irregular and stable overrides; surplus is not negative', () => {
+  const a = classifyIncome([100, 200], 300, 'IRREGULAR'); assert.equal(a.yBase, 100); assert.equal(a.mode, 'IRREGULAR'); assert.equal(a.surplusForBuffer, 200);
+  assert.equal(classifyIncome([0, 100, 200], 50, 'STABLE').yBase, 100);
+  assert.equal(classifyIncome([100, 100, 100], 20).surplusForBuffer, 0);
+});
+test('forecast: tier zero reserves paid and unpaid bills, exact intramonth blend', () => {
+  const a = forecastSpending({ currVarSpent: 100, paidFixedBills: 50, unpaidFixedBills: 150, elapsedDays: 10, daysInMonth: 30 });
+  assert.equal(a.tierIndex, 0); assert.equal(a.intramonthProj, 500); assert.equal(a.blendedEomForecast, 500);
+});
+test('forecast: SES exact smoothing and weighted blend', () => {
+  const a = forecastSpending({ hist: [100, 200], elapsedDays: 15, daysInMonth: 30, currVarSpent: 100 });
+  assert.equal(a.histForecast, 140); assert.equal(a.blendedEomForecast, 170); assert.equal(a.tierIndex, 1);
+});
+test('forecast: damped Holt recurrence has the expected independent result', () => {
+  const a = forecastSpending({ hist: [100, 200, 300], elapsedDays: 1 });
+  // level1=191, trend1=86.2; level2=278.562, trend2=76.1284.
+  approximate(a.histForecast, 343.27114); assert.equal(a.tierIndex, 2);
+});
+test('forecast: additive seasonality repeats the twelve-month seasonal pattern', () => {
+  const xs = Array.from({ length: 24 }, (_, i) => 100000 + (i % 12) * 10000);
+  const a = forecastSpending({ hist: xs }); assert.equal(a.tierIndex, 3); approximate(a.histForecast, 100000);
+  assert.equal(forecastSpending({ hist: Array(24).fill(100000), elapsedDays: 30, daysInMonth: 30, currVarSpent: 90000 }).blendedEomForecast, 90000);
+});
+test('anomalies: zero MAD and zero IQR still detect large purchases', () => {
+  const a = detectAnomalies([50000, 50000, 50000, 50000, 500000].map((amount) => tx({ amount })), 1000000, date);
+  assert.equal(a.length, 1); assert.equal(a[0].severity, 'CRITICAL'); assert.equal(a[0].multiple, 10);
+});
+test('anomalies: MAD zero/IQR nonzero and MAD positive', () => {
+  assert.ok(detectAnomalies([50000, 50000, 50000, 80000, 500000].map((amount) => tx({ amount })), 1000000, date).some((a) => a.amount === 500000));
+  assert.ok(detectAnomalies([40000, 50000, 60000, 70000, 900000].map((amount) => tx({ amount })), 1000000, date).some((a) => a.severity === 'CRITICAL'));
+});
+test('anomalies: materiality gate, sample size and 90-day window', () => {
+  assert.equal(detectAnomalies([10000, 10000, 10000, 10000, 80000].map((amount) => tx({ amount })), 0, date).length, 0);
+  assert.equal(detectAnomalies([50000, 50000, 50000, 900000].map((amount) => tx({ amount })), 0, date).length, 0);
+  assert.equal(detectAnomalies([50000, 50000, 50000, 50000, 900000].map((amount) => tx({ amount, date: '2026-01-01' })), 0, date).length, 0);
+});
+test('PSI: denominator counts zero-spend calendar days, excluding fixed bills', () => {
+  const rows = [tx({ date: '2026-11-01', amount: 50000 }), ...[5, 6, 7, 8, 9].map((d) => tx({ date: `2026-11-0${d}`, amount: 200000 })), tx({ date: '2026-11-01', amount: 4000000, isFixedBill: true })];
+  const a = paydaySpike(rows, 5, new Date(2026, 10, 10));
+  assert.equal(a.windowDays, 5); assert.equal(a.otherDays, 5); assert.equal(a.psi, 20); assert.equal(a.warning, true);
+});
+test('PSI: zero baseline is explicit and safe to render', () => {
+  assert.equal(paydaySpike([], 5, date).psi, null);
+  assert.equal(paydaySpike([tx({ date: '2026-11-05' })], 5, date).psi, Infinity);
+});
+test('lifestyle: adjacent windows, threshold drift, missing income', () => {
+  const rows = [.1, .1, .1, .2, .2, .2].map((x) => ({ income: 10000000, wants: x * 10000000 }));
+  const a = lifestyleCreep(rows); assert.equal(a.warning, true); approximate(a.driftPP, 10);
+  assert.equal(lifestyleCreep(rows.slice(0, 3)).available, false);
+  assert.equal(lifestyleCreep([...rows.slice(0, 3), { income: 0, wants: 2 }]).available, false);
+});
+test('FHI: exact weighted score and high-interest penalty', () => {
+  const a = financialHealth({ yBase: 10000000, actualIncome: 10000000, totalNeedsWantsSpent: 8000000, avgMonthlyNeeds: 5000000, totalActiveFixedBills: 5000000, currWantsSpent: 3000000, profile: { ...DEFAULT_PROFILE, liquidSavings: 22500000 } });
+  assert.equal(a.fhi, 95); assert.equal(a.label, 'Vững tài chính'); assert.equal(a.level, 5);
+  const b = financialHealth({ yBase: 10000000, actualIncome: 10000000, avgMonthlyNeeds: 5000000, profile: { ...DEFAULT_PROFILE, liquidSavings: 5000000 }, debts: [{ principal: 5000000, apr: 24, minMonthlyPayment: 1000000 }] });
+  assert.equal(b.level, 3); assert.equal(b.scores.sDebt, 60);
+});
+test('FHI: five level priorities and 6-month irregular runway', () => {
+  const base = { yBase: 100, actualIncome: 100, totalNeedsWantsSpent: 50, avgMonthlyNeeds: 10, profile: { ...DEFAULT_PROFILE, liquidSavings: 20 } };
+  assert.equal(financialHealth({ ...base, totalNeedsWantsSpent: 200 }).level, 1);
+  assert.equal(financialHealth({ ...base, profile: { ...DEFAULT_PROFILE, liquidSavings: 0 } }).level, 2);
+  assert.equal(financialHealth({ ...base, debts: [{ principal: 100, apr: 24, minMonthlyPayment: 10 }] }).level, 3);
+  assert.equal(financialHealth(base).level, 4);
+  assert.equal(financialHealth({ ...base, profile: { ...DEFAULT_PROFILE, liquidSavings: 100 } }).level, 5);
+  assert.equal(financialHealth({ ...base, incomeMode: 'IRREGULAR' }).targetRunway, 6);
+});
+test('FHI: high fixed costs keep allocation sum 100%, wants >= 10%, saving >= 5%', () => {
+  const a = financialHealth({ yBase: 100, totalActiveFixedBills: 90 });
+  assert.equal(a.alloc.needs, .75); approximate(a.alloc.needs + a.alloc.wants + a.alloc.save, 1); assert.ok(a.alloc.wants >= .10); assert.ok(a.alloc.save >= .05);
+});
+test('safe spending: month end, exhausted budget, burn thresholds', () => {
+  const a = safeToSpend({ yBase: 10000000, alloc: { save: .3 }, totalActiveFixedBills: 4000000, currentMonthVariableSpent: 2000000, elapsedDays: 30, daysInMonth: 30 });
+  assert.equal(a.daysLeft, 1); assert.equal(a.dailySafeToSpend, 1000000); assert.equal(a.savingsTargetDaily, 100000);
+  assert.equal(safeToSpend({ currentMonthVariableSpent: 1000 }).dailySafeToSpend, 0);
+  assert.equal(safeToSpend({ currentMonthVariableSpent: 1000 }).status, 'danger');
+  const burn = (r) => safeToSpend({ yBase: 10000, alloc: { save: 0 }, currentMonthVariableSpent: 5000 * r, elapsedDays: 15 }).status;
+  assert.equal(burn(1), 'safe'); assert.equal(burn(1.01), 'notice'); assert.equal(burn(1.16), 'warning'); assert.equal(burn(1.31), 'danger');
+});
+test('cutbacks: bounded to 35%, multiple of 50k, no overshoot or sub-50k cut', () => {
+  const a = cutbackPlan({ yBase: 10000000, blendedEomForecast: 9000000, savingsTargetMonthly: 3000000, categoryAverages: [{ category: 'A', amount: 1100000 }, { category: 'B', amount: 750000 }, { category: 'C', amount: 10000 }] });
+  assert.equal(a.savingsGap, 2000000);
+  for (const c of a.actions) { assert.equal(c.suggestedCut % 50000, 0); assert.ok(c.suggestedCut <= Math.round(c.currentAvg * .35)); assert.ok(c.suggestedCut >= 50000); }
+  assert.equal(a.actions.reduce((x, c) => x + c.suggestedCut, 0) + a.unmetGap, a.savingsGap);
+  assert.equal(cutbackPlan({ yBase: 1, blendedEomForecast: 2, savingsTargetMonthly: 1, categoryAverages: [{ category: 'A', amount: 1000000 }] }).actions.length, 0);
+});
+test('debt payoff: avalanche ordering and early payments reduce interest', () => {
+  const a = simulateDebtPayoff([{ principal: 10000000, apr: 12, minMonthlyPayment: 500000 }, { principal: 10000000, apr: 24, minMonthlyPayment: 500000 }], 1000000);
+  assert.equal(a.orderedDebts[0].apr, 24); assert.ok(a.accelerated.months < a.baseline.months); assert.ok(a.interestSaved > 0);
+  assert.equal(simulateDebtPayoff([{ principal: 10000000, apr: 24, minMonthlyPayment: 10000 }]).baseline.paidOff, false);
+});
+test('orchestration: partial fixed payment is reserved once, same-category bills match once', () => {
+  const data = empty();
+  data.recurring_bills = [1, 2].map((i) => ({ id: `bill${i}`, name: `Bill ${i}`, amount: 1000000, dueDay: 1, group: 'needs', category: 'Tiền nhà / Trả góp nhà', active: true }));
+  data.transactions = [tx({ amount: 500000, group: 'needs', category: 'Tiền nhà / Trả góp nhà', isFixedBill: true })];
+  const a = analyzeFinance(data, date); assert.equal(a.unpaidFixedBills, 1500000); assert.equal(a.totalActiveFixedBills, 2000000); assert.equal(a.forecast.intramonthProj, 2000000); assert.equal(a.bills.filter((b) => b.paid).length, 0);
+});
+test('orchestration: missing calendar months count as zero, future records excluded', () => {
+  const data = empty(); data.transactions = [tx({ date: '2026-08-01', type: 'income', group: 'income', amount: 10000000 }), tx({ date: '2026-10-01', type: 'income', group: 'income', amount: 10000000 }), tx({ date: '2026-12-01', amount: 100000000 })];
+  const a = analyzeFinance(data, date); assert.equal(a.history.length, 3); assert.equal(a.history[1].income, 0); assert.equal(a.current.spent, 0); assert.equal(a.anomalies.length, 0);
+});
+test('empty application: all finance values finite and no NaN in rendered views', () => {
+  const data = empty(), a = analyzeFinance(data, date);
+  const walk = (x) => { for (const v of Object.values(x)) { if (typeof v === 'number') assert.ok(Number.isFinite(v)); else if (v && typeof v === 'object') walk(v); } }; walk(a);
+  const views = [renderOverview(data, a, false), renderAnalysis(data, a), renderPlanning(data, a, 100000), renderSettings(data, a, { mode: 'memory' }), renderTransactions(data, a, { month: '', group: '', category: '', search: '' }, 1)];
+  for (const html of views) assert.doesNotMatch(html, /NaN|undefined|Infinity/);
+});
+test('sample data: all required diagnostic signals and level 3 for each part of a month', () => {
+  for (const day of [1, 5, 15, 21, 30]) {
+    const d = new Date(2026, 10, day), data = createSeedData(d), a = analyzeFinance(data, d);
+    assert.equal(a.history.length, 6); assert.equal(a.health.level, 3); assert.ok(a.anomalies.length >= 2); assert.ok(a.payday.warning); assert.ok(a.lifestyle.warning); assert.ok(a.cutbacks.actions.length > 0);
+    assert.ok(data.transactions.every((t) => Number.isSafeInteger(t.amount)));
+  }
+});
+test('backup: round-trip all stores, reject corrupted schema before any writes', () => {
+  const data = createSeedData(date), clean = validateBackup(JSON.parse(createBackup(data, 100000)));
+  assert.deepEqual(clean, data);
+  assert.throws(() => validateBackup({ version: 1, data }), /định dạng/);
+  assert.throws(() => validateRecord('transactions', tx({ amount: 1.5 })), /số nguyên/);
+  assert.throws(() => validateRecord('transactions', tx({ date: '2026-02-30' })), /Ngày/);
+  assert.throws(() => validateRecord('transactions', tx({ type: 'income' })), /khớp/);
+  assert.throws(() => validateBackup({ app: 'vung-tai-chinh', version: 1, data: { ...empty(), transactions: [tx({ id: 'duplicate' }), tx({ id: 'duplicate' })] } }), /trùng/);
+});
+test('CSV: UTF-8 BOM, Vietnamese, multiline escaping and formula neutralization', () => {
+  const csv = createCSV([tx({ note: '=1+1\n"Chào bạn"' })]);
+  assert.equal(csv.charCodeAt(0), 0xfeff); assert.ok(csv.includes('Ăn ngoài & Cafe')); assert.ok(csv.includes("'=1+1")); assert.ok(csv.includes('""Chào bạn""'));
+});
+test('XSS: every user note is escaped in financial pages', () => {
+  const payload = '<img src=x onerror=alert(1)>', data = empty(); data.transactions = [tx({ note: payload, category: payload })];
+  const a = analyzeFinance(data, date), html = renderOverview(data, a, true) + renderTransactions(data, a, { month: '', group: '', category: '', search: '' }, 1);
+  assert.ok(html.includes(escapeHtml(payload))); assert.ok(!html.includes(payload));
+});
+test('ledger: all four filters combine and keep income/expense distinct', () => {
+  const data = empty(); data.transactions = [tx({ note: 'Cà phê sáng' }), tx({ note: 'Buổi tối', date: '2026-10-01' }), tx({ group: 'needs' })];
+  assert.equal(filteredTransactions(data, { month: '2026-11', group: 'wants', category: 'Ăn ngoài & Cafe', search: 'CÀ PHÊ' }).length, 1);
+});
+test('storage: private-mode memory fallback supports all stores and backup restore', async () => {
+  const status = await initDB(); assert.equal(status.mode, 'memory');
+  const sample = createSeedData(date); await replaceData(sample); assert.deepEqual(await readData(), sample);
+});
+test('storage: invalid restore leaves existing data untouched', async () => {
+  const before = await readData();
+  await assert.rejects(replaceData({ ...before, transactions: [tx({ amount: -1 })] }));
+  assert.deepEqual(await readData(), before);
+});
+test('storage: CRUD and persistent profile settings share the same validated contract', async () => {
+  const record = tx(); await putRecord('transactions', record);
+  assert.ok((await readData()).transactions.some((t) => t.id === record.id));
+  await putRecord('transactions', { ...record, amount: 99000 });
+  assert.equal((await readData()).transactions.find((t) => t.id === record.id).amount, 99000);
+  await deleteRecord('transactions', record.id); assert.ok(!(await readData()).transactions.some((t) => t.id === record.id));
+  await putRecord('profile', { ...DEFAULT_PROFILE, theme: 'dark', liquidSavings: 100000 });
+  assert.equal((await readData()).profile.theme, 'dark');
+});
+
+```
+
+### File: tests/excel-import.test.js
+
+```javascript
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import { arithmeticFormula, parseMoney, excelDate, detectColumns, detectHeader, workbookSheets, buildImport, detectOpeningBalance } from '../js/excel-import.js';
+import { initDB, replaceData, readData, appendTransactions, markExistingTransactions, validateBackup } from '../js/db.js';
+import { DEFAULT_PROFILE, cashBalanceForMonth } from '../js/finance-engine.js';
+import { renderTransactions, renderSettings } from '../js/ui.js';
+import { analyzeFinance } from '../js/finance-engine.js';
+
+const context = {}; vm.createContext(context);
+vm.runInContext(fs.readFileSync(new URL('../vendor/xlsx.full.min.js', import.meta.url), 'utf8'), context, { timeout: 3000 });
+const X = context.XLSX;
+const sample = () => {
+  const wb = X.utils.book_new();
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([['Một trang ghi chú khác']]), 'Ghi chú');
+  const sheet = X.utils.aoa_to_sheet([['Tháng 11'], ['Ngày', 'Danh mục', 'VNĐ', 'Tổng chi/ngày', 'Note', 'Danh mục'], ['2026-11-01', 'Khoản thu mẫu', 900000, -99999, '', 'Thu nhập khác'], ['2026-11-02', 'Giao dịch A', -47000, -999999, '', 'Sinh hoạt'], ['', 'Giao dịch B', -18000, '', 'Ghi chú thêm', 'Di chuyển'], ['2026-11-03', 'Khoản cọc thử', -200000, '', 'Có hoàn trả', 'Học tập']]);
+  sheet['!merges'] = [{ s: { r: 3, c: 0 }, e: { r: 4, c: 0 } }];
+  sheet.C5 = { t: 'n', f: '-10000-8000', v: -18000 };
+  sheet.H4 = { t: 's', v: 'Số dư riêng' }; sheet.I4 = { t: 'n', v: 999999999 }; sheet['!ref'] = 'A1:I6';
+  X.utils.book_append_sheet(wb, sheet, 'Thu chi');
+  const bytes = X.write(wb, { type: 'array', bookType: 'xlsx' });
+  return workbookSheets(X.read(bytes, { type: 'array', cellDates: false }), X).find((s) => s.name === 'Thu chi');
+};
+const empty = () => ({ transactions: [], debts: [], recurring_bills: [], profile: { ...DEFAULT_PROFILE } });
+
+test('arithmetic grammar respects precedence, unary signs and parentheses', () => {
+  assert.equal(arithmeticFormula('=-10000-60000/2'), -40000);
+  assert.equal(arithmeticFormula('=-(10000+20000)/2'), -15000);
+  assert.equal(arithmeticFormula('=1.5e3*2'), 3000);
+});
+test('arithmetic grammar rejects code, references, excessive depth and division by zero', () => {
+  for (const text of ['=alert(1)', '=A1+A2', '=SUM(A1:A4)', '=1/0', '=1**3', '=()']) assert.throws(() => arithmeticFormula(text));
+  assert.throws(() => arithmeticFormula('='.concat('('.repeat(40), '1', ')'.repeat(40))));
+});
+test('money parser handles Vietnamese and international formats, integer VND and units', () => {
+  assert.equal(parseMoney('-1.234.567 ₫').amount, -1234567);
+  assert.equal(parseMoney('1,234,567 VND').amount, 1234567);
+  assert.equal(parseMoney('(25.000)').amount, -25000);
+  assert.equal(parseMoney('1,5', 1000).amount, 1500);
+  assert.equal(parseMoney('1.234,50').amount, 1235);
+  assert.equal(parseMoney(123.4).amount, 123);
+  assert.throws(() => parseMoney('20k'));
+});
+test('simple formulas recalculate safely; other formulas require a numeric cached result', () => {
+  assert.equal(parseMoney({ f: '-10000-8000', v: -1 }).amount, -18000);
+  assert.equal(parseMoney({ f: 'SUM(A1:A2)', v: -18000 }).cachedFormula, true);
+  assert.throws(() => parseMoney({ f: 'SUM(A1:A2)', v: '' }), /chưa có kết quả/);
+});
+test('dates support Excel 1900/1904, Vietnamese day-first strings and day-only values', () => {
+  assert.equal(excelDate('21/11/26', '2026-11'), '2026-11-21');
+  assert.equal(excelDate('2026-11-21T12:00:00', ''), '2026-11-21');
+  assert.equal(excelDate('21/11', '2026-11'), '2026-11-21');
+  assert.equal(excelDate(21, '2026-11'), '2026-11-21');
+  assert.equal(excelDate(61, '', false), '1900-03-01');
+  assert.equal(excelDate(0, '', true), '1904-01-01');
+  assert.equal(excelDate(60, '', false), null);
+  assert.equal(excelDate('31/11/2026', ''), null);
+  assert.equal(excelDate('21/11', ''), null);
+});
+test('duplicate category headers distinguish transaction text from final category column', () => {
+  const m = detectColumns(['Ngày', 'Danh mục', 'VNĐ', 'Tổng chi/ngày', 'Note', 'Danh mục']);
+  assert.equal(m.date, 0); assert.equal(m.amount, 2); assert.equal(m.note, 1); assert.equal(m.extra, 4); assert.equal(m.category, 5);
+  assert.equal(detectHeader([['Tên sổ'], ['Ngày', 'Số tiền', 'Ghi chú']]).index, 1);
+});
+test('XLSX bytes round-trip: merged dates, transaction formulas, side balances and subtotals', () => {
+  const sheet = sample(), result = buildImport(sheet, { month: '2026-11' });
+  assert.equal(sheet.header.index, 1); assert.equal(result.rows.length, 4); assert.equal(result.errors.length, 0);
+  assert.equal(result.rows[2].transaction.date, '2026-11-02'); assert.equal(result.rows[2].transaction.amount, 18000);
+  assert.equal(result.rows[2].transaction.note, 'Giao dịch B · Ghi chú thêm');
+  assert.equal(result.rows.filter((r) => r.transaction.type === 'expense').reduce((s, r) => s + r.transaction.amount, 0), 265000);
+  assert.equal(result.rows[0].transaction.type, 'income');
+  assert.ok(result.rows[3].warnings.some((w) => w.includes('tiền cọc')));
+});
+test('single positive expense sheet is explicitly interpreted through selected mode', () => {
+  const sheet = sample(); sheet.rows[3][2] = { v: 47000 };
+  assert.equal(buildImport(sheet, { mode: 'expense' }).rows[1].transaction.type, 'expense');
+  assert.equal(buildImport(sheet, { mode: 'signed' }).rows[1].transaction.type, 'income');
+});
+test('invalid rows remain visible, totals skipped, missing categories retained for review', () => {
+  const sheet = sample();
+  sheet.rows.push([{ v: '2026-11-04' }, { v: 'Tổng cộng' }, { v: -265000 }]);
+  sheet.rows.push([{ v: '2026-11-31' }, { v: 'Ngày sai' }, { v: -10000 }]);
+  sheet.rows.push([{ v: '2026-11-05' }, { v: 'Không có nhóm' }, { v: -10000 }]);
+  const result = buildImport(sheet);
+  assert.equal(result.skipped, 1); assert.equal(result.errors.length, 1); assert.equal(result.rows.length, 5);
+  assert.equal(result.rows.at(-1).transaction.category, 'Chưa phân loại');
+  assert.ok(result.rows.at(-1).warnings.length > 0);
+});
+test('blank date is not guessed unless explicitly allowed; real merged cells always work', () => {
+  const sheet = sample(); sheet.rows.push([null, { v: 'Ngày bỏ trống' }, { v: -10000 }]);
+  assert.equal(buildImport(sheet).errors.length, 1);
+  assert.equal(buildImport(sheet, { fillDates: true }).errors.length, 0);
+});
+test('user can change expense groups while preserving the source category', () => {
+  const result = buildImport(sample(), { categoryGroups: { 'Sinh hoạt': 'wants' } });
+  assert.equal(result.rows[1].transaction.group, 'wants'); assert.equal(result.rows[1].transaction.category, 'Sinh hoạt');
+});
+test('CSV keeps Vietnamese day/month order instead of auto-converting to US dates', () => {
+  const wb = X.read('\uFEFFNgày;Số tiền;Ghi chú\n12/11/2026;-35.000;Đi chợ', { type: 'string', raw: true });
+  const sheet = workbookSheets(wb, X)[0], result = buildImport(sheet);
+  assert.equal(result.rows.length, 1); assert.equal(result.rows[0].transaction.date, '2026-11-12'); assert.equal(result.rows[0].transaction.amount, 35000);
+});
+test('duplicate multiset does not erase repeated legitimate purchases', () => {
+  const transaction = buildImport(sample()).rows[1].transaction;
+  assert.deepEqual(markExistingTransactions([transaction, { ...transaction, id: 'second' }], [transaction]), [true, false]);
+  assert.deepEqual(markExistingTransactions([transaction, transaction], []), [false, false]);
+});
+test('append is atomic, preserves other stores and skips repeated imports', async () => {
+  await initDB(); await replaceData(empty());
+  const transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  assert.equal((await appendTransactions(transactions)).imported, 4);
+  const second = transactions.map((t) => ({ ...t, id: crypto.randomUUID() }));
+  assert.deepEqual(await appendTransactions(second), { imported: 0, skipped: 4, updated: 0 });
+  const before = await readData();
+  await assert.rejects(appendTransactions([{ ...transactions[0], id: 'valid-next' }, { ...transactions[1], id: 'invalid-next', amount: -1 }]));
+  assert.deepEqual(await readData(), before);
+  assert.equal((await appendTransactions(second, { skipDuplicates: false })).imported, 4);
+  assert.deepEqual((await readData()).profile, DEFAULT_PROFILE);
+});
+test('daily ledger displays separate income, expense and net totals, including all day records', () => {
+  const data = empty(); data.transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  const a = analyzeFinance(data, new Date(2026, 10, 21));
+  const html = renderTransactions(data, a, { month: '2026-11', group: '', category: '', search: '' }, 1, 'daily');
+  assert.ok(html.includes('daily-ledger')); assert.ok(html.includes('65.000')); assert.ok(html.includes('Thu trừ chi'));
+  assert.ok(html.includes('Nhập Excel'));
+  assert.ok(renderSettings(data, a, { mode: 'indexeddb' }).includes('Chọn tệp Excel'));
+});
+test('opening balances are detected separately from transactions and savings', () => {
+  const sheet = sample();
+  sheet.rows[2][7] = { v: 'TK NH:' }; sheet.rows[2][8] = { f: '100000+200000', v: 300000 };
+  sheet.rows[3][7] = { v: 'Tiền mặt:' }; sheet.rows[3][8] = { v: 100000 };
+  sheet.rows[4][7] = { v: 'Tiết kiệm:' }; sheet.rows[4][8] = { v: 5000000 };
+  assert.deepEqual(detectOpeningBalance(sheet), { bank: 300000, cash: 100000 });
+  assert.equal(buildImport(sheet).rows.length, 4);
+});
+test('cash balance separates opening money, new income, expenses and emergency reserves', () => {
+  const data = empty(); data.transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  data.profile = { ...DEFAULT_PROFILE, liquidSavings: 5000000, openingBalances: { '2026-11': { bank: 300000, cash: 100000 } } };
+  const balance = cashBalanceForMonth(data, '2026-11', '2026-11-21');
+  assert.equal(balance.opening, 400000); assert.equal(balance.income, 900000); assert.equal(balance.expense, 265000); assert.equal(balance.available, 1035000);
+  assert.equal(cashBalanceForMonth(data, '2026-12').available, null);
+});
+test('future transactions do not alter current cash balance', () => {
+  const data = empty(); data.profile.openingBalances = { '2026-11': { bank: 100000, cash: 0 } };
+  data.transactions = buildImport(sample()).rows.map((r) => ({ ...r.transaction, date: '2026-11-30' }));
+  assert.equal(cashBalanceForMonth(data, '2026-11', '2026-11-21').available, 100000);
+});
+test('Excel import can atomically update opening money without replacing other profile fields', async () => {
+  const data = empty(); data.profile.liquidSavings = 700000; data.profile.theme = 'dark';
+  await replaceData(data);
+  const transactions = buildImport(sample()).rows.map((r) => r.transaction);
+  await appendTransactions(transactions, { openingBalance: { month: '2026-11', bank: 300000, cash: 100000 } });
+  const after = await readData();
+  assert.equal(after.transactions.length, 4); assert.equal(after.profile.liquidSavings, 700000); assert.equal(after.profile.theme, 'dark');
+  assert.deepEqual(after.profile.openingBalances['2026-11'], { bank: 300000, cash: 100000 });
+  await appendTransactions([], { openingBalance: { month: '2026-11', bank: 350000, cash: 120000 } });
+  assert.equal((await readData()).transactions.length, 4);
+  assert.equal((await readData()).profile.openingBalances['2026-11'].bank, 350000);
+});
+test('invalid opening balance rejects the entire import before any record is written', async () => {
+  const before = await readData(), record = buildImport(sample()).rows[0].transaction;
+  await assert.rejects(appendTransactions([{ ...record, id: 'should-not-import' }], { openingBalance: { month: '2026-13', bank: 100000, cash: 0 } }));
+  assert.deepEqual(await readData(), before);
+});
+test('older backups without opening balances remain compatible', () => {
+  const data = empty(); delete data.profile.openingBalances; data.profile.liquidSavings = 250000;
+  const normalized = validateBackup({ app: 'vung-tai-chinh', version: 1, data });
+  assert.deepEqual(normalized.profile.openingBalances, {}); assert.equal(normalized.profile.liquidSavings, 250000);
+});
+
+```
+
+### File: tests/money-flow.test.js
+
+```javascript
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DEFAULT_PROFILE, analyzeFinance, cashBalanceForMonth } from '../js/finance-engine.js';
+import { kindOf, suggestFlow, monthlyMoney, depositBalances, categoryHabits, dateForMonth, monthAfterDayChange } from '../js/money-flow.js';
+import { initDB, replaceData, readData, saveTransaction, appendTransactions, planImport, validateBackup } from '../js/db.js';
+import { renderOverview, renderAnalysis, filteredTransactions } from '../js/ui.js';
+import { buildImport, detectSideBalances } from '../js/excel-import.js';
+
+let n = 0;
+const row = (overrides = {}) => ({ id: `flow-${++n}`, date: '2026-11-12', type: 'expense', amount: 100000, group: 'needs', category: 'Sinh hoạt', isFixedBill: false, note: 'Ghi chép tổng hợp', createdAt: n, ...overrides });
+const data = (transactions = [], rest = {}) => ({ transactions, recurring_bills: [], debts: [], profile: { ...DEFAULT_PROFILE, openingBalances: { '2026-11': { bank: 1000000, cash: 0 } } }, ...rest });
+const date = new Date(2026, 10, 25);
+const debt = { id: 'loan', name: 'Khoản vay tổng hợp', principal: 900000, apr: 12, minMonthlyPayment: 150000, isHighInterest: true };
+
+test('cash movements reconcile while deposits and refunds stay out of income/spending plans', () => {
+  const deposit = row({ amount: 500000, flow: { kind: 'deposit' } });
+  const records = [deposit, row({ type: 'income', group: 'income', amount: 300000 }), row({ type: 'income', group: 'income', amount: 400000, flow: { kind: 'refund', targetId: deposit.id } }), row(), row({ group: 'savings_debt', flow: { kind: 'reserve-in' } }), row({ amount: 50000, group: 'savings_debt', flow: { kind: 'debt', targetId: debt.id, principal: 40000 } })];
+  const d = data(records), a = analyzeFinance(d, date), m = monthlyMoney(d, a);
+  assert.equal(cashBalanceForMonth(d, a.month, a.today).available, 950000);
+  assert.equal(m.available, 950000); assert.equal(m.received, 700000); assert.equal(m.paid, 750000);
+  assert.equal(a.current.income, 300000); assert.equal(a.current.spent, 100000);
+  assert.equal(m.everyday, 100000); assert.equal(m.refunds, 400000); assert.equal(m.deposits[0].remaining, 100000);
+  assert.equal(m.moved, 150000);
+});
+test('daily cash suggestion reserves the unpaid part of bills and debt payments once', () => {
+  const b = { id: 'rent', name: 'Hóa đơn tổng hợp', amount: 200000, dueDay: 28, group: 'needs', category: 'Sinh hoạt', active: true };
+  const d = data([row({ amount: 50000, isFixedBill: true, flow: { kind: 'regular', billId: b.id } }), row({ amount: 50000, group: 'savings_debt', flow: { kind: 'debt', targetId: debt.id, principal: 40000 } })], { recurring_bills: [b], debts: [debt] });
+  const a = analyzeFinance(d, date), m = monthlyMoney(d, a);
+  assert.equal(m.reserved, 250000); assert.equal(m.available, 900000);
+  assert.equal(m.daily, Math.floor(650000 / 6));
+  const without = data([], { profile: { ...DEFAULT_PROFILE } });
+  assert.equal(monthlyMoney(without, analyzeFinance(without, date)).daily, null);
+});
+test('named bill links cannot pay another bill with the same category', () => {
+  const bills = ['a', 'b'].map((id) => ({ id, name: id, category: 'Sinh hoạt', group: 'needs', active: true, amount: 100000, dueDay: 5 }));
+  const a = analyzeFinance(data([row({ isFixedBill: true, flow: { kind: 'regular', billId: 'b' } })], { recurring_bills: bills }), date);
+  assert.equal(a.bills[0].remaining, 100000); assert.equal(a.bills[1].paid, true);
+  const mixed = analyzeFinance(data([row({ isFixedBill: true }), row({ isFixedBill: true, flow: { kind: 'regular', billId: 'a' } })], { recurring_bills: bills }), date);
+  assert.equal(mixed.unpaidFixedBills, 0, 'named payments are consumed before generic category payments');
+});
+test('using an existing Excel expense as a bill payment changes no cash amount or record count', async () => {
+  await initDB();
+  const expense = row({ amount: 170000 });
+  const bill = { id: 'existing-bill', name: 'Hóa đơn tổng hợp', category: 'Tiền mạng', group: 'needs', active: true, dueDay: 12, amount: 170000 };
+  await replaceData(data([expense], { recurring_bills: [bill] }));
+  const before = cashBalanceForMonth(await readData(), '2026-11', '2026-11-25');
+  await saveTransaction({ ...expense, isFixedBill: true, flow: { kind: 'regular', billId: bill.id } }, '', '2026-11-25');
+  const saved = await readData();
+  assert.equal(saved.transactions.length, 1); assert.deepEqual(cashBalanceForMonth(saved, '2026-11', '2026-11-25'), before);
+  assert.equal(analyzeFinance(saved, date).bills[0].paid, true);
+  assert.deepEqual(filteredTransactions(saved, { month: '2026-11', billId: bill.id }).map((t) => t.id), [expense.id]);
+});
+test('fund entry edits and deletion reverse only the prior effect', async () => {
+  await initDB(); await replaceData(data());
+  const t = row({ group: 'savings_debt', amount: 200000, flow: { kind: 'reserve-in' } });
+  await saveTransaction(t, '', '2026-11-25');
+  assert.equal((await readData()).profile.liquidSavings, 200000);
+  await saveTransaction({ ...t, amount: 350000 }, '', '2026-11-25');
+  assert.equal((await readData()).profile.liquidSavings, 350000); assert.equal((await readData()).transactions.length, 1);
+  await saveTransaction(null, t.id, '2026-11-25');
+  assert.equal((await readData()).profile.liquidSavings, 0); assert.equal((await readData()).transactions.length, 0);
+});
+test('invalid fund withdrawal and deleting a spent deposit leave all data unchanged', async () => {
+  await initDB(); await replaceData(data());
+  const inFund = row({ group: 'savings_debt', flow: { kind: 'reserve-in' } });
+  await saveTransaction(inFund, '', '2026-11-25');
+  await saveTransaction(row({ type: 'income', group: 'income', flow: { kind: 'reserve-out' } }), '', '2026-11-25');
+  const before = await readData();
+  await assert.rejects(saveTransaction(row({ type: 'income', group: 'income', flow: { kind: 'reserve-out' } }), '', '2026-11-25'), /Quỹ không đủ/);
+  await assert.rejects(saveTransaction(null, inFund.id, '2026-11-25'), /Quỹ không đủ/);
+  assert.deepEqual(await readData(), before);
+});
+test('debt payment records the full cash amount but reduces principal only by the explicit part', async () => {
+  await initDB(); await replaceData(data([], { debts: [debt] }));
+  const t = row({ group: 'savings_debt', amount: 150000, flow: { kind: 'debt', targetId: debt.id, principal: 120000 } });
+  await saveTransaction(t, '', '2026-11-25');
+  let d = await readData(); assert.equal(d.debts[0].principal, 780000); assert.equal(d.transactions[0].amount, 150000);
+  await saveTransaction({ ...t, flow: { ...t.flow, principal: 130000 } }, '', '2026-11-25');
+  assert.equal((await readData()).debts[0].principal, 770000);
+  const before = await readData();
+  await assert.rejects(saveTransaction({ ...t, flow: { ...t.flow, principal: 160000 } }, '', '2026-11-25'), /Phần trả gốc/);
+  await assert.rejects(saveTransaction({ ...t, amount: 1000000, flow: { ...t.flow, principal: 1000000 } }, '', '2026-11-25'), /lớn hơn số nợ/);
+  assert.deepEqual(await readData(), before);
+  await saveTransaction(null, t.id, '2026-11-25'); assert.equal((await readData()).debts[0].principal, debt.principal);
+});
+test('future or missing linked debt/fund effects reject without a partial ledger entry', async () => {
+  await initDB(); await replaceData(data());
+  const before = await readData();
+  await assert.rejects(saveTransaction(row({ date: '2026-12-01', group: 'savings_debt', flow: { kind: 'reserve-in' } }), '', '2026-11-25'), /tương lai/);
+  await assert.rejects(saveTransaction(row({ group: 'savings_debt', flow: { kind: 'debt', targetId: 'missing', principal: 50000 } }), '', '2026-11-25'), /không còn tồn tại/);
+  assert.deepEqual(await readData(), before);
+});
+test('partial refunds across months link correctly and cannot exceed or orphan their deposit', async () => {
+  const deposit = row({ date: '2026-10-10', amount: 400000, flow: { kind: 'deposit' } });
+  await initDB(); await replaceData(data([deposit]));
+  const refund = row({ type: 'income', group: 'income', amount: 150000, flow: { kind: 'refund', targetId: deposit.id } });
+  await saveTransaction(refund, '', '2026-11-25');
+  assert.equal(depositBalances((await readData()).transactions)[0].remaining, 250000);
+  const before = await readData();
+  await assert.rejects(saveTransaction({ ...refund, amount: 450000 }, '', '2026-11-25'), /vượt số tiền cọc/);
+  await assert.rejects(saveTransaction(null, deposit.id, '2026-11-25'), /Gỡ liên kết/);
+  await assert.rejects(saveTransaction({ ...refund, date: '2026-10-09' }, '', '2026-11-25'), /từ ngày đặt cọc/);
+  assert.deepEqual(await readData(), before);
+  await saveTransaction(null, refund.id, '2026-11-25'); assert.equal(depositBalances((await readData()).transactions)[0].remaining, 400000);
+});
+test('reimport fills missing categories and suggests cash classification without duplicate cash movements', async () => {
+  const old = row({ category: 'Chưa phân loại', note: 'Cọc đồ dùng', amount: 200000 });
+  const incoming = { ...old, id: 'new-id', category: 'Học tập', flow: { kind: 'deposit' } };
+  await initDB(); await replaceData(data([old]));
+  const receipt = await appendTransactions([incoming]);
+  assert.equal(receipt.imported, 0); assert.equal(receipt.updated, 1);
+  const d = await readData(); assert.equal(d.transactions.length, 1); assert.equal(d.transactions[0].id, old.id);
+  assert.equal(d.transactions[0].category, 'Học tập'); assert.equal(kindOf(d.transactions[0]), 'deposit');
+  assert.equal(cashBalanceForMonth(d, '2026-11', '2026-11-25').expense, 200000);
+  assert.equal((await appendTransactions([incoming])).updated, 0);
+  assert.equal(planImport([incoming], [old], { updateDetails: false }).updated, 0);
+});
+test('reimport keeps manual refund links and counts legitimately repeated purchases', () => {
+  const t = row({ type: 'income', group: 'income', flow: { kind: 'refund', targetId: 'my-deposit' } });
+  const imported = { ...t, id: 'other', flow: { kind: 'refund' } };
+  assert.equal(planImport([imported], [t]).updated, 0);
+  assert.equal(planImport([row({ ...t, id: 'a' }), row({ ...t, id: 'b' })], [t]).imported, 1);
+});
+test('side balances and cash classifications are proposed without manufacturing a debt or transaction', () => {
+  const rows = [['Ngày', 'Nội dung', 'VNĐ', 'Danh mục'], ['2026-11-02', 'cọc sách', -200000, 'Học tập'], ['2026-11-03', 'hoàn tiền', 200000, 'Khác'], [null, null, null, null, 'Tiết kiệm:', 750000], [null, null, null, null, 'dư nợ', 550000]];
+  const sheet = { rows, merges: [], header: { index: 0, mapping: { date: 0, note: 1, amount: 2, category: 3, extra: -1, fixed: -1, group: -1, type: -1 } } };
+  const result = buildImport(sheet, { month: '2026-11' });
+  assert.equal(result.rows.length, 2); assert.equal(kindOf(result.rows[0].transaction), 'deposit'); assert.equal(kindOf(result.rows[1].transaction), 'refund');
+  assert.deepEqual(detectSideBalances(sheet), { liquidSavings: 750000, debt: 550000 });
+  assert.equal(suggestFlow(row({ note: 'Mua cocacola' })), 'regular');
+});
+test('month selection, learned categories and insight ledger filters refer to the same records', () => {
+  assert.equal(monthAfterDayChange('2026-10', '2026-11-25', '2026-11-25'), '2026-10');
+  assert.equal(monthAfterDayChange('2026-10', '2026-11-30', '2026-12-01'), '2026-10');
+  assert.equal(monthAfterDayChange('2026-11', '2026-11-30', '2026-12-01'), '2026-12');
+  assert.equal(dateForMonth('2026-10', date).getDate(), 31);
+  assert.equal(dateForMonth('2026-11', date), date);
+  const rows = [row({ category: 'Ăn uống' }), row({ category: 'Di chuyển' }), row({ category: 'Ăn uống' }), row({ type: 'income', group: 'income', flow: { kind: 'refund' } })];
+  assert.equal(categoryHabits(rows)[0].category, 'Ăn uống');
+  assert.equal(filteredTransactions(data(rows), { month: '2026-11', category: 'Ăn uống' }).length, 2);
+  assert.equal(filteredTransactions(data(rows), { month: '2026-11', kind: 'refund' }).length, 1);
+  const categorized = [...rows, row({ category: 'Ăn uống', flow: { kind: 'deposit' } }), row({ date: '2026-12-01', category: 'Ăn uống' }), row({ date: '2026-10-01', category: 'Ăn uống' })];
+  const subset = filteredTransactions(data(categorized), { month: '2026-11', category: 'Ăn uống', scope: 'everyday', through: '2026-11-25' });
+  assert.equal(subset.length, 2);
+  assert.equal(filteredTransactions(data(categorized), { month: '2026-11', category: 'Ăn uống', scope: 'everyday', through: '2026-11-25', allMonths: true }).length, 3);
+});
+test('old backups remain valid; linked records survive backups and render as escaped actionable content', () => {
+  const deposit = row({ note: '<script>bad()</script>', category: 'a" onclick="bad()', flow: { kind: 'deposit' } });
+  const d = data([deposit]), clean = validateBackup({ app: 'vung-tai-chinh', version: 1, data: d });
+  assert.deepEqual(clean.transactions[0].flow, { kind: 'deposit' });
+  const a = analyzeFinance(clean, date), html = renderOverview(clean, a, true) + renderAnalysis(clean, a);
+  assert.ok(!html.includes('<script>bad()')); assert.ok(html.includes('&lt;script&gt;bad()'));
+  assert.ok(html.includes('data-action="open-ledger"')); assert.ok(html.includes('data-action="refund-deposit"'));
+  assert.ok(!html.includes('NaN')); assert.ok(!html.includes('Sức khỏe tài chính · FHI'));
+});
+
+```
+
+### File: vendor/NOTICE.md
+
+````markdown
+# SheetJS Community Edition
+
+`xlsx.full.min.js` is the unmodified standalone build of SheetJS Community Edition 0.20.3, distributed under the Apache License 2.0. The full license is included in `SHEETJS-LICENSE.txt`.
+
+Official distribution: https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js
+
+Official browser documentation: https://docs.sheetjs.com/docs/getting-started/installation/standalone/
+
+The script is served with the application, including in its offline cache. Spreadsheet file contents are read in the visitor's browser and are not uploaded by the application.
+
+````
+
+### File: vendor/SHEETJS-LICENSE.txt
+
+```
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "{}"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright (C) 2012-present   SheetJS LLC
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
 ```
 
 # Bảng kiểm chứng — Vững Tài Chính
@@ -1571,3 +2931,15 @@ Giao diện cho xem trước, chọn trang/cột/đơn vị, bỏ chọn từng 
 Có sáu kiểm tra bổ sung cho số dư: nhận riêng ô ngân hàng/tiền mặt; loại quỹ dự phòng khỏi tiền đang dùng; không tính giao dịch tương lai; ghi giao dịch và số dư đầu kỳ trong cùng một lần lưu, giữ các cài đặt khác; hủy toàn bộ khi số dư không hợp lệ; chấp nhận tệp JSON cũ chưa có trường mới.
 
 Đã thử trên Chrome nhập lại tệp mẫu khi toàn bộ giao dịch bị nhận trùng, chỉ chọn lưu số dư đầu tháng. Số giao dịch và tổng thu giữ nguyên; tiền còn lại tăng đúng số tiền đầu kỳ.
+
+
+## Giao diện theo cách ghi chép hằng ngày — 25/11/2026
+
+- Tổng quan đưa ba câu trả lời lên trước: tiền còn dùng, tiền chi ra, số tạm chia mỗi ngày. Công thức và chỉ số nâng cao được thu gọn.
+- Danh mục trong phân tích mở đúng tập chi sinh hoạt tạo nên tổng đó; cọc/hoàn trong cùng danh mục không làm tổng chi tiết lệch khỏi số đã bấm. Giữ tháng đang chọn khi chuyển trang.
+- Nội dung khoản là chữ chính. Danh mục và mô tả đã dùng được gợi ý từ chính dữ liệu trong trình duyệt; không đưa dữ liệu cá nhân vào mã nguồn.
+- Các kiểm tra mới dùng dữ liệu tổng hợp: đối chiếu tiền thực tế với thu nhập/chi sinh hoạt, hoàn cọc một phần và qua tháng, chống hoàn vượt hoặc mất liên kết, cập nhật quỹ/nợ khi sửa và xóa, lỗi không gây lưu một phần, ngăn ghi hiệu ứng ở tương lai, liên kết đúng hóa đơn và tránh nhập trùng khi bổ sung danh mục cũ.
+- Đã thử trực tiếp trên Chrome bản nội bộ: ghi cọc, nhận hoàn một phần, bấm danh mục mở đúng sổ, chuyển quỹ rồi sửa số tiền, trả nợ có phần lãi, ghi đã trả hóa đơn và mở các biểu đồ thu gọn. Chiều ngang nội dung khớp cửa sổ laptop, không có thanh cuộn ngang toàn trang.
+- Nhập lại Excel có thể chỉ sửa phân loại cũ thay vì thêm tiền ra vào. Số dư đầu tháng và quỹ được lưu trong cùng giao dịch cơ sở dữ liệu với phần nhập; phải chủ động chọn đối chiếu quỹ. Ghi chú dư nợ chỉ tạo gợi ý thiết lập, không tự giả định lãi suất.
+
+Kết quả hiện tại: **65/65 kiểm tra tự động đạt**. Bổ sung kiểm tra ưu tiên giao dịch gắn đúng hóa đơn trước khi phân bổ khoản cũ theo danh mục, và giữ tháng cũ khi đồng hồ kiểm tra sang ngày mới. Trên Chrome, đã thử dùng khoản có sẵn để hoàn tất hóa đơn mà giữ nguyên tiền ra vào, cùng nhập lại tệp mẫu chỉ cập nhật phân loại cũ.
