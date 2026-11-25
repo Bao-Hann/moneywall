@@ -124,3 +124,50 @@ body { font-size: 16px; }
 @media (max-width: 950px) { .overview-columns { grid-template-columns: 1fr; } .money-equation { grid-template-columns: 1fr 1fr; } .money-cards { gap: 12px; } .money-card { padding: 18px 14px; } .big-money { font-size: 23px; } .analysis-lead { flex-wrap: wrap; } }
 @media (max-width: 760px) { .money-cards { grid-template-columns: 1fr 1fr; } .money-cards>.balance-card { grid-column: 1/-1; } .big-money { font-size: 30px; } .money-card:not(.balance-card) .big-money { font-size: 24px; } .card-label { font-size: 13px; } .money-card p { font-size: 12px; } .page-heading h1 { font-size: 25px; } .money-card { min-height: 170px; } .balance-card { min-height: 185px; } .heading-actions { width: 100%; justify-content: space-between; } .analysis-lead>div { min-width: calc(100% - 65px); } .plain-insights,.trend-charts,.adjustment-list { grid-template-columns: 1fr; } .recent-item { gap: 9px; } .recent-item>.money { font-size: 13px; } .recent-copy strong { font-size: 13px; } .separate-row { font-size: 13px; } .helper-text { font-size: 14px; } .fine-print { font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto!important; } }
+
+/* Financial wellbeing stays visible, with one concrete next step. */
+.wellbeing-overview { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:20px 28px; margin-bottom:20px; border:1px solid #bcd7c6; }
+.wellbeing-rating { display:flex; align-items:center; gap:20px; min-width:0; }
+.wellbeing-gauge { width:100px; height:100px; flex:none; border-radius:50%; padding:7px; background:conic-gradient(var(--green) var(--health-score),var(--line) 0); }
+.wellbeing-gauge>div { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:var(--surface); }
+.wellbeing-gauge strong { font-size:29px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.wellbeing-gauge small { font-size:12px; color:var(--muted); }
+.wellbeing-label { color:var(--green); display:block; font-size:15px; margin-top:8px; }
+.wellbeing-rating h2 { font-size:20px; margin:0; }
+.wellbeing-rating p { font-size:13px; color:var(--muted); margin:8px 0 0; max-width:260px; }
+.wellbeing-next { padding-left:28px; border-left:1px solid var(--line); }
+.wellbeing-next h3 { font-size:18px; margin:7px 0; }
+.wellbeing-gap { display:block; font-size:14px; line-height:1.7; }
+.wellbeing-next p { color:var(--muted); font-size:13px; margin:6px 0 12px; }
+.wellbeing-next .button { font-size:13px; }
+.wellbeing-footer { grid-column:1/-1; border-top:1px solid var(--line); padding-top:15px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
+.wellbeing-footer>span { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+.wellbeing-footer .icon { width:17px; color:var(--green); margin-right:3px; }
+.wellbeing-footer strong { font-weight:650; }
+.health-details { margin-top:0; margin-bottom:22px; scroll-margin-top:20px; }
+.health-detail-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:34px; }
+.health-detail-columns h3 { font-size:16px; margin-bottom:10px; }
+.health-factor { padding:15px 0; border-bottom:1px solid var(--line); }
+.health-factor:last-child { border-bottom:0; }
+.health-factor-heading { display:flex; justify-content:space-between; gap:15px; font-size:14px; }
+.health-factor-heading>span { color:var(--green); font-variant-numeric:tabular-nums; flex:none; }
+.health-factor-bar { height:5px; border-radius:5px; overflow:hidden; background:var(--line); margin:10px 0; }
+.health-factor-bar>i { display:block; height:100%; background:var(--green); border-radius:5px; }
+.health-factor p { font-size:13px; color:var(--muted); margin:7px 0; line-height:1.7; }
+.health-factor .text-link,.independence-milestone .text-link { font-size:13px; background:transparent; padding:0; }
+.independence-path { border-left:1px solid var(--line); padding-left:30px; }
+.independence-path>.helper-text { font-size:13px; }
+.independence-milestone { display:flex; gap:12px; padding:12px 0; align-items:flex-start; }
+.milestone-icon { display:grid; place-items:center; background:var(--bg); color:var(--muted); border-radius:50%; width:28px; height:28px; flex:none; margin-top:2px; }
+.milestone-icon .icon { width:16px; height:16px; }
+.complete .milestone-icon { background:var(--mint); color:var(--green); }
+.independence-milestone h4 { font-size:14px; font-weight:550; margin:0 0 4px; }
+.milestone-status { display:block; color:var(--muted); font-size:12px; margin-bottom:5px; }
+.complete .milestone-status { color:var(--green); }
+.next-milestone { background:var(--mint); padding:17px; border-radius:10px; margin-top:12px; }
+.next-milestone h3 { margin:6px 0; font-size:15px; }
+.next-milestone p { font-size:13px; color:var(--muted); margin-bottom:12px; }
+#spending-section,#reserve-section,#debts-section,#bills-section,#income-history-section { scroll-margin-top:20px; }
+@media(max-width:1050px) { .wellbeing-overview { grid-template-columns:1fr; } .wellbeing-next { border-left:0; border-top:1px solid var(--line); padding:17px 0 0; } .wellbeing-rating p { max-width:none; } }
+@media(max-width:800px) { .health-detail-columns { grid-template-columns:1fr; gap:24px; } .independence-path { padding:20px 0 0; border-left:0; border-top:1px solid var(--line); } }
+@media(max-width:600px) { .wellbeing-gauge { width:80px; height:80px; padding:6px; } .wellbeing-gauge strong { font-size:25px; } .wellbeing-rating { gap:15px; } .wellbeing-rating h2 { font-size:18px; } .wellbeing-label { font-size:14px; } }

@@ -58,6 +58,34 @@ export function monthlyMoney(data, a) {
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };
 }
+/** Explain the existing health model without turning its score into a claim of independence. */
+export function wellbeingPlan(data, a) {
+  const h = a.health, hasIncome = a.income.yBase > 0;
+  const hasEssentials = a.current.needs > 0 || a.history.some((m) => m.needs > 0) || a.totalActiveFixedBills > 0;
+  const ready = hasIncome && hasEssentials, provisional = a.income.months < 3;
+  const score = ready ? h.fhi : null;
+  const reserve = data.profile.liquidSavings, target = Math.ceil(h.essentialMonthly * h.targetRunway);
+  const oneMonthGap = hasEssentials ? Math.max(0, Math.ceil(h.essentialMonthly - reserve)) : null;
+  const reserveGap = hasEssentials ? Math.max(0, target - reserve) : null;
+  const highDebt = [...data.debts].filter((d) => d.principal > 0 && d.apr > 10).sort((x, y) => y.apr - x.apr)[0];
+  const completeMonths = a.history.slice(-3), surplusMonths = completeMonths.filter((m) => m.income > 0 && m.income > m.spent).length;
+  let next;
+  if (!ready) next = { title: 'Hoàn thiện bức tranh của bạn', text: 'Ghi thu nhập và chi phí sinh hoạt để biết nền tảng hiện tại.', action: 'add-transaction', label: 'Bổ sung thu chi', symbol: 'wallet' };
+  else if (h.level === 1) next = { title: 'Giảm phần chi đang vượt thu', gap: Math.max(0, a.current.spent - a.current.income), text: 'Tiền có sẵn vẫn nằm trong số dư. Ưu tiên xem khoản có thể giảm trước khi tăng để dành.', action: 'open-analysis', section: 'spending-section', label: 'Tìm chỗ có thể điều chỉnh', symbol: 'wallet' };
+  else if (h.level === 2) next = { title: 'Có quỹ đủ 1 tháng sinh hoạt', gap: oneMonthGap, text: 'Tạo lớp đệm đầu tiên cho những việc ngoài dự tính.', action: 'reserve-in', label: 'Chọn tiền chuyển vào quỹ', symbol: 'shield' };
+  else if (h.level === 3 && highDebt) next = { title: 'Giảm khoản nợ có lãi cao nhất', debtId: highDebt.id, debtName: highDebt.name, gap: highDebt.principal, text: 'Trả các mức tối thiểu trước, rồi cân nhắc phần có thể trả thêm.', action: 'pay-debt', label: 'Xem và ghi lần trả nợ', symbol: 'layers' };
+  else if (h.level === 4) next = { title: `Quỹ đủ ${new Intl.NumberFormat('vi-VN').format(h.targetRunway)} tháng sinh hoạt`, gap: reserveGap, text: 'Có thêm thời gian xoay xở nếu nguồn thu tạm dừng.', action: 'reserve-in', label: 'Chọn tiền chuyển vào quỹ', symbol: 'shield' };
+  else next = { title: 'Giữ quỹ và duy trì khoản dư', text: 'Bạn đã có nền tảng. Tiếp tục giữ quỹ, kiểm soát nợ và dành tiền cho mục tiêu dài hạn.', action: 'reserve-in', label: 'Ghi khoản để dành', symbol: 'sprout' };
+  return { ready, provisional, score, hasEssentials, target, reserveGap, oneMonthGap, highDebt, surplusMonths, next,
+    label: score === null ? 'Cần thêm ghi chép' : score < 40 ? 'Cần củng cố nền tảng' : score < 70 ? 'Đang xây sự chủ động' : score < 85 ? 'Đang khá vững' : 'Nền tảng tốt',
+    milestones: [
+      { key: 'balance', title: 'Thu đủ trang trải chi sinh hoạt', done: a.current.income > 0 && a.current.income >= a.current.spent, known: a.current.income > 0 || a.current.spent > 0, action: 'open-analysis', section: 'spending-section', label: 'Xem thu chi' },
+      { key: 'buffer', title: 'Có quỹ đệm 1 tháng', done: hasEssentials && h.runwayMonths >= 1, known: hasEssentials, action: 'open-planning', section: 'reserve-section', label: 'Xem quỹ' },
+      { key: 'debt', title: 'Kiểm soát nợ lãi cao', done: data.debts.length > 0 && !highDebt, known: data.debts.length > 0, action: 'open-planning', section: 'debts-section', label: 'Đối chiếu nợ' },
+      { key: 'reserve', title: `Quỹ đủ ${new Intl.NumberFormat('vi-VN').format(h.targetRunway)} tháng`, done: hasEssentials && h.runwayMonths >= h.targetRunway, known: hasEssentials, action: 'open-planning', section: 'reserve-section', label: 'Xem mốc quỹ' },
+      { key: 'surplus', title: 'Thu vượt chi sinh hoạt trong 3 tháng', done: completeMonths.length === 3 && surplusMonths === 3, known: completeMonths.length === 3, action: 'open-analysis', section: 'income-history-section', label: 'Xem các tháng' },
+    ] };
+}
 /** Compute reversals and replacements before one atomic database write. */
 export function changeTransaction(data, next, id, today) {
   const previous = data.transactions.find((t) => t.id === id);

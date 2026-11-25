@@ -1,6 +1,6 @@
 # Mã nguồn đầy đủ — Vững Tài Chính
 
-Phiên bản giao diện ghi chép hằng ngày, liên kết cọc/hoàn, hóa đơn, quỹ và nợ. Thư viện SheetJS nguyên bản nằm trong `vendor/`; dữ liệu cá nhân không nằm trong mã nguồn.
+Giao diện theo cách ghi hằng ngày, sức khỏe và lộ trình tự chủ; liên kết cọc/hoàn, hóa đơn, quỹ và nợ. SheetJS nguyên bản trong `vendor/`. Không đưa dữ liệu cá nhân vào mã nguồn.
 
 ### File: .nojekyll
 
@@ -243,6 +243,53 @@ body { font-size: 16px; }
 @media (max-width: 950px) { .overview-columns { grid-template-columns: 1fr; } .money-equation { grid-template-columns: 1fr 1fr; } .money-cards { gap: 12px; } .money-card { padding: 18px 14px; } .big-money { font-size: 23px; } .analysis-lead { flex-wrap: wrap; } }
 @media (max-width: 760px) { .money-cards { grid-template-columns: 1fr 1fr; } .money-cards>.balance-card { grid-column: 1/-1; } .big-money { font-size: 30px; } .money-card:not(.balance-card) .big-money { font-size: 24px; } .card-label { font-size: 13px; } .money-card p { font-size: 12px; } .page-heading h1 { font-size: 25px; } .money-card { min-height: 170px; } .balance-card { min-height: 185px; } .heading-actions { width: 100%; justify-content: space-between; } .analysis-lead>div { min-width: calc(100% - 65px); } .plain-insights,.trend-charts,.adjustment-list { grid-template-columns: 1fr; } .recent-item { gap: 9px; } .recent-item>.money { font-size: 13px; } .recent-copy strong { font-size: 13px; } .separate-row { font-size: 13px; } .helper-text { font-size: 14px; } .fine-print { font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto!important; } }
+
+/* Financial wellbeing stays visible, with one concrete next step. */
+.wellbeing-overview { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:20px 28px; margin-bottom:20px; border:1px solid #bcd7c6; }
+.wellbeing-rating { display:flex; align-items:center; gap:20px; min-width:0; }
+.wellbeing-gauge { width:100px; height:100px; flex:none; border-radius:50%; padding:7px; background:conic-gradient(var(--green) var(--health-score),var(--line) 0); }
+.wellbeing-gauge>div { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:var(--surface); }
+.wellbeing-gauge strong { font-size:29px; line-height:1.2; font-variant-numeric:tabular-nums; }
+.wellbeing-gauge small { font-size:12px; color:var(--muted); }
+.wellbeing-label { color:var(--green); display:block; font-size:15px; margin-top:8px; }
+.wellbeing-rating h2 { font-size:20px; margin:0; }
+.wellbeing-rating p { font-size:13px; color:var(--muted); margin:8px 0 0; max-width:260px; }
+.wellbeing-next { padding-left:28px; border-left:1px solid var(--line); }
+.wellbeing-next h3 { font-size:18px; margin:7px 0; }
+.wellbeing-gap { display:block; font-size:14px; line-height:1.7; }
+.wellbeing-next p { color:var(--muted); font-size:13px; margin:6px 0 12px; }
+.wellbeing-next .button { font-size:13px; }
+.wellbeing-footer { grid-column:1/-1; border-top:1px solid var(--line); padding-top:15px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
+.wellbeing-footer>span { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+.wellbeing-footer .icon { width:17px; color:var(--green); margin-right:3px; }
+.wellbeing-footer strong { font-weight:650; }
+.health-details { margin-top:0; margin-bottom:22px; scroll-margin-top:20px; }
+.health-detail-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:34px; }
+.health-detail-columns h3 { font-size:16px; margin-bottom:10px; }
+.health-factor { padding:15px 0; border-bottom:1px solid var(--line); }
+.health-factor:last-child { border-bottom:0; }
+.health-factor-heading { display:flex; justify-content:space-between; gap:15px; font-size:14px; }
+.health-factor-heading>span { color:var(--green); font-variant-numeric:tabular-nums; flex:none; }
+.health-factor-bar { height:5px; border-radius:5px; overflow:hidden; background:var(--line); margin:10px 0; }
+.health-factor-bar>i { display:block; height:100%; background:var(--green); border-radius:5px; }
+.health-factor p { font-size:13px; color:var(--muted); margin:7px 0; line-height:1.7; }
+.health-factor .text-link,.independence-milestone .text-link { font-size:13px; background:transparent; padding:0; }
+.independence-path { border-left:1px solid var(--line); padding-left:30px; }
+.independence-path>.helper-text { font-size:13px; }
+.independence-milestone { display:flex; gap:12px; padding:12px 0; align-items:flex-start; }
+.milestone-icon { display:grid; place-items:center; background:var(--bg); color:var(--muted); border-radius:50%; width:28px; height:28px; flex:none; margin-top:2px; }
+.milestone-icon .icon { width:16px; height:16px; }
+.complete .milestone-icon { background:var(--mint); color:var(--green); }
+.independence-milestone h4 { font-size:14px; font-weight:550; margin:0 0 4px; }
+.milestone-status { display:block; color:var(--muted); font-size:12px; margin-bottom:5px; }
+.complete .milestone-status { color:var(--green); }
+.next-milestone { background:var(--mint); padding:17px; border-radius:10px; margin-top:12px; }
+.next-milestone h3 { margin:6px 0; font-size:15px; }
+.next-milestone p { font-size:13px; color:var(--muted); margin-bottom:12px; }
+#spending-section,#reserve-section,#debts-section,#bills-section,#income-history-section { scroll-margin-top:20px; }
+@media(max-width:1050px) { .wellbeing-overview { grid-template-columns:1fr; } .wellbeing-next { border-left:0; border-top:1px solid var(--line); padding:17px 0 0; } .wellbeing-rating p { max-width:none; } }
+@media(max-width:800px) { .health-detail-columns { grid-template-columns:1fr; gap:24px; } .independence-path { padding:20px 0 0; border-left:0; border-top:1px solid var(--line); } }
+@media(max-width:600px) { .wellbeing-gauge { width:80px; height:80px; padding:6px; } .wellbeing-gauge strong { font-size:25px; } .wellbeing-rating { gap:15px; } .wellbeing-rating h2 { font-size:18px; } .wellbeing-label { font-size:14px; } }
 
 ```
 
@@ -601,6 +648,34 @@ export function monthlyMoney(data, a) {
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };
 }
+/** Explain the existing health model without turning its score into a claim of independence. */
+export function wellbeingPlan(data, a) {
+  const h = a.health, hasIncome = a.income.yBase > 0;
+  const hasEssentials = a.current.needs > 0 || a.history.some((m) => m.needs > 0) || a.totalActiveFixedBills > 0;
+  const ready = hasIncome && hasEssentials, provisional = a.income.months < 3;
+  const score = ready ? h.fhi : null;
+  const reserve = data.profile.liquidSavings, target = Math.ceil(h.essentialMonthly * h.targetRunway);
+  const oneMonthGap = hasEssentials ? Math.max(0, Math.ceil(h.essentialMonthly - reserve)) : null;
+  const reserveGap = hasEssentials ? Math.max(0, target - reserve) : null;
+  const highDebt = [...data.debts].filter((d) => d.principal > 0 && d.apr > 10).sort((x, y) => y.apr - x.apr)[0];
+  const completeMonths = a.history.slice(-3), surplusMonths = completeMonths.filter((m) => m.income > 0 && m.income > m.spent).length;
+  let next;
+  if (!ready) next = { title: 'Hoàn thiện bức tranh của bạn', text: 'Ghi thu nhập và chi phí sinh hoạt để biết nền tảng hiện tại.', action: 'add-transaction', label: 'Bổ sung thu chi', symbol: 'wallet' };
+  else if (h.level === 1) next = { title: 'Giảm phần chi đang vượt thu', gap: Math.max(0, a.current.spent - a.current.income), text: 'Tiền có sẵn vẫn nằm trong số dư. Ưu tiên xem khoản có thể giảm trước khi tăng để dành.', action: 'open-analysis', section: 'spending-section', label: 'Tìm chỗ có thể điều chỉnh', symbol: 'wallet' };
+  else if (h.level === 2) next = { title: 'Có quỹ đủ 1 tháng sinh hoạt', gap: oneMonthGap, text: 'Tạo lớp đệm đầu tiên cho những việc ngoài dự tính.', action: 'reserve-in', label: 'Chọn tiền chuyển vào quỹ', symbol: 'shield' };
+  else if (h.level === 3 && highDebt) next = { title: 'Giảm khoản nợ có lãi cao nhất', debtId: highDebt.id, debtName: highDebt.name, gap: highDebt.principal, text: 'Trả các mức tối thiểu trước, rồi cân nhắc phần có thể trả thêm.', action: 'pay-debt', label: 'Xem và ghi lần trả nợ', symbol: 'layers' };
+  else if (h.level === 4) next = { title: `Quỹ đủ ${new Intl.NumberFormat('vi-VN').format(h.targetRunway)} tháng sinh hoạt`, gap: reserveGap, text: 'Có thêm thời gian xoay xở nếu nguồn thu tạm dừng.', action: 'reserve-in', label: 'Chọn tiền chuyển vào quỹ', symbol: 'shield' };
+  else next = { title: 'Giữ quỹ và duy trì khoản dư', text: 'Bạn đã có nền tảng. Tiếp tục giữ quỹ, kiểm soát nợ và dành tiền cho mục tiêu dài hạn.', action: 'reserve-in', label: 'Ghi khoản để dành', symbol: 'sprout' };
+  return { ready, provisional, score, hasEssentials, target, reserveGap, oneMonthGap, highDebt, surplusMonths, next,
+    label: score === null ? 'Cần thêm ghi chép' : score < 40 ? 'Cần củng cố nền tảng' : score < 70 ? 'Đang xây sự chủ động' : score < 85 ? 'Đang khá vững' : 'Nền tảng tốt',
+    milestones: [
+      { key: 'balance', title: 'Thu đủ trang trải chi sinh hoạt', done: a.current.income > 0 && a.current.income >= a.current.spent, known: a.current.income > 0 || a.current.spent > 0, action: 'open-analysis', section: 'spending-section', label: 'Xem thu chi' },
+      { key: 'buffer', title: 'Có quỹ đệm 1 tháng', done: hasEssentials && h.runwayMonths >= 1, known: hasEssentials, action: 'open-planning', section: 'reserve-section', label: 'Xem quỹ' },
+      { key: 'debt', title: 'Kiểm soát nợ lãi cao', done: data.debts.length > 0 && !highDebt, known: data.debts.length > 0, action: 'open-planning', section: 'debts-section', label: 'Đối chiếu nợ' },
+      { key: 'reserve', title: `Quỹ đủ ${new Intl.NumberFormat('vi-VN').format(h.targetRunway)} tháng`, done: hasEssentials && h.runwayMonths >= h.targetRunway, known: hasEssentials, action: 'open-planning', section: 'reserve-section', label: 'Xem mốc quỹ' },
+      { key: 'surplus', title: 'Thu vượt chi sinh hoạt trong 3 tháng', done: completeMonths.length === 3 && surplusMonths === 3, known: completeMonths.length === 3, action: 'open-analysis', section: 'income-history-section', label: 'Xem các tháng' },
+    ] };
+}
 /** Compute reversals and replacements before one atomic database write. */
 export function changeTransaction(data, next, id, today) {
   const previous = data.transactions.find((t) => t.id === id);
@@ -946,7 +1021,7 @@ export function createSeedData(date = new Date()) {
 ```javascript
 import { CATEGORIES, GROUP_LABELS, clamp, sum, cashBalanceForMonth, localDate, analyzeFinance } from './finance-engine.js';
 
-import { monthlyMoney, kindOf, FLOW_LABELS, dateForMonth } from './money-flow.js';
+import { monthlyMoney, kindOf, FLOW_LABELS, dateForMonth, wellbeingPlan } from './money-flow.js';
 
 const paths = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
@@ -1023,6 +1098,31 @@ function categoryList(m, limit = 8) {
 function recentList(rows) {
   return `<div class="recent-list">${rows.map((t) => `<button class="recent-item" data-action="edit-transaction" data-id="${E(t.id)}"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><span class="recent-copy"><strong>${E(t.note || t.category)}</strong><small>${E(t.category)} · ${dateText(t.date)}</small></span><strong class="money ${t.type === 'income' ? 'amount-income' : ''}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</strong></button>`).join('')}</div>`;
 }
+function wellbeingAction(next, cls = 'primary small') {
+  return btn(next.label, next.action, cls, '', `${next.debtId ? `data-id="${E(next.debtId)}"` : ''} ${next.section ? `data-section="${E(next.section)}"` : ''}`);
+}
+function wellbeingGap(plan, a) {
+  if (plan.next.gap === undefined) return '';
+  if (a.health.level === 1) return `Chi sinh hoạt đang cao hơn thu nhập mới ${formatVND(plan.next.gap)}.`;
+  if (plan.next.debtId) return `${E(plan.next.debtName)} · còn ${formatVND(plan.next.gap)} nợ gốc.`;
+  return `Còn cần ${formatVND(plan.next.gap)} để chạm mốc này.`;
+}
+function renderWellbeing(data, a) {
+  const p = wellbeingPlan(data, a), h = a.health;
+  return `<section class="panel wellbeing-overview" id="health-overview" aria-label="Sức khỏe tài chính và bước tự chủ"><div class="wellbeing-rating"><div class="wellbeing-gauge ${p.score === null ? 'unrated' : ''}" style="--health-score:${p.score ?? 0}%" role="img" aria-label="${p.score === null ? 'Chưa đủ dữ liệu để chấm điểm' : `Sức khỏe tài chính ${N(p.score)} trên 100`}"><div><strong>${p.score === null ? '—' : N(p.score)}</strong><small>/ 100</small></div></div><div><h2>Sức khỏe tài chính</h2><strong class="wellbeing-label">${p.label}</strong><p>${p.provisional ? 'Đánh giá tạm từ những tháng bạn đã ghi.' : 'Theo thu chi, quỹ và nợ bạn đã ghi.'}</p></div></div><div class="wellbeing-next"><span class="eyebrow">TỪNG BƯỚC TỰ CHỦ TÀI CHÍNH</span><h3>${p.next.title}</h3>${p.next.gap !== undefined ? `<strong class="wellbeing-gap">${wellbeingGap(p, a)}</strong>` : ''}<p>${p.next.text}</p>${wellbeingAction(p.next)}</div><div class="wellbeing-footer"><span>${icon('shield')}${p.hasEssentials ? `Quỹ hiện đủ khoảng <strong>${N(h.runwayMonths)} tháng</strong> chi thiết yếu.` : 'Thêm chi phí sinh hoạt để biết quỹ có thể đỡ được bao lâu.'}</span>${btn('Xem lộ trình và từng phần', 'open-health', 'text-link')}</div></section>`;
+}
+function renderHealthDetails(data, a) {
+  const p = wellbeingPlan(data, a), h = a.health;
+  const surplus = a.current.income - a.current.spent;
+  const factors = [
+    { title: 'Tiền dư sau sinh hoạt', score: h.scores.sSavings, note: surplus >= 0 ? `Còn ${formatVND(surplus)} trước để dành và trả nợ.` : `Chi sinh hoạt vượt thu nhập mới ${formatVND(-surplus)}.`, action: 'open-analysis', section: 'spending-section', label: 'Xem khoản có thể giảm' },
+    { title: 'Quỹ cho lúc cần gấp', score: h.scores.sRunway, note: p.hasEssentials ? `${formatVND(data.profile.liquidSavings)} · khoảng ${N(h.runwayMonths)} tháng chi thiết yếu.` : 'Cần thêm chi thiết yếu để ước tính quỹ.', action: 'open-planning', section: 'reserve-section', label: 'Xem quỹ để dành' },
+    { title: 'Hóa đơn vừa với thu nhập', score: h.scores.sFixed, note: `Đã ghi ${formatVND(a.totalActiveFixedBills)} hóa đơn mỗi tháng.`, action: 'open-planning', section: 'bills-section', label: 'Đối chiếu hóa đơn' },
+    { title: 'Áp lực từ các khoản nợ', score: h.scores.sDebt, note: data.debts.length ? `Còn ${formatVND(sum(data.debts.map((d) => d.principal)))} nợ gốc · mức trả ${formatVND(h.totalMinDebtPayments)}/tháng.` : 'Chưa có khoản nợ nào được ghi. Kiểm tra để đánh giá sát hơn.', action: 'open-planning', section: 'debts-section', label: 'Đối chiếu nợ' },
+    { title: 'Mua sắm trong khả năng', score: h.scores.sControl, note: `${formatVND(a.current.wants)} cho mua sắm và giải trí tháng này.`, action: 'open-ledger', group: 'wants', label: 'Xem các khoản này' },
+  ];
+  return `<section class="panel health-details section-spaced" id="health-analysis"><div class="panel-header"><div><h2>Đường đến sự chủ động về tiền</h2><p>${p.score === null ? 'Hoàn thiện sổ trước khi đánh giá.' : `${N(p.score)}/100 · ${p.label}${p.provisional ? ' · Đánh giá tạm' : ''}`}</p></div><a class="text-link" href="#overview">Về tổng quan</a></div><div class="health-detail-columns"><div><h3>Sức khỏe đến từ đâu?</h3><div class="health-factor-list">${factors.map((f) => `<article class="health-factor"><div class="health-factor-heading"><strong>${f.title}</strong><span>${p.ready ? `${N(f.score, 0)}/100` : '—'}</span></div><div class="health-factor-bar"><i style="width:${p.ready ? clamp(f.score, 0, 100) : 0}%"></i></div><p>${f.note}</p>${btn(f.label, f.action, 'text-link', '', `${f.section ? `data-section="${f.section}"` : ''} ${f.group ? `data-group="${f.group}" data-scope="everyday"` : ''}`)}</article>`).join('')}</div></div><div class="independence-path"><h3>Những mốc để yên tâm hơn</h3><p class="helper-text">Mỗi mốc là một nền tảng cần xây, không phải mức giàu nghèo.</p>${p.milestones.map((m) => `<article class="independence-milestone ${m.done ? 'complete' : ''}"><span class="milestone-icon">${icon(m.done ? 'check' : 'target')}</span><div><h4>${m.title}</h4><span class="milestone-status">${m.done ? 'Đã đạt theo dữ liệu hiện có' : m.key === 'debt' && !m.known ? 'Chưa đối chiếu nợ' : !m.known ? 'Cần thêm ghi chép' : m.key === 'surplus' ? `${p.surplusMonths}/3 tháng có dư sau sinh hoạt` : 'Đang xây nền tảng'}</span>${btn(m.label, m.action, 'text-link', '', `data-section="${m.section}"`)}</div></article>`).join('')}<div class="next-milestone"><span class="eyebrow">ƯU TIÊN HIỆN TẠI</span><h3>${p.next.title}</h3><p>${wellbeingGap(p, a) || p.next.text}</p>${wellbeingAction(p.next)}</div></div></div><p class="fine-print">Mốc quỹ dựa trên khoảng ${formatVND(h.essentialMonthly)} chi thiết yếu/tháng${h.totalMinDebtPayments ? ', chưa gồm tiền trả nợ' : ''}. Quỹ và nợ dùng số dư bạn đang cập nhật. Điểm cao cho thấy nền tảng tốt hơn; chưa có nghĩa là đã đủ tiền sống lâu dài mà không cần thu nhập.</p></section>`;
+}
 export function renderOverview(data, a, installDismissed) {
   const m = monthlyMoney(data, a), current = a.month === localDate().slice(0, 7);
   const recent = [...m.rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt).slice(0, 4);
@@ -1031,7 +1131,7 @@ export function renderOverview(data, a, installDismissed) {
   return heading('Tiền của bạn, rõ từng ngày', `Một nơi để ghi, xem lại và biết mình cần làm gì.`, a) +
     (sample ? `<div class="banner">Đây là sổ minh họa. ${btn('Bắt đầu sổ của tôi', 'clear-data', 'ghost small')}</div>` : '') +
     (!data.transactions.length ? `<section class="panel welcome-panel"><div><h2>Mang sổ Excel của bạn vào đây</h2><p>Giữ tên khoản, danh mục và cách xem theo ngày như bạn đang ghi.</p></div><div class="welcome-actions">${btn('Nhập Excel', 'import-excel', 'primary', 'upload')}${btn('Ghi khoản đầu tiên', 'add-transaction', 'secondary', 'plus')}</div></section>` : '') +
-    `<section class="money-cards" aria-label="Tiền trong tháng"><article class="money-card balance-card"><span class="card-label">${current ? 'Tiền còn dùng' : 'Tiền cuối tháng'}</span><strong class="big-money">${m.available === null ? 'Chưa có số dư' : formatVND(m.available)}</strong><p>Ngân hàng + tiền mặt · sau các khoản đã ghi</p>${btn('Xem cách tính', 'show-balance', 'balance-link', '', 'aria-controls="balance-detail"')}</article><article class="money-card"><span class="card-label">Đã chi ra</span><strong class="big-money">${formatVND(m.paid)}</strong><p>${formatVND(m.everyday)} cho sinh hoạt${m.deposited ? ' · Có tiền cọc' : ''}</p>${ledgerButton('Xem sổ chi', '', 'data-type="expense"')}</article><article class="money-card daily-card"><span class="card-label">${current ? 'Tạm chia mỗi ngày' : 'Tiền nhận trong tháng'}</span><strong class="big-money">${current ? m.daily === null ? '—' : formatVND(m.daily) : formatVND(m.received)}</strong><p>${current ? `Cho ${a.safe.daysLeft} ngày còn lại, tính cả hôm nay` : 'Gồm thu nhập và các khoản tiền quay về'}</p><span class="daily-note">${current ? m.opening ? m.reserved > 0 ? `Đã giữ lại ${formatVND(m.reserved)} cho hóa đơn và trả nợ` : 'Chưa giữ lại khoản trả hằng tháng' : 'Điền tiền đầu tháng để xem gợi ý' : `Trong đó ${formatVND(m.refunds)} là tiền hoàn`}</span></article></section>
+    renderWellbeing(data, a) + `<section class="money-cards" aria-label="Tiền trong tháng"><article class="money-card balance-card"><span class="card-label">${current ? 'Tiền còn dùng' : 'Tiền cuối tháng'}</span><strong class="big-money">${m.available === null ? 'Chưa có số dư' : formatVND(m.available)}</strong><p>Ngân hàng + tiền mặt · sau các khoản đã ghi</p>${btn('Xem cách tính', 'show-balance', 'balance-link', '', 'aria-controls="balance-detail"')}</article><article class="money-card"><span class="card-label">Đã chi ra</span><strong class="big-money">${formatVND(m.paid)}</strong><p>${formatVND(m.everyday)} cho sinh hoạt${m.deposited ? ' · Có tiền cọc' : ''}</p>${ledgerButton('Xem sổ chi', '', 'data-type="expense"')}</article><article class="money-card daily-card"><span class="card-label">${current ? 'Tạm chia mỗi ngày' : 'Tiền nhận trong tháng'}</span><strong class="big-money">${current ? m.daily === null ? '—' : formatVND(m.daily) : formatVND(m.received)}</strong><p>${current ? `Cho ${a.safe.daysLeft} ngày còn lại, tính cả hôm nay` : 'Gồm thu nhập và các khoản tiền quay về'}</p><span class="daily-note">${current ? m.opening ? m.reserved > 0 ? `Đã giữ lại ${formatVND(m.reserved)} cho hóa đơn và trả nợ` : 'Chưa giữ lại khoản trả hằng tháng' : 'Điền tiền đầu tháng để xem gợi ý' : `Trong đó ${formatVND(m.refunds)} là tiền hoàn`}</span></article></section>
     <details id="balance-detail" class="panel balance-detail"><summary>Tiền còn lại được tính thế nào?</summary><div class="money-equation"><span>Đầu tháng<strong>${m.opening ? formatVND(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Tiền nhận<strong>${formatVND(m.received)}</strong></span><span>− Tiền chi ra<strong>${formatVND(m.paid)}</strong></span><span>= Còn lại<strong>${m.available === null ? '—' : formatVND(m.available)}</strong></span></div><p class="helper-text">Quỹ để dành được theo dõi riêng. Số này tính theo các khoản đã ghi đến ${dateText(a.today)}.</p>${btn('Sửa tiền đầu tháng', 'open-opening', 'secondary small')}${current ? '<p class="fine-print">Gợi ý mỗi ngày chia tiền còn lại sau hóa đơn và mức trả nợ chưa ghi. Chưa trừ khoản mua sắm hoặc chi phí khác bạn chưa thêm; chưa tính khoản thu tương lai.</p>' : ''}</details>
     <div class="overview-columns"><section class="panel next-panel"><div class="panel-header"><div><span class="eyebrow">BƯỚC TIẾP THEO</span><h2>${m.available !== null && m.available < m.reserved ? 'Giữ tiền cho các khoản cần trả' : 'Bạn có thể làm gì hôm nay?'}</h2></div>${icon('sparkles')}</div>${prioritySteps(data, a, m)}</section><section class="panel"><div class="panel-header"><div><h2>Chi nhiều ở đâu?</h2><p>Chạm vào danh mục để xem từng khoản.</p></div><a class="text-link" href="#analysis">Xem phân tích</a></div>${categoryList(m, 3)}${m.deposited ? `<p class="compact-note">${formatVND(m.deposited)} tiền cọc được tách riêng bên dưới.</p>` : ''}</section></div>
     <div class="overview-columns"><section class="panel"><div class="panel-header"><div><h2>Vừa ghi gần đây</h2>${m.latest ? `<p>Ghi gần nhất ${dateText(m.latest)}</p>` : ''}</div>${ledgerButton('Mở sổ thu chi')}</div>${recent.length ? recentList(recent) : empty('Chưa có khoản nào trong tháng', 'Ghi một khoản hoặc nhập sổ Excel.', btn('Nhập Excel', 'import-excel', 'secondary', 'upload'))}</section><section class="panel separate-money"><div class="panel-header"><div><h2>Các khoản theo dõi riêng</h2><p>Không cộng vào tiền đang dùng.</p></div></div><button class="separate-row" data-action="open-planning" data-section="reserve-section"><span>${icon('shield')}Quỹ hiện có</span><strong>${formatVND(data.profile.liquidSavings)}</strong></button><button class="separate-row" data-action="open-deposits"><span>${icon('receipt')}Cọc còn chờ hoàn</span><strong>${formatVND(outstanding)}</strong></button><button class="separate-row" data-action="open-planning" data-section="debts-section"><span>${icon('layers')}Nợ gốc hiện còn</span><strong>${formatVND(sum(data.debts.map((d) => d.principal)))}</strong></button></section></div>
@@ -1068,13 +1168,13 @@ export function renderTransactions(data, a, filters, page, view = 'table') {
 export function renderAnalysis(data, a) {
   const m = monthlyMoney(data, a), top = m.categories[0], current = a.month === localDate().slice(0, 7);
   const linked = m.deposits.filter((d) => d.date.startsWith(a.month) || d.remaining > 0 || m.rows.some((t) => t.flow?.targetId === d.id));
-  return heading('Hiểu tiền của mình', 'Xem khoản lớn, tìm chỗ điều chỉnh, rồi mở đúng ghi chép cần xem.', a) +
+  return heading('Hiểu tiền của mình', 'Xem khoản lớn, tìm chỗ điều chỉnh, rồi mở đúng ghi chép cần xem.', a) + renderHealthDetails(data, a) +
     `<section class="analysis-lead panel"><span class="category-icon">${icon('chart')}</span><div><h2>${top ? `${E(top.category)} là mục bạn chi nhiều nhất` : 'Bắt đầu từ những khoản bạn đã ghi'}</h2><p>${top ? `${formatVND(top.amount)} · khoảng ${N(top.amount / m.everyday * 100, 0)}% tiền sinh hoạt tháng này.` : 'Có khoản thu chi thì phần này sẽ tự cập nhật.'}${m.refunds ? ` ${formatVND(m.refunds)} tiền hoàn đã tách khỏi thu nhập mới.` : ''}</p></div>${top ? ledgerButton('Xem các khoản này', top.category, '', 'secondary small') : ''}</section>
-    <div class="overview-columns analysis-columns"><section class="panel"><div class="panel-header"><div><h2>Tiền sinh hoạt đã dùng</h2><p>${formatVND(m.everyday)} · không gồm cọc, chuyển quỹ và trả nợ</p></div></div>${categoryList(m, m.categories.length)}${m.categories.length ? '<p class="fine-print">Bấm một danh mục để xem, sửa hoặc xóa các khoản trong sổ.</p>' : ''}</section><section class="panel next-panel"><div class="panel-header"><div><h2>Việc nên xem trước</h2><p>Từ những gì bạn đã ghi trong sổ.</p></div>${icon('target')}</div>${prioritySteps(data, a, m)}${a.income.months < 3 ? '<p class="compact-note">Bạn mới có ít tháng ghi chép. Chưa đủ để kết luận thói quen chi tiêu dài hạn.</p>' : ''}</section></div>
+    <div class="overview-columns analysis-columns"><section class="panel" id="spending-section"><div class="panel-header"><div><h2>Tiền sinh hoạt đã dùng</h2><p>${formatVND(m.everyday)} · không gồm cọc, chuyển quỹ và trả nợ</p></div></div>${categoryList(m, m.categories.length)}${m.categories.length ? '<p class="fine-print">Bấm một danh mục để xem, sửa hoặc xóa các khoản trong sổ.</p>' : ''}</section><section class="panel next-panel"><div class="panel-header"><div><h2>Việc nên xem trước</h2><p>Từ những gì bạn đã ghi trong sổ.</p></div>${icon('target')}</div>${prioritySteps(data, a, m)}${a.income.months < 3 ? '<p class="compact-note">Bạn mới có ít tháng ghi chép. Chưa đủ để kết luận thói quen chi tiêu dài hạn.</p>' : ''}</section></div>
     <section class="panel section-spaced" id="deposit-section"><div class="panel-header"><div><h2>Cọc và tiền được hoàn</h2><p>Vẫn tính đúng tiền ra vào, tách khỏi thu nhập và chi hằng ngày.</p></div>${btn('Ghi tiền cọc', 'new-deposit', 'secondary small', 'plus')}</div>${linked.length ? `<div class="deposit-list">${linked.map((d) => `<article class="deposit-row"><div><h3>${E(d.note || d.category)}</h3><p>Cọc ${formatVND(d.amount)} · Đã nhận lại ${formatVND(d.refunded)}</p></div><span class="badge ${d.remaining ? 'warning' : 'safe'}">${d.remaining ? `Chờ ${formatVND(d.remaining)}` : 'Đã nhận đủ'}</span><div class="row-actions">${d.remaining ? btn('Ghi nhận hoàn', 'refund-deposit', 'secondary small', '', `data-id="${E(d.id)}"`) : ''}${btn('Xem', 'edit-transaction', 'ghost small', '', `data-id="${E(d.id)}"`)}</div></article>`).join('')}</div>` : '<p class="helper-text">Khi ghi cọc, chọn “Tiền cọc chờ hoàn”. Lúc nhận lại, chọn đúng khoản cọc để thấy số còn chờ.</p>'}${m.unmatchedRefunds.length ? `<div class="compact-note">Có ${m.unmatchedRefunds.length} khoản hoàn chưa liên kết. ${btn('Chọn khoản cọc', 'edit-transaction', 'ghost small', '', `data-id="${E(m.unmatchedRefunds[0].id)}"`)}</div>` : ''}</section>
     <section class="panel section-spaced"><div class="panel-header"><div><h2>Khoản lớn đáng nhìn lại</h2><p>Chi cao hơn những lần trước cùng danh mục; có thể hoàn toàn hợp lý.</p></div></div>${a.anomalies.length ? recentList(a.anomalies.slice(0, 4)) + ledgerButton('Mở sổ để xem thêm') : '<p class="helper-text">Chưa thấy khoản nào cần nhắc riêng. Mỗi danh mục cần ít nhất 5 khoản để so sánh.</p>'}</section>
     ${a.cutbacks.actions.length && a.income.months >= 3 ? `<section class="panel section-spaced"><div class="panel-header"><div><h2>Có thể giảm ở đâu?</h2><p>Gợi ý cho cả tháng, dựa trên mức chi đã ghi trước đây.</p></div></div><div class="adjustment-list">${a.cutbacks.actions.slice(0, 3).map((c) => `<article><h3>${E(c.category)}</h3><strong>Giảm khoảng ${formatVND(c.suggestedCut)}</strong><p>Thử giữ trong ${formatVND(c.newCap)}/tháng.</p>${ledgerButton('Xem lại các khoản', c.category)}</article>`).join('')}</div></section>` : ''}
-    <details class="panel section-spaced advanced-analysis"><summary>Xem thêm xu hướng và cách tính</summary><div class="method-content"><div class="plain-insights"><article><h3>Chi sau ngày nhận lương</h3><p>${a.payday.psi === null ? 'Chưa đủ dữ liệu để so sánh.' : a.payday.warning ? 'Bạn thường chi nhiều hơn trong 5 ngày sau ngày lương. Thử chia đều tiền cho từng tuần.' : 'Chưa thấy nhịp chi tăng mạnh sau ngày lương.'}</p>${btn('Đổi ngày nhận lương', 'open-planning', 'ghost small', '', 'data-section="reserve-section"')}</article><article><h3>Mua sắm và giải trí</h3><p>${!a.lifestyle.available ? 'Cần ít nhất 4 tháng hoàn chỉnh để xem thay đổi dài hạn.' : a.lifestyle.warning ? 'Phần tiền dành cho mua sắm và giải trí đang tăng nhanh hơn thu nhập.' : 'Chưa thấy phần tiền mua sắm và giải trí tăng quá nhanh.'}</p>${ledgerButton('Xem nhóm này', '', 'data-group="wants"')}</article></div><div class="trend-charts"><section><h3>Thu và chi qua các tháng</h3><p class="helper-text">Đơn vị: triệu đồng · không gồm cọc, tiền hoàn, chuyển quỹ và trả nợ.</p>${canvas('cashflow-chart', 'Thu nhập mới và chi sinh hoạt sáu tháng gần nhất')}</section><section><h3>Nhịp chi trong tháng</h3><p class="helper-text">Chi sinh hoạt cộng dồn so với kế hoạch theo thu nhập.</p>${canvas('daily-chart', 'Chi tiêu lũy kế so với kế hoạch theo thu nhập')}</section></div><p><strong>Chia tiền hiện có mỗi ngày:</strong> (tiền còn dùng − hóa đơn chưa trả − mức trả nợ tháng này còn thiếu) ÷ ${a.safe.daysLeft} ngày. Chưa tính thu nhập tương lai và các chi phí chưa ghi.</p><p><strong>Kế hoạch theo thu nhập:</strong> ${a.income.months ? `Dựa trên ${a.income.months} tháng đã ghi, mức tham chiếu ${formatVND(a.income.yBase)}/tháng. Hạn mức từ kế hoạch: ${formatVND(a.safe.dailySafeToSpend)}/ngày.` : 'Chưa có thu nhập để lập kế hoạch.'} Khác với cách chia tiền hiện có ở Tổng quan.</p><p><strong>Dự báo chi sinh hoạt:</strong> ${formatVND(a.forecast.blendedEomForecast)} đến cuối tháng theo lịch sử và nhịp chi đã ghi${current ? '' : ', tại thời điểm cuối tháng được chọn'}.</p><p><strong>Điểm theo dõi của ứng dụng:</strong> ${N(a.health.fhi)}/100. Gồm để dành 25%, quỹ 30%, hóa đơn 20%, nợ 15%, kiểm soát mua sắm 10%; không dùng để kết luận khi sổ còn thiếu.</p></div></details>`;
+    <details class="panel section-spaced advanced-analysis"><summary>Xem thêm xu hướng và cách tính</summary><div class="method-content"><div class="plain-insights"><article><h3>Chi sau ngày nhận lương</h3><p>${a.payday.psi === null ? 'Chưa đủ dữ liệu để so sánh.' : a.payday.warning ? 'Bạn thường chi nhiều hơn trong 5 ngày sau ngày lương. Thử chia đều tiền cho từng tuần.' : 'Chưa thấy nhịp chi tăng mạnh sau ngày lương.'}</p>${btn('Đổi ngày nhận lương', 'open-planning', 'ghost small', '', 'data-section="reserve-section"')}</article><article><h3>Mua sắm và giải trí</h3><p>${!a.lifestyle.available ? 'Cần ít nhất 4 tháng hoàn chỉnh để xem thay đổi dài hạn.' : a.lifestyle.warning ? 'Phần tiền dành cho mua sắm và giải trí đang tăng nhanh hơn thu nhập.' : 'Chưa thấy phần tiền mua sắm và giải trí tăng quá nhanh.'}</p>${ledgerButton('Xem nhóm này', '', 'data-group="wants"')}</article></div><div class="trend-charts"><section id="income-history-section"><h3>Thu và chi qua các tháng</h3><p class="helper-text">Đơn vị: triệu đồng · không gồm cọc, tiền hoàn, chuyển quỹ và trả nợ.</p>${canvas('cashflow-chart', 'Thu nhập mới và chi sinh hoạt sáu tháng gần nhất')}</section><section><h3>Nhịp chi trong tháng</h3><p class="helper-text">Chi sinh hoạt cộng dồn so với kế hoạch theo thu nhập.</p>${canvas('daily-chart', 'Chi tiêu lũy kế so với kế hoạch theo thu nhập')}</section></div><p><strong>Chia tiền hiện có mỗi ngày:</strong> (tiền còn dùng − hóa đơn chưa trả − mức trả nợ tháng này còn thiếu) ÷ ${a.safe.daysLeft} ngày. Chưa tính thu nhập tương lai và các chi phí chưa ghi.</p><p><strong>Kế hoạch theo thu nhập:</strong> ${a.income.months ? `Dựa trên ${a.income.months} tháng đã ghi, mức tham chiếu ${formatVND(a.income.yBase)}/tháng. Hạn mức từ kế hoạch: ${formatVND(a.safe.dailySafeToSpend)}/ngày.` : 'Chưa có thu nhập để lập kế hoạch.'} Khác với cách chia tiền hiện có ở Tổng quan.</p><p><strong>Dự báo chi sinh hoạt:</strong> ${formatVND(a.forecast.blendedEomForecast)} đến cuối tháng theo lịch sử và nhịp chi đã ghi${current ? '' : ', tại thời điểm cuối tháng được chọn'}.</p><p><strong>Điểm theo dõi của ứng dụng:</strong> ${N(a.health.fhi)}/100. Gồm để dành 25%, quỹ 30%, hóa đơn 20%, nợ 15%, kiểm soát mua sắm 10%; không dùng để kết luận khi sổ còn thiếu.</p></div></details>`;
 }
 
 export function renderPlanning(data, a, extraPayment) {
@@ -1338,7 +1438,7 @@ function goTo(tab, section = '') {
   state.tab = tab;
   if (location.hash !== `#${tab}`) history.pushState(null, '', `#${tab}`);
   render();
-  if (section) { const target = document.getElementById(section); target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (section) { const target = document.getElementById(section); let parent = target?.parentElement?.closest('details'); while (parent) { parent.open = true; parent = parent.parentElement?.closest('details'); } target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   else document.getElementById('main').scrollIntoView({ block: 'start' });
 }
 async function handleAction(action, id, attrs = {}) {
@@ -1352,6 +1452,8 @@ async function handleAction(action, id, attrs = {}) {
   else if (action === 'open-opening') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; goTo('transactions', 'opening-section'); const details = document.querySelector('#opening-section details'); if (details) details.open = true; document.querySelector('#opening-balance-form [name=bank]')?.focus({ preventScroll: true }); }
   else if (action === 'show-balance') { const el = document.getElementById('balance-detail'); el.open = !el.open; }
   else if (action === 'open-planning') goTo('planning', attrs.section);
+  else if (action === 'open-health') goTo('analysis', 'health-analysis');
+  else if (action === 'open-analysis') goTo('analysis', attrs.section);
   else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
   else if (action === 'new-deposit') openTransaction({ type: 'expense', group: 'needs', category: '', note: '', date: state.analysis.today, flow: { kind: 'deposit' } });
   else if (action === 'refund-deposit') { const d = depositBalances(state.data.transactions, state.analysis.today).find((d) => d.id === id); if (d?.remaining) openTransaction({ type: 'income', group: 'income', category: d.category, note: `Hoàn cọc: ${d.note || d.category}`.slice(0, 1000), amount: d.remaining, date: state.analysis.today, flow: { kind: 'refund', targetId: d.id } }); }
@@ -1920,7 +2022,7 @@ export async function openExcelImporter({ getExisting, onImport }) {
 ### File: sw.js
 
 ```javascript
-const CACHE = 'vung-tai-chinh-v4-everyday';
+const CACHE = 'vung-tai-chinh-v5-wellbeing';
 const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/db.js', './js/finance-engine.js', './js/money-flow.js', './js/charts.js', './js/seed-data.js', './js/excel-import.js', './js/excel-ui.js', './vendor/xlsx.full.min.js', './manifest.webmanifest', './icon.svg'];
 const CHART_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
 self.addEventListener('install', (event) => {
@@ -2029,6 +2131,14 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 6. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
 
 Không tự nạp dữ liệu mẫu. Mục thử mẫu trong Cài đặt luôn hỏi trước khi thay sổ.
+
+## Sức khỏe và từng bước tự chủ tài chính
+
+Sức khỏe tài chính được đặt ở đầu Tổng quan: điểm trên 100 theo mô hình hiện có, tình trạng dễ hiểu, quỹ đủ bao lâu và đúng một bước ưu tiên. Không đổi công thức hay trọng số chấm điểm. Khi chưa có thu nhập hoặc chi phí thiết yếu, chưa chấm điểm; sổ dưới ba tháng ghi rõ là đánh giá tạm.
+
+Nút **Xem lộ trình và từng phần** mở Phân tích, giải thích năm phần của điểm và các mốc: thu đủ chi sinh hoạt, quỹ đệm một tháng, kiểm soát nợ lãi cao, quỹ dài hơn và thu vượt chi sinh hoạt ba tháng hoàn chỉnh. Chưa ghi nợ được hiển thị là chưa đối chiếu, không tự đánh dấu hoàn tất mốc nợ. Mỗi mốc mở đúng sổ, quỹ, nợ hoặc biểu đồ liên quan.
+
+Bước ưu tiên đi theo cấp hiện tại của mô hình: cân bằng thu chi → quỹ đầu tiên → nợ lãi cao → quỹ dài hơn → duy trì nền tảng. Hiển thị số còn thiếu để đạt mốc quỹ hoặc khoản nợ cần xem, không tự thực hiện giao dịch. Điểm theo dõi nền tảng hiện tại; không dùng làm tỷ lệ phần trăm đã đạt tự do tài chính.
 
 ## Cách ghi quen thuộc
 
@@ -2658,6 +2768,72 @@ test('old backups remain valid; linked records survive backups and render as esc
 
 ```
 
+### File: tests/wellbeing.test.js
+
+```javascript
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DEFAULT_PROFILE, analyzeFinance } from '../js/finance-engine.js';
+import { wellbeingPlan, monthlyMoney } from '../js/money-flow.js';
+import { renderOverview, renderAnalysis } from '../js/ui.js';
+
+const date = new Date(2026, 10, 25);
+let serial = 0;
+const tx = (type, amount, month = '2026-11') => ({ id: `wellbeing-${++serial}`, type, amount, group: type === 'income' ? 'income' : 'needs', date: `${month}-05`, category: type === 'income' ? 'Khoản thu' : 'Sinh hoạt', note: 'Dữ liệu tổng hợp', isFixedBill: false, createdAt: serial });
+function fixture({ income = 1000000, expense = 300000, reserve = 0, debts = [], historical = [] } = {}) {
+  return { transactions: [tx('income', income), tx('expense', expense), ...historical], recurring_bills: [], debts, profile: { ...DEFAULT_PROFILE, liquidSavings: reserve, openingBalances: { '2026-11': { bank: 2000000, cash: 0 } } } };
+}
+const loan = { id: 'wellbeing-loan', name: 'Khoản vay tổng hợp', principal: 800000, minMonthlyPayment: 100000, apr: 12, isHighInterest: true };
+
+test('empty or income-only records cannot look like a fully healthy independent household', () => {
+  for (const transactions of [[], [tx('income', 1000000)]]) {
+    const d = { ...fixture(), transactions }, a = analyzeFinance(d, date), p = wellbeingPlan(d, a);
+    assert.equal(p.ready, false); assert.equal(p.score, null); assert.equal(p.next.action, 'add-transaction');
+    const html = renderOverview(d, a, true); assert.ok(html.includes('Sức khỏe tài chính')); assert.ok(html.includes('Chưa đủ dữ liệu để chấm điểm'));
+    assert.ok(!p.milestones.find((m) => m.key === 'reserve').done);
+  }
+});
+test('cash kept from the beginning does not erase a current income/spending gap', () => {
+  const d = fixture({ income: 200000, expense: 500000, reserve: 1000000 }), a = analyzeFinance(d, date), p = wellbeingPlan(d, a);
+  assert.equal(monthlyMoney(d, a).available, 1700000);
+  assert.equal(p.next.gap, 300000); assert.equal(p.next.action, 'open-analysis'); assert.equal(p.next.section, 'spending-section');
+  assert.equal(p.provisional, true); assert.equal(p.score, a.health.fhi);
+});
+test('health stages retain the engine priorities and give the correct actionable gap', () => {
+  const cases = [
+    [fixture({ reserve: 50000 }), 2, 'reserve-in', 250000],
+    [fixture({ reserve: 500000, debts: [loan] }), 3, 'pay-debt', 800000],
+    [fixture({ reserve: 500000 }), 4, 'reserve-in', 850000],
+    [fixture({ reserve: 1500000 }), 5, 'reserve-in', undefined],
+  ];
+  for (const [d, level, action, gap] of cases) {
+    const a = analyzeFinance(d, date), p = wellbeingPlan(d, a);
+    assert.equal(a.health.level, level); assert.equal(p.score, a.health.fhi); assert.equal(p.next.action, action); assert.equal(p.next.gap, gap);
+    if (level === 3) assert.equal(p.next.debtId, loan.id);
+  }
+});
+test('consistent surplus needs three complete months; unentered debt stays unconfirmed', () => {
+  const historical = ['2026-08', '2026-09', '2026-10'].flatMap((m) => [tx('income', 1000000, m), tx('expense', 300000, m)]);
+  const d = fixture({ reserve: 1500000, historical }), p = wellbeingPlan(d, analyzeFinance(d, date));
+  assert.equal(p.milestones.find((m) => m.key === 'surplus').done, true);
+  assert.equal(p.milestones.find((m) => m.key === 'debt').known, false);
+  assert.equal(wellbeingPlan(fixture(), analyzeFinance(fixture(), date)).milestones.find((m) => m.key === 'surplus').done, false);
+  const withoutCurrent = { ...d, transactions: historical };
+  assert.equal(wellbeingPlan(withoutCurrent, analyzeFinance(withoutCurrent, date)).milestones.find((m) => m.key === 'balance').done, false);
+});
+test('prominent health links, component explanations and milestones escape personal content', () => {
+  const malicious = { ...loan, name: '<img src=x onerror=bad()>' }, d = fixture({ reserve: 500000, debts: [malicious] }), a = analyzeFinance(d, date);
+  const overview = renderOverview(d, a, true), analysis = renderAnalysis(d, a);
+  assert.ok(overview.indexOf('id="health-overview"') < overview.indexOf('class="money-cards"'));
+  assert.ok(overview.includes('data-action="open-health"')); assert.ok(overview.includes('data-action="pay-debt"'));
+  assert.ok(analysis.includes('id="health-analysis"')); assert.ok(analysis.includes('id="spending-section"')); assert.ok(analysis.includes('id="income-history-section"'));
+  assert.ok(analysis.includes('Chưa đối chiếu nợ') === false); assert.ok(analysis.includes('Điểm cao cho thấy nền tảng tốt hơn'));
+  assert.ok(!overview.includes('<img src=x')); assert.ok(overview.includes('&lt;img src=x'));
+  assert.ok(!overview.includes('NaN')); assert.ok(!analysis.includes('NaN'));
+});
+
+```
+
 ### File: vendor/NOTICE.md
 
 ````markdown
@@ -2943,3 +3119,10 @@ Có sáu kiểm tra bổ sung cho số dư: nhận riêng ô ngân hàng/tiền 
 - Nhập lại Excel có thể chỉ sửa phân loại cũ thay vì thêm tiền ra vào. Số dư đầu tháng và quỹ được lưu trong cùng giao dịch cơ sở dữ liệu với phần nhập; phải chủ động chọn đối chiếu quỹ. Ghi chú dư nợ chỉ tạo gợi ý thiết lập, không tự giả định lãi suất.
 
 Kết quả hiện tại: **65/65 kiểm tra tự động đạt**. Bổ sung kiểm tra ưu tiên giao dịch gắn đúng hóa đơn trước khi phân bổ khoản cũ theo danh mục, và giữ tháng cũ khi đồng hồ kiểm tra sang ngày mới. Trên Chrome, đã thử dùng khoản có sẵn để hoàn tất hóa đơn mà giữ nguyên tiền ra vào, cùng nhập lại tệp mẫu chỉ cập nhật phân loại cũ.
+
+
+## Sức khỏe và lộ trình tự chủ
+
+Sức khỏe trở lại vị trí đầu Tổng quan, giữ nguyên công thức FHI. Phân tích có năm phần điểm, mốc nền tảng và hành động liên quan. Năm kiểm tra bổ sung xác nhận: không chấm điểm khi sổ trống/thiếu chi thiết yếu; số dư đầu tháng không che phần chi vượt thu nhập; thứ tự ưu tiên và số thiếu đúng ở các cấp; ba tháng có dư phải là tháng đã hoàn tất; nội dung tên nợ được hiển thị an toàn. Tổng **70/70 kiểm tra đạt**.
+
+Đã thử trực tiếp trên Chrome: điểm hiện trên Tổng quan; nút lộ trình mở đúng phần phân tích; mốc xem các tháng tự mở phần biểu đồ đang thu gọn; các cột vừa chiều ngang laptop. Quỹ/nợ lấy số dư đang cập nhật, không khẳng định là số dư lịch sử của tháng cũ. Đã ghi rõ quỹ chỉ so với chi thiết yếu và điểm cao không đồng nghĩa đủ tiền sống lâu dài không cần thu nhập.

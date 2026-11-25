@@ -162,7 +162,7 @@ function goTo(tab, section = '') {
   state.tab = tab;
   if (location.hash !== `#${tab}`) history.pushState(null, '', `#${tab}`);
   render();
-  if (section) { const target = document.getElementById(section); target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (section) { const target = document.getElementById(section); let parent = target?.parentElement?.closest('details'); while (parent) { parent.open = true; parent = parent.parentElement?.closest('details'); } target?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   else document.getElementById('main').scrollIntoView({ block: 'start' });
 }
 async function handleAction(action, id, attrs = {}) {
@@ -176,6 +176,8 @@ async function handleAction(action, id, attrs = {}) {
   else if (action === 'open-opening') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; goTo('transactions', 'opening-section'); const details = document.querySelector('#opening-section details'); if (details) details.open = true; document.querySelector('#opening-balance-form [name=bank]')?.focus({ preventScroll: true }); }
   else if (action === 'show-balance') { const el = document.getElementById('balance-detail'); el.open = !el.open; }
   else if (action === 'open-planning') goTo('planning', attrs.section);
+  else if (action === 'open-health') goTo('analysis', 'health-analysis');
+  else if (action === 'open-analysis') goTo('analysis', attrs.section);
   else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
   else if (action === 'new-deposit') openTransaction({ type: 'expense', group: 'needs', category: '', note: '', date: state.analysis.today, flow: { kind: 'deposit' } });
   else if (action === 'refund-deposit') { const d = depositBalances(state.data.transactions, state.analysis.today).find((d) => d.id === id); if (d?.remaining) openTransaction({ type: 'income', group: 'income', category: d.category, note: `Hoàn cọc: ${d.note || d.category}`.slice(0, 1000), amount: d.remaining, date: state.analysis.today, flow: { kind: 'refund', targetId: d.id } }); }

@@ -61,3 +61,10 @@ Có sáu kiểm tra bổ sung cho số dư: nhận riêng ô ngân hàng/tiền 
 - Nhập lại Excel có thể chỉ sửa phân loại cũ thay vì thêm tiền ra vào. Số dư đầu tháng và quỹ được lưu trong cùng giao dịch cơ sở dữ liệu với phần nhập; phải chủ động chọn đối chiếu quỹ. Ghi chú dư nợ chỉ tạo gợi ý thiết lập, không tự giả định lãi suất.
 
 Kết quả hiện tại: **65/65 kiểm tra tự động đạt**. Bổ sung kiểm tra ưu tiên giao dịch gắn đúng hóa đơn trước khi phân bổ khoản cũ theo danh mục, và giữ tháng cũ khi đồng hồ kiểm tra sang ngày mới. Trên Chrome, đã thử dùng khoản có sẵn để hoàn tất hóa đơn mà giữ nguyên tiền ra vào, cùng nhập lại tệp mẫu chỉ cập nhật phân loại cũ.
+
+
+## Sức khỏe và lộ trình tự chủ
+
+Sức khỏe trở lại vị trí đầu Tổng quan, giữ nguyên công thức FHI. Phân tích có năm phần điểm, mốc nền tảng và hành động liên quan. Năm kiểm tra bổ sung xác nhận: không chấm điểm khi sổ trống/thiếu chi thiết yếu; số dư đầu tháng không che phần chi vượt thu nhập; thứ tự ưu tiên và số thiếu đúng ở các cấp; ba tháng có dư phải là tháng đã hoàn tất; nội dung tên nợ được hiển thị an toàn. Tổng **70/70 kiểm tra đạt**.
+
+Đã thử trực tiếp trên Chrome: điểm hiện trên Tổng quan; nút lộ trình mở đúng phần phân tích; mốc xem các tháng tự mở phần biểu đồ đang thu gọn; các cột vừa chiều ngang laptop. Quỹ/nợ lấy số dư đang cập nhật, không khẳng định là số dư lịch sử của tháng cũ. Đã ghi rõ quỹ chỉ so với chi thiết yếu và điểm cao không đồng nghĩa đủ tiền sống lâu dài không cần thu nhập.

@@ -15,6 +15,14 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 
 Không tự nạp dữ liệu mẫu. Mục thử mẫu trong Cài đặt luôn hỏi trước khi thay sổ.
 
+## Sức khỏe và từng bước tự chủ tài chính
+
+Sức khỏe tài chính được đặt ở đầu Tổng quan: điểm trên 100 theo mô hình hiện có, tình trạng dễ hiểu, quỹ đủ bao lâu và đúng một bước ưu tiên. Không đổi công thức hay trọng số chấm điểm. Khi chưa có thu nhập hoặc chi phí thiết yếu, chưa chấm điểm; sổ dưới ba tháng ghi rõ là đánh giá tạm.
+
+Nút **Xem lộ trình và từng phần** mở Phân tích, giải thích năm phần của điểm và các mốc: thu đủ chi sinh hoạt, quỹ đệm một tháng, kiểm soát nợ lãi cao, quỹ dài hơn và thu vượt chi sinh hoạt ba tháng hoàn chỉnh. Chưa ghi nợ được hiển thị là chưa đối chiếu, không tự đánh dấu hoàn tất mốc nợ. Mỗi mốc mở đúng sổ, quỹ, nợ hoặc biểu đồ liên quan.
+
+Bước ưu tiên đi theo cấp hiện tại của mô hình: cân bằng thu chi → quỹ đầu tiên → nợ lãi cao → quỹ dài hơn → duy trì nền tảng. Hiển thị số còn thiếu để đạt mốc quỹ hoặc khoản nợ cần xem, không tự thực hiện giao dịch. Điểm theo dõi nền tảng hiện tại; không dùng làm tỷ lệ phần trăm đã đạt tự do tài chính.
+
 ## Cách ghi quen thuộc
 
 Tên khoản là nội dung chính, danh mục nằm ngay dưới. Biểu mẫu gợi lại danh mục và nội dung từng dùng, cho phép nhập danh mục mới. Nhóm dùng cho phân tích nằm trong phần mở rộng. Sổ mặc định gom theo ngày, cộng riêng thu, chi và chênh lệch; có thể chuyển sang bảng toàn bộ.
