@@ -2,6 +2,7 @@
 export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', deposit: 'Tiền cọc', refund: 'Tiền được hoàn', 'reserve-in': 'Chuyển vào quỹ', 'reserve-out': 'Rút từ quỹ', debt: 'Trả nợ' });
 export const kindOf = (t) => t.flow?.kind || 'regular';
 export const isPlanTransaction = (t) => kindOf(t) === 'regular';
+export const isLivingExpense = (t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group);
 export const isContribution = (t) => kindOf(t) === 'reserve-out' || t.type === 'expense' && (['reserve-in', 'debt'].includes(kindOf(t)) || kindOf(t) === 'regular' && t.group === 'savings_debt');
 export const contributionAmount = (t) => !isContribution(t) ? 0 : kindOf(t) === 'reserve-out' ? -t.amount : t.amount;
 const total = (xs) => xs.reduce((s, t) => s + t.amount, 0);
@@ -41,7 +42,7 @@ export function monthlyMoney(data, a) {
   const incoming = rows.filter((t) => t.type === 'income'), outgoing = rows.filter((t) => t.type === 'expense');
   const opening = data.profile.openingBalances?.[a.month];
   const received = total(incoming), paid = total(outgoing), available = opening ? opening.bank + opening.cash + received - paid : null;
-  const ordinary = rows.filter((t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group));
+  const ordinary = rows.filter(isLivingExpense);
   const buckets = new Map();
   for (const t of ordinary) { const c = buckets.get(t.category) || { category: t.category, amount: 0, count: 0 }; c.amount += t.amount; c.count++; buckets.set(t.category, c); }
   const categories = [...buckets.values()].sort((x, y) => y.amount - x.amount);
@@ -91,7 +92,7 @@ export const ANALYSIS_VIEWS = Object.freeze([
 ]);
 export const isAnalysisView = (view) => ANALYSIS_VIEWS.some((v) => v.key === view);
 const analysisSections = Object.freeze({
-  'health-analysis': 'health', 'monthly-plan-section': 'plan', 'budget-section': 'plan',
+  'health-analysis': 'health', 'monthly-plan-section': 'plan', 'budget-section': 'plan', 'category-limits-section': 'plan',
   'savings-section': 'plan', 'allocation-section': 'plan', 'cutbacks-section': 'plan', 'debt-advice-section': 'plan',
   'spending-section': 'cashflow', 'income-history-section': 'cashflow', 'forecast-section': 'cashflow', 'deposit-section': 'cashflow',
   'habit-section': 'habits', 'anomaly-section': 'habits', 'payday-section': 'habits', 'lifestyle-section': 'habits',

@@ -1,5 +1,6 @@
 import { clamp, sum, localDate } from './finance-engine.js';
 import { ANALYSIS_VIEWS, financePlanSummary, isAnalysisView, monthlyMoney, wellbeingPlan } from './money-flow.js';
+import { analyzeCategoryBudgets, budgetCategoryLabel, suggestedCategoryLimits } from './category-budgets.js';
 import { E, N, btn, canvas, categoryIcon, categoryList, dateText, formatMonth, formatVND, heading, icon, ledgerButton } from './ui-parts.js';
 
 const money = formatVND;
@@ -182,8 +183,66 @@ function renderDebtAdvice(a, p) {
   </section>`;
 }
 
+const limitBadges = {
+  unset: ['Chưa đặt mức', ''],
+  over: ['Vượt mức', 'danger'],
+  bills: ['Thiếu cho hóa đơn', 'warning'],
+  full: ['Hết mức', 'warning'],
+  fast: ['Chi hơi nhanh', 'warning'],
+  near: ['Sắp hết mức', 'warning'],
+  within: ['Trong mức', 'safe'],
+};
+
+function limitAdvice(row, a) {
+  if (row.status === 'unset') return 'Chọn mức chi phù hợp cho cả tháng.';
+  if (row.nextBill) return `Chừa ${money(row.unpaid)} cho hóa đơn. Kỳ gần nhất ngày ${Math.min(row.nextBill.dueDay, a.daysInMonth)}.`;
+  if (row.status === 'over' || row.status === 'full') return row.essential ? 'Kiểm tra khoản đã ghi và phần thiết yếu còn cần.' : 'Xem khoản có thể bớt hoặc dời sang tháng sau.';
+  if (row.perDay !== null) return `Tạm chia ${money(row.perDay)}/ngày cho ${row.daysLeft} ngày còn lại tính từ mốc sổ.`;
+  if (row.status === 'near') return 'Xem các khoản còn cần trong tháng.';
+  return 'Theo dõi tiếp các khoản đã dự tính.';
+}
+
+function budgetLedgerLink(label, row, scope) {
+  return btn(label, 'open-ledger', 'text-link', '', `data-category="${E(row.category)}" data-scope="${scope}"`);
+}
+
+function renderLimitRow(row, a, trial) {
+  const [status, tone] = limitBadges[row.status];
+  const changed = row.limit !== null || row.eventLimit !== null;
+  const event = row.eventSpent || row.eventLimit !== null;
+  const eventDetails = row.eventRemaining === null ? 'Chưa dự trù' : row.eventRemaining < 0 ? `Vượt dự trù ${money(-row.eventRemaining)}` : `Còn ${money(row.eventRemaining)} theo dự trù`;
+  const difference = row.afterBills === null ? '—' : row.remaining < 0 ? `Vượt ${money(-row.remaining)}` : row.afterBills < 0 ? `Thiếu ${money(-row.afterBills)}` : money(row.afterBills);
+  return `<tr>
+    <th scope="row"><strong>${E(budgetCategoryLabel(row.category))}</strong>${row.unpaid ? `<small class="table-secondary">Hóa đơn còn ${money(row.unpaid)}</small>` : ''}</th>
+    <td class="align-right money">${money(row.spent)}${row.fixedSpent ? `<small class="table-secondary">Đã trả hóa đơn ${money(row.fixedSpent)}</small>` : ''}${event ? `<small class="table-secondary">Theo lần ${money(row.eventSpent)}</small>` : ''}</td>
+    <td class="align-right money">${row.limit === null ? (trial ? `<small class="table-secondary">Thử ${money(trial.limit)}</small>` : '—') : money(row.limit)}${row.eventLimit !== null ? `<small class="table-secondary">Theo lần ${money(row.eventLimit)}</small>` : ''}</td>
+    <td class="align-right"><strong class="money ${row.afterBills < 0 ? 'amount-expense' : ''}">${difference}</strong><span class="badge ${tone}">${status}</span></td>
+    <td><p>${limitAdvice(row, a)}</p>${event ? `<small class="table-secondary">Khoản theo lần · ${eventDetails}</small>` : ''}
+      <div class="category-limit-links">${row.spent ? budgetLedgerLink('Xem đã chi', row, 'budget-routine') : ''}${row.eventSpent ? budgetLedgerLink('Xem khoản theo lần', row, 'budget-event') : ''}${btn(changed ? 'Chỉnh mức' : 'Đặt mức', 'edit-category-limit', 'text-link', '', `data-category="${E(row.category)}"`)}</div>
+    </td>
+  </tr>`;
+}
+
+function renderCategoryLimits(data, a, m) {
+  const rows = analyzeCategoryBudgets(data, a, m);
+  const suggestions = suggestedCategoryLimits(rows);
+  const trials = new Map(suggestions.map((entry) => [entry.category, entry]));
+  const configured = rows.some((row) => row.limit !== null || row.eventLimit !== null);
+  const total = sum(rows.map((row) => row.limit ?? 0));
+  const events = sum(rows.map((row) => row.eventLimit ?? 0));
+  const debt = a.health.totalMinDebtPayments;
+  const difference = total + events + debt - a.income.yBase;
+  return `<section class="panel finance-panel" id="category-limits-section">
+    ${header('Mức chi theo danh mục', m.latest ? `Theo sổ đến ${dateText(m.latest)}. Số còn lại đã chừa cho hóa đơn chưa trả.` : 'Đặt mức cho từng nhóm bạn muốn theo dõi.', `<div class="finance-action-row">${suggestions.length ? btn('Dùng mức thử', 'use-category-trials', 'primary small') : ''}${btn('Thêm mức chi', 'edit-category-limit', 'secondary small', 'plus')}</div>`)}
+    ${configured ? `<p class="category-limit-summary"><strong>${money(total)}</strong> mức chi thường xuyên${events ? ` · <strong>${money(events)}</strong> dự trù theo lần` : ''}${debt ? ` · <strong>${money(debt)}</strong> trả nợ tối thiểu` : ''}</p>` : ''}
+    ${configured && a.income.yBase > 0 && difference > 0 ? `<p class="insight-note">Tổng mức đã đặt và trả nợ cao hơn thu nhập làm căn cứ ${money(difference)}. Kiểm tra mức thu và phần chi linh hoạt trước khi dùng hết ngân sách.</p>` : ''}
+    ${rows.length ? `<div class="table-scroll category-limit-table"><table><thead><tr><th>Danh mục</th><th class="align-right">Đã chi</th><th class="align-right">Mức tháng</th><th class="align-right">Còn lại</th><th>Việc nên làm</th></tr></thead><tbody>${rows.map((row) => renderLimitRow(row, a, trials.get(row.category))).join('')}</tbody></table></div>` : '<p class="helper-text">Thêm mức chi hoặc ghi giao dịch để thấy danh mục ở đây.</p>'}
+    ${rows.some((row) => row.eventSpent) ? '<p class="fine-print">Khoản theo lần vẫn tính vào số dư. Bạn có thể dùng gợi ý từ ghi chú hoặc chọn cách tính khi sửa khoản đã ghi.</p>' : ''}
+  </section>`;
+}
+
 function renderPlanAnalysis(data, a, m, p) {
-  return `<div class="analysis-stack" id="monthly-plan-section">${renderBudget(a, m, p)}${renderSavingsAndAllocation(data, a, p)}${renderCutbacks(a, p)}${renderIncome(a, p)}${renderDebtAdvice(a, p)}</div>`;
+  return `<div class="analysis-stack" id="monthly-plan-section">${renderCategoryLimits(data, a, m)}${renderBudget(a, m, p)}${renderSavingsAndAllocation(data, a, p)}${renderCutbacks(a, p)}${renderIncome(a, p)}${renderDebtAdvice(a, p)}</div>`;
 }
 
 function renderForecast(a, p) {

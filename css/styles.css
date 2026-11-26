@@ -266,6 +266,17 @@ body { font-size: 16px; }
 .monthly-history { margin-top:18px; }
 .monthly-history table { min-width:620px; }
 .table-secondary { display:block; color:var(--muted); font-size:12px; line-height:1.5; font-weight:400; }
+.category-limit-summary { margin:0 0 14px; color:var(--muted); font-size:14px; }
+.category-limit-summary strong { color:var(--text); }
+.category-limit-table table { min-width:680px; }
+.category-limit-table th[scope=row] { color:var(--text); font-size:14px; text-transform:none; letter-spacing:normal; }
+.category-limit-table td, .category-limit-table th[scope=row] { vertical-align:top; }
+.category-limit-table th:nth-child(4) { min-width:115px; }
+.category-limit-table td>.badge { display:table; margin:4px 0 0 auto; white-space:nowrap; }
+.category-limit-table td:last-child { width:36%; }
+.category-limit-table p { margin:0; line-height:1.5; }
+.category-limit-links { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:5px; }
+.category-limit-links .text-link { font-size:12px; }
 .debt-comparison table { min-width:0; }
 .debt-comparison td,.debt-comparison th { font-size:13px; }
 .cutback-table td,.cutback-table th { font-size:13px; }

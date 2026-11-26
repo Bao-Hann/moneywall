@@ -1,8 +1,9 @@
 import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, simulateDebtPayoff } from './finance-engine.js';
-import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions, saveTransaction } from './db.js';
+import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions, saveTransaction, saveCategoryLimits } from './db.js';
 import { createSeedData } from './seed-data.js';
-import { fillIcons, icon, escapeHtml as E, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions, formatVND } from './ui.js';
-import { categoryHabits, depositBalances, dateForMonth, kindOf, suggestFlow, monthAfterDayChange, analysisViewForSection, isAnalysisView } from './money-flow.js';
+import { fillIcons, icon, escapeHtml as E, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions, formatVND, formatMonth } from './ui.js';
+import { categoryHabits, depositBalances, dateForMonth, isLivingExpense, kindOf, suggestFlow, monthAfterDayChange, analysisViewForSection, isAnalysisView } from './money-flow.js';
+import { analyzeCategoryBudgets, budgetCategoryKey, categoryLimitsForMonth, suggestedCategoryLimits } from './category-budgets.js';
 import { renderCharts, destroyCharts } from './charts.js';
 import { openExcelImporter } from './excel-ui.js';
 
@@ -122,6 +123,9 @@ function billFields(selected = '') {
   document.getElementById('tx-bill-label').hidden = !visible;
   form.elements.billTarget.innerHTML = '<option value="">Đối chiếu theo danh mục</option>' + state.data.recurring_bills.map((b) => `<option value="${E(b.id)}">${E(b.name)}</option>`).join('');
   form.elements.billTarget.value = selected;
+  const canChooseTiming = !form.elements.isFixedBill.disabled && !visible && form.elements.group.value !== 'savings_debt';
+  document.getElementById('tx-budget-timing').hidden = !canChooseTiming;
+  form.elements.budgetTiming.disabled = !canChooseTiming;
 }
 function flowOptions(form, kind = 'regular') {
   const options = form.elements.type.value === 'income' ? [['regular', 'Thu nhập mới'], ['refund', 'Tiền được hoàn'], ['reserve-out', 'Rút từ quỹ để dành']] : [['regular', 'Chi tiêu bình thường'], ['deposit', 'Tiền cọc chờ hoàn'], ['reserve-in', 'Chuyển vào quỹ để dành'], ['debt', 'Trả nợ']];
@@ -150,6 +154,23 @@ function openDebt(record) {
   const form = document.getElementById('debt-form'); form.reset(); form.elements.id.value = '';
   if (record) fillForm(form, record); document.getElementById('debt-error').hidden = true;
   document.getElementById('debt-dialog').showModal();
+}
+function openCategoryLimit(category = '') {
+  const form = document.getElementById('category-limit-form');
+  form.reset();
+  const month = state.analysis.month;
+  const limits = categoryLimitsForMonth(state.data.profile, month);
+  const entry = limits.find((item) => budgetCategoryKey(item.category) === budgetCategoryKey(category));
+  const recent = categoryHabits(state.data.transactions.filter(isLivingExpense)).map((item) => item.category);
+  const categories = [...new Set([...recent, ...state.data.recurring_bills.map((bill) => bill.category), ...limits.map((item) => item.category)])];
+  document.getElementById('budget-category-options').innerHTML = categories.map((name) => `<option value="${E(name)}"></option>`).join('');
+  document.getElementById('category-limit-month').textContent = `Mức thường xuyên áp dụng từ ${formatMonth(month).toLowerCase()} đến lần chỉnh kế tiếp. Mức dự trù theo lần chỉ dùng cho tháng đang xem.`;
+  form.elements.month.value = month;
+  form.elements.category.value = category;
+  form.elements.category.readOnly = !!category;
+  if (entry) fillForm(form, entry);
+  document.getElementById('category-limit-dialog').showModal();
+  (category ? form.elements.limit : form.elements.category).focus();
 }
 function download(name, contentValue, type) {
   const blob = new Blob([contentValue], { type }), url = URL.createObjectURL(blob), link = document.createElement('a');
@@ -192,6 +213,12 @@ async function handleAction(action, id, attrs = {}) {
   }
   else if (action === 'open-health') goTo('analysis', 'health-analysis');
   else if (action === 'open-analysis') goTo('analysis', attrs.section);
+  else if (action === 'edit-category-limit') openCategoryLimit(attrs.category);
+  else if (action === 'use-category-trials') {
+    const month = state.analysis.month;
+    const trials = suggestedCategoryLimits(analyzeCategoryBudgets(state.data, state.analysis));
+    if (trials.length) await mutation(() => saveCategoryLimits(month, trials, true), `Đã áp dụng mức thử cho ${trials.length} danh mục.`);
+  }
   else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
   else if (action === 'new-deposit') openTransaction({ type: 'expense', group: 'needs', category: '', note: '', date: state.analysis.today, flow: { kind: 'deposit' } });
   else if (action === 'refund-deposit') { const d = depositBalances(state.data.transactions, state.analysis.today).find((d) => d.id === id); if (d?.remaining) openTransaction({ type: 'income', group: 'income', category: d.category, note: `Hoàn cọc: ${d.note || d.category}`.slice(0, 1000), amount: d.remaining, date: state.analysis.today, flow: { kind: 'refund', targetId: d.id } }); }
@@ -313,9 +340,18 @@ document.addEventListener('submit', async (event) => {
   const form = event.target;
   // Named form controls can shadow native properties (including an input named "id").
   const formId = form.getAttribute('id');
-  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form', 'opening-balance-form', 'link-payment-form'].includes(formId)) return;
+  if (!['transaction-form', 'bill-form', 'debt-form', 'profile-form', 'opening-balance-form', 'link-payment-form', 'category-limit-form'].includes(formId)) return;
   event.preventDefault();
   const values = new FormData(form), value = (key) => String(values.get(key) ?? ''), amount = (key) => Math.round(Number(value(key)));
+  if (formId === 'category-limit-form') {
+    const optionalAmount = (key) => value(key) === '' ? null : Number(value(key));
+    const category = value('category').trim();
+    if (!category) { toast('Hãy nhập tên danh mục.', true); return; }
+    const entry = { category, limit: optionalAmount('limit'), eventLimit: optionalAmount('eventLimit'), pace: value('pace') };
+    const ok = await mutation(() => saveCategoryLimits(value('month'), [entry]), 'Đã lưu mức chi theo danh mục.');
+    if (ok) form.closest('dialog').close();
+    return;
+  }
   if (formId === 'link-payment-form') {
     const transaction = state.data.transactions.find((t) => t.id === value('transactionId'));
     if (!transaction || !state.data.recurring_bills.some((b) => b.id === value('billId'))) { toast('Khoản chi hoặc hóa đơn đã thay đổi. Mở lại để chọn.', true); return; }
@@ -333,6 +369,7 @@ document.addEventListener('submit', async (event) => {
   if (formId === 'transaction-form') {
     store = 'transactions'; const existing = state.data.transactions.find((t) => t.id === id);
     record = { id, type: value('type'), date: value('date'), amount: amount('amount'), group: value('group'), category: value('category'), isFixedBill: values.get('isFixedBill') === 'on', note: value('note'), createdAt: existing?.createdAt || Date.now() };
+    if (['routine', 'event'].includes(value('budgetTiming'))) record.budgetTiming = value('budgetTiming');
     const kind = value('flowKind');
     if (kind !== 'regular') record.flow = { kind, ...(value('targetId') && ['refund', 'debt'].includes(kind) ? { targetId: value('targetId') } : {}), ...(kind === 'debt' ? { principal: amount('principal') } : {}) };
     else if (record.isFixedBill && value('billId')) record.flow = { kind, billId: value('billId') };

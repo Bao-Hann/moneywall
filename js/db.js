@@ -1,5 +1,6 @@
 import { DEFAULT_PROFILE, GROUP_LABELS, localDate } from './finance-engine.js';
-import { FLOW_LABELS, changeTransaction, kindOf } from './money-flow.js';
+import { FLOW_LABELS, changeTransaction, isLivingExpense, kindOf } from './money-flow.js';
+import { budgetCategoryKey, categoryLimitsForMonth } from './category-budgets.js';
 
 const STORES = ['transactions', 'recurring_bills', 'debts', 'profile'];
 const memory = Object.fromEntries(STORES.map((s) => [s, new Map()]));
@@ -58,6 +59,37 @@ function storeRequest(name, method, argument, write = false) {
 export const getAll = (name) => storeRequest(name, 'getAll');
 export const putRecord = (name, value) => storeRequest(name, 'put', validateRecord(name, value), true);
 export const deleteRecord = (name, id) => storeRequest(name, 'delete', id, true);
+
+export async function saveCategoryLimits(month, changes, onlyMissing = false) {
+  const update = (current) => {
+    const profile = { ...DEFAULT_PROFILE, ...current };
+    const entries = new Map(categoryLimitsForMonth(profile, month).map((entry) => [budgetCategoryKey(entry.category), entry]));
+    for (const entry of changes) {
+      const key = budgetCategoryKey(entry.category);
+      const previous = entries.get(key);
+      if (onlyMissing && previous?.limit != null) continue;
+      const updated = onlyMissing && previous ? { ...entry, eventLimit: previous.eventLimit } : entry;
+      if (updated.limit === null && updated.eventLimit === null) entries.delete(key);
+      else entries.set(key, updated);
+    }
+    return validateRecord('profile', { ...profile, categoryLimits: { ...profile.categoryLimits, [month]: [...entries.values()] } });
+  };
+  if (!database) {
+    memory.profile.set('default', update(memory.profile.get('default')));
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction('profile', 'readwrite');
+    const store = tx.objectStore('profile'), read = store.get('default');
+    let failure;
+    read.onsuccess = () => {
+      try { store.put(update(read.result)); }
+      catch (error) { failure = error; tx.abort(); }
+    };
+    tx.oncomplete = resolve;
+    tx.onabort = tx.onerror = () => reject(failure || tx.error || new Error('Chưa lưu được mức chi. Hãy thử lại.'));
+  });
+}
 // Ledger changes and their fund/debt effects commit or roll back together.
 export async function saveTransaction(record, removingId = '', today = localDate()) {
   const next = record ? validateRecord('transactions', record) : null, id = next?.id || removingId;
@@ -188,9 +220,27 @@ function text(value, label, max = 200) { assert(typeof value === 'string' && val
 function money(value, label, allowZero = true) { assert(Number.isSafeInteger(value) && value >= (allowZero ? 0 : 1), `${label} phải là số nguyên ${allowZero ? 'không âm' : 'lớn hơn 0'}.`); return value; }
 function bool(value, label) { assert(typeof value === 'boolean', `${label} không hợp lệ.`); return value; }
 function day(value) { assert(Number.isInteger(value) && value >= 1 && value <= 31, 'Ngày phải từ 1 đến 31.'); return value; }
+const validMonth = (month) => typeof month === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && Number(month.slice(0, 4)) >= 1900;
 export function validateOpeningBalance(value) {
-  assert(value && typeof value === 'object' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value.month) && Number(value.month.slice(0, 4)) >= 1900, 'Tháng của số dư đầu kỳ không hợp lệ.');
+  assert(value && typeof value === 'object' && validMonth(value.month), 'Tháng của số dư đầu kỳ không hợp lệ.');
   return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng đầu tháng'), cash: money(value.cash, 'Tiền mặt đầu tháng') };
+}
+function validateCategoryLimits(limits) {
+  assert(limits && typeof limits === 'object' && !Array.isArray(limits) && Object.keys(limits).length <= 1200, 'Danh sách mức chi không hợp lệ.');
+  const clean = {};
+  for (const [month, entries] of Object.entries(limits)) {
+    assert(validMonth(month) && Array.isArray(entries) && entries.length <= 1000, 'Mức chi theo tháng không hợp lệ.');
+    clean[month] = entries.map((entry) => {
+      assert(entry && ['daily', 'monthly'].includes(entry.pace), 'Cách theo dõi mức chi không hợp lệ.');
+      return {
+        category: text(entry.category, 'Danh mục'), pace: entry.pace,
+        limit: entry.limit == null ? null : money(entry.limit, 'Mức chi thường xuyên'),
+        eventLimit: entry.eventLimit == null ? null : money(entry.eventLimit, 'Dự trù khoản theo lần'),
+      };
+    });
+    assert(new Set(clean[month].map((entry) => budgetCategoryKey(entry.category))).size === clean[month].length, 'Có danh mục đặt mức chi nhiều lần.');
+  }
+  return clean;
 }
 export function validateRecord(store, value) {
   assert(value && typeof value === 'object' && !Array.isArray(value), 'Bản ghi không hợp lệ.');
@@ -213,6 +263,10 @@ export function validateRecord(store, value) {
       if (kind === 'debt') { assert(flow.targetId, 'Hãy chọn khoản nợ được trả.'); flow.principal = money(value.flow.principal, 'Phần trả gốc'); assert(flow.principal <= result.amount, 'Phần trả gốc không được lớn hơn tổng tiền đã trả.'); }
       if (kind !== 'regular' || flow.billId) result.flow = flow;
     }
+    if (value.budgetTiming && isLivingExpense(result) && !result.isFixedBill) {
+      assert(['routine', 'event'].includes(value.budgetTiming), 'Cách tính khoản chi không hợp lệ.');
+      result.budgetTiming = value.budgetTiming;
+    }
     return result;
   }
   if (store === 'recurring_bills') {
@@ -229,7 +283,7 @@ export function validateRecord(store, value) {
   const openingBalances = {}, rawBalances = value.openingBalances ?? {};
   assert(rawBalances && typeof rawBalances === 'object' && !Array.isArray(rawBalances) && Object.keys(rawBalances).length <= 1200, 'Danh sách số dư đầu tháng không hợp lệ.');
   for (const [month, amounts] of Object.entries(rawBalances)) { const entry = validateOpeningBalance({ ...amounts, month }); openingBalances[month] = { bank: entry.bank, cash: entry.cash }; }
-  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances };
+  return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances, categoryLimits: validateCategoryLimits(value.categoryLimits ?? {}) };
 }
 export function validateBackup(input) {
   assert(input && input.app === 'vung-tai-chinh' && input.version === 1 && input.data, 'Tệp không đúng định dạng sao lưu Vững Tài Chính (phiên bản 1).');

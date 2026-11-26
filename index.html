@@ -61,11 +61,21 @@
       <div id="tx-link-fields" hidden><label id="tx-target-label">Khoản liên quan<select name="targetId" id="tx-target"></select></label><label id="tx-principal-label" hidden>Trong đó trả tiền gốc (₫)<input name="principal" type="number" min="0" max="9000000000000" step="1"><span class="helper-text">Phần còn lại là lãi hoặc phí. Chỉ tiền gốc làm giảm số nợ.</span></label></div>
       <p class="flow-explanation helper-text" id="tx-flow-explanation"></p>
       <input name="billId" type="hidden">
-      <details class="tx-extra"><summary>Phân nhóm và hóa đơn</summary><div class="form-grid"><label>Nhóm để phân tích<select name="group" id="tx-group"><option value="needs">Sinh hoạt cần thiết</option><option value="wants">Mua sắm & Giải trí</option><option value="savings_debt">Để dành & Trả nợ</option></select></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Hóa đơn hằng tháng</label></div><label id="tx-bill-label" hidden>Hóa đơn liên quan<select name="billTarget" id="tx-bill-target"></select></label></details>
+      <details class="tx-extra"><summary>Phân nhóm và cách tính</summary><div class="form-grid"><label>Nhóm để phân tích<select name="group" id="tx-group"><option value="needs">Sinh hoạt cần thiết</option><option value="wants">Mua sắm & Giải trí</option><option value="savings_debt">Để dành & Trả nợ</option></select></label><label class="checkbox-label"><input name="isFixedBill" type="checkbox">Hóa đơn hằng tháng</label></div><label id="tx-bill-label" hidden>Hóa đơn liên quan<select name="billTarget" id="tx-bill-target"></select></label><label id="tx-budget-timing">Tính vào mức chi<select name="budgetTiming"><option value="auto">Theo gợi ý từ ghi chú</option><option value="routine">Chi thường xuyên</option><option value="event">Khoản theo lần</option></select></label></details>
       <p class="form-error" role="alert" id="transaction-error" hidden></p>
       <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Để sau</button><button type="submit" class="button primary"><span data-icon="check"></span>Lưu vào sổ</button></div>
     </form>
   </dialog>
+
+  <dialog id="category-limit-dialog" class="form-dialog" aria-labelledby="category-limit-title"><form id="category-limit-form" method="dialog">
+    <div class="dialog-header"><div><h2 id="category-limit-title">Mức chi theo danh mục</h2><p class="helper-text" id="category-limit-month"></p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <input name="month" type="hidden">
+    <label>Danh mục<input name="category" list="budget-category-options" maxlength="200" required autocomplete="off" placeholder="Chọn hoặc gõ tên danh mục"><datalist id="budget-category-options"></datalist></label>
+    <div class="form-grid"><label>Mức thường xuyên/tháng (₫)<input name="limit" type="number" inputmode="numeric" min="0" max="9000000000000" step="1" placeholder="Chưa đặt"></label><label>Cách theo dõi<select name="pace"><option value="monthly">So theo cả tháng</option><option value="daily">Chia theo ngày</option></select></label></div>
+    <label>Dự trù khoản theo lần trong tháng (₫)<input name="eventLimit" type="number" inputmode="numeric" min="0" max="9000000000000" step="1" placeholder="Tùy chọn, ví dụ tiền bảo dưỡng xe"></label>
+    <p class="helper-text">Để trống số tiền để bỏ mức đó. Có thể áp dụng mức 0 ₫ nếu muốn dừng chi.</p>
+    <div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog>Hủy</button><button type="submit" class="button primary">Lưu mức chi</button></div>
+  </form></dialog>
 
   <dialog id="bill-dialog" class="form-dialog" aria-labelledby="bill-dialog-title"><form id="bill-form" method="dialog">
     <div class="dialog-header"><h2 id="bill-dialog-title">Hóa đơn cố định</h2><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>

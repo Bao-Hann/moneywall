@@ -7,7 +7,7 @@ export const CATEGORIES = Object.freeze({
   savings_debt: ['Nạp quỹ dự phòng', 'Trả nợ gốc/lãi', 'Đầu tư dài hạn'],
 });
 export const GROUP_LABELS = { income: 'Tiền nhận', needs: 'Sinh hoạt cần thiết', wants: 'Mua sắm & Giải trí', savings_debt: 'Để dành & Trả nợ' };
-export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null, openingBalances: {} };
+export const DEFAULT_PROFILE = { id: 'default', liquidSavings: 0, paydayDay: 5, incomeModeOverride: 'AUTO', theme: 'light', lastBackupAt: null, openingBalances: {}, categoryLimits: {} };
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 export const sum = (xs) => xs.reduce((a, x) => a + x, 0);
 export const avg = (xs) => xs.length ? sum(xs) / xs.length : 0;

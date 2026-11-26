@@ -10,6 +10,7 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 2. Kiểm tra cách tính cọc/tiền hoàn và chọn lưu số dư ngân hàng, tiền mặt đầu tháng nếu đúng. Có thể đối chiếu quỹ để dành riêng.
 3. Ở **Tổng quan**, xem tiền còn dùng, tiền đã chi ra và gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
 4. Ở **Phân tích**, chọn một trong bốn phần: Sức khỏe tài chính, Kế hoạch chi tiêu, Dòng tiền & dự báo, Thói quen & cảnh báo. Các giá trị chính luôn hiển thị; bấm liên kết để mở đúng khoản đã ghi. Chỉ phần giải thích công thức được thu gọn.
+   - Trong **Kế hoạch chi tiêu → Mức chi theo danh mục**, chọn **Dùng mức thử** cho các danh mục phù hợp hoặc tự đặt mức. Mức thường xuyên áp dụng từ tháng đang xem đến lần chỉnh kế tiếp. Mức dự trù theo lần chỉ dùng cho tháng đang xem. Bấm **Xem đã chi** hoặc **Xem khoản theo lần** để đối chiếu với sổ.
 5. Ở **Khoản cần lo**, thêm hóa đơn, nợ hoặc quỹ. Ghi thanh toán, chuyển quỹ và trả nợ tại đây sẽ cập nhật cùng sổ thu chi.
 6. Vào **Sao lưu & Cài đặt → Sao lưu dữ liệu** định kỳ, trước khi đổi máy hoặc dọn dữ liệu trình duyệt.
 

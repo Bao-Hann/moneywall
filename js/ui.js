@@ -1,6 +1,7 @@
 import { CATEGORIES, GROUP_LABELS, clamp, sum, cashBalanceForMonth, localDate, analyzeFinance, inPaydayWindow } from './finance-engine.js';
 
-import { monthlyMoney, kindOf, FLOW_LABELS, dateForMonth, isAnalysisView, isContribution } from './money-flow.js';
+import { monthlyMoney, kindOf, FLOW_LABELS, dateForMonth, isAnalysisView, isContribution, isLivingExpense } from './money-flow.js';
+import { analyzeCategoryBudgets, budgetCategoryKey, budgetCategoryLabel, isBudgetEvent } from './category-budgets.js';
 
 import { icon, E, N, formatVND, formatMonth, dateText, categoryIcon, btn, empty, heading, ledgerButton, categoryList } from './ui-parts.js';
 import { renderWellbeing, renderPlanHighlights } from './finance-views.js';
@@ -8,7 +9,7 @@ export { icon, fillIcons, escapeHtml, formatVND, formatMonth } from './ui-parts.
 export { renderAnalysis, renderDebtSimulation } from './finance-views.js';
 
 export function transactionRows(transactions, editable = false) {
-  return transactions.map((t) => `<tr><td><div class="transaction-title"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><div><strong>${E(t.note || t.category)}</strong><small>${E(t.category)}${t.isFixedBill ? ' · Hóa đơn' : ''}${kindOf(t) !== 'regular' ? ` · ${FLOW_LABELS[kindOf(t)]}` : ''}</small></div></div></td><td><span class="badge ${t.group === 'wants' ? 'warning' : 'safe'}">${GROUP_LABELS[t.group]}</span></td><td class="muted">${dateText(t.date)}</td><td class="align-right money ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</td>${editable ? `<td><div class="row-actions"><button class="icon-button" data-action="edit-transaction" data-id="${E(t.id)}" aria-label="Sửa ${E(t.note || t.category)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-transaction" data-id="${E(t.id)}" aria-label="Xóa ${E(t.note || t.category)}">${icon('trash')}</button></div></td>` : ''}</tr>`).join('');
+  return transactions.map((t) => `<tr><td><div class="transaction-title"><span class="category-icon ${t.group}">${icon(categoryIcon(t.category, t.group))}</span><div><strong>${E(t.note || t.category)}</strong><small>${E(t.category)}${t.isFixedBill ? ' · Hóa đơn' : ''}${isLivingExpense(t) && isBudgetEvent(t) ? ' · Khoản theo lần' : ''}${kindOf(t) !== 'regular' ? ` · ${FLOW_LABELS[kindOf(t)]}` : ''}</small></div></div></td><td><span class="badge ${t.group === 'wants' ? 'warning' : 'safe'}">${GROUP_LABELS[t.group]}</span></td><td class="muted">${dateText(t.date)}</td><td class="align-right money ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</td>${editable ? `<td><div class="row-actions"><button class="icon-button" data-action="edit-transaction" data-id="${E(t.id)}" aria-label="Sửa ${E(t.note || t.category)}">${icon('edit')}</button><button class="icon-button delete" data-action="delete-transaction" data-id="${E(t.id)}" aria-label="Xóa ${E(t.note || t.category)}">${icon('trash')}</button></div></td>` : ''}</tr>`).join('');
 }
 function transactionTable(ts, editable = false, recent = false) {
   return `<div class="table-scroll ${recent ? 'recent-table' : ''}"><table><thead><tr><th>Nội dung</th><th>Nhóm</th><th>Ngày</th><th class="align-right">Số tiền</th>${editable ? '<th class="align-right">Thao tác</th>' : ''}</tr></thead><tbody>${transactionRows(ts, editable)}</tbody></table></div>`;
@@ -22,6 +23,8 @@ function prioritySteps(data, a, m) {
   const bill = a.bills.filter((b) => !b.paid).sort((x, y) => x.dueDay - y.dueDay)[0];
   if (bill) add(E(bill.name), `Còn ${formatVND(bill.remaining)} · Hạn ngày ${Math.min(bill.dueDay, a.daysInMonth)}.`, btn('Ghi đã trả', 'pay-bill', 'secondary small', '', `data-id="${E(bill.id)}"`), 'calendar');
   if (m.debtDue > 0) { const debt = data.debts.find((d) => d.principal > 0 && d.minMonthlyPayment > sum(m.rows.filter((t) => kindOf(t) === 'debt' && t.flow.targetId === d.id).map((t) => t.amount))); if (debt) add('Dành tiền trả nợ tháng này', `Cần giữ lại ${formatVND(m.debtDue)} theo mức trả bạn đã đặt.`, btn('Ghi trả nợ', 'pay-debt', 'secondary small', '', `data-id="${E(debt.id)}"`), 'layers'); }
+  const over = analyzeCategoryBudgets(data, a, m).find((row) => row.status === 'over');
+  if (over) add(`Xem lại ${E(budgetCategoryLabel(over.category))}`, `Đã chi hơn mức tháng ${formatVND(-over.remaining)}.`, btn('Xem mức chi', 'open-analysis', 'secondary small', '', 'data-section="category-limits-section"'), 'bag');
   if (!steps.length && a.cutbacks.actions.length && a.income.yBase > 0) { const c = a.cutbacks.actions[0]; add(`Xem lại ${E(c.category)}`, `Gợi ý giảm khoảng ${formatVND(c.suggestedCut)} trong một tháng.`, btn('Xem gợi ý giảm chi', 'open-analysis', 'secondary small', '', 'data-section="cutbacks-section"'), 'bag'); }
   if (!steps.length) add('Tiếp tục ghi những khoản trong ngày', 'Số dư và phân tích sẽ đổi ngay khi bạn lưu.', btn('Ghi khoản mới', 'add-transaction', 'secondary small', 'plus'), 'sprout');
   return steps.slice(0, 3).join('');
@@ -50,8 +53,13 @@ export function filteredTransactions(data, filters) {
   const analysis = filters.billId || filters.scope === 'anomaly' ? analyzeFinance(data, date) : null;
   const sources = filters.billId ? new Set([...(analysis.bills.find((b) => b.id === filters.billId)?.payments || []).map((p) => p.id), ...data.transactions.filter((t) => t.flow?.billId === filters.billId).map((t) => t.id)]) : null;
   const anomalies = filters.scope === 'anomaly' ? new Set(analysis.anomalies.map((t) => t.id)) : null;
+  const budgetScope = ['budget-routine', 'budget-event'].includes(filters.scope);
+  const categoryMatches = budgetScope && filters.category
+    ? (t) => budgetCategoryKey(t.category) === budgetCategoryKey(filters.category)
+    : (t) => !filters.category || t.category === filters.category;
   const scopeMatch = (t) => {
-    const everyday = kindOf(t) === 'regular' && t.type === 'expense' && ['needs', 'wants'].includes(t.group);
+    const everyday = isLivingExpense(t);
+    if (budgetScope) return everyday && isBudgetEvent(t) === (filters.scope === 'budget-event');
     if (filters.scope === 'anomaly') return anomalies.has(t.id);
     if (filters.scope === 'contribution') return isContribution(t);
     if (filters.scope === 'earned') return kindOf(t) === 'regular' && t.type === 'income';
@@ -68,11 +76,11 @@ export function filteredTransactions(data, filters) {
     scopeMatch(t) && (!filters.type || t.type === filters.type) &&
     (!filters.kind || (filters.kind === 'reserve' ? ['reserve-in', 'reserve-out'].includes(kindOf(t)) : kindOf(t) === filters.kind)) &&
     (!filters.target || t.flow?.targetId === filters.target) &&
-    (!filters.group || t.group === filters.group) && (!filters.category || t.category === filters.category) &&
+    (!filters.group || t.group === filters.group) && categoryMatches(t) &&
     (!filters.search || `${t.note} ${t.category}`.toLocaleLowerCase('vi-VN').includes(filters.search.toLocaleLowerCase('vi-VN')))
   ).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
-const ledgerScopeLabels = { everyday: 'Chi sinh hoạt', variable: 'Chi ngoài hóa đơn', payday: 'Chi trong kỳ nhận tiền', earned: 'Thu nhập mới', operating: 'Thu nhập mới và chi sinh hoạt', contribution: 'Để dành, rút quỹ và trả nợ', anomaly: 'Khoản chi được nhắc' };
+const ledgerScopeLabels = { everyday: 'Chi sinh hoạt', variable: 'Chi ngoài hóa đơn', payday: 'Chi trong kỳ nhận tiền', earned: 'Thu nhập mới', operating: 'Thu nhập mới và chi sinh hoạt', contribution: 'Để dành, rút quỹ và trả nợ', anomaly: 'Khoản chi được nhắc', 'budget-routine': 'Chi thường xuyên tính vào mức tháng', 'budget-event': 'Khoản theo lần' };
 function ledgerContext(filters) {
   if (!(filters.category || filters.group || filters.search || filters.kind || filters.type || filters.allMonths || filters.billId || filters.scope || filters.from || filters.through)) return '';
   const labels = [];
