@@ -1,4 +1,4 @@
-import { isPlanTransaction, kindOf, ledgerTotals } from './money-flow.js';
+import { bankSupport, isPlanTransaction, kindOf, ledgerTotals } from './money-flow.js';
 /** All calculations are pure. Money is integer VND; dates are local calendar dates. */
 export const CATEGORIES = Object.freeze({
   income: ['Chu cấp', 'Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
@@ -29,14 +29,21 @@ export function cashBalanceForMonth(data, month, today = localDate()) {
   const opening = data.profile.openingBalances?.[month];
   const transactions = data.transactions.filter((t) => t.date.startsWith(month) && t.date <= today);
   const { received: income, expense, net } = ledgerTotals(transactions);
-  return { month, configured: !!opening, bank: opening?.bank ?? null, cash: opening?.cash ?? null, opening: opening ? opening.bank + opening.cash : null, income, expense, available: opening ? opening.bank + opening.cash + net : null };
+  return { month, configured: !!opening, bank: opening?.bank ?? null, support: bankSupport(opening), cash: opening?.cash ?? null, opening: opening ? opening.bank + opening.cash : null, income, expense, available: opening ? opening.bank + opening.cash + net : null };
 }
-export function aggregateMonths(transactions, date = new Date()) {
+export function aggregateMonths(transactions, date = new Date(), openingBalances = {}) {
   const months = new Map();
+  const through = localDate(date);
+  for (const [month, opening] of Object.entries(openingBalances)) {
+    const support = bankSupport(opening);
+    if (month <= through.slice(0, 7) && support > 0) {
+      months.set(month, { month, income: support, support, needs: 0, wants: 0, savings_debt: 0, spent: 0, variable: 0 });
+    }
+  }
   for (const t of transactions) {
     const offset = kindOf(t) === 'offset';
     if (!offset && !isPlanTransaction(t)) continue;
-    if (t.date > localDate(date)) continue;
+    if (t.date > through) continue;
     const key = t.date.slice(0, 7);
     if (!months.has(key)) months.set(key, { month: key, income: 0, needs: 0, wants: 0, savings_debt: 0, spent: 0, variable: 0 });
     const m = months.get(key);
@@ -260,7 +267,7 @@ export function simulateDebtPayoff(debts, extraMonthly = 0) {
 
 export function analyzeFinance({ transactions = [], recurring_bills = [], debts = [], profile = DEFAULT_PROFILE }, date = new Date()) {
   const today = localDate(date), key = today.slice(0, 7), elapsedDays = date.getDate(), daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const months = aggregateMonths(transactions, date), current = months.find((m) => m.month === key) || { month: key, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 };
+  const months = aggregateMonths(transactions, date, profile.openingBalances), current = months.find((m) => m.month === key) || { month: key, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 };
   transactions = transactions.filter(isPlanTransaction);
   const firstMonth = months[0]?.month;
   const history = firstMonth ? monthKeys(new Date(date.getFullYear(), date.getMonth() - 1, 1), 120).filter((m) => m >= firstMonth).map((m) => months.find((x) => x.month === m) || { month: m, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 }) : [];

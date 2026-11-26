@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { arithmeticFormula, parseMoney, excelDate, detectColumns, detectHeader, workbookSheets, buildImport, detectOpeningBalance } from '../js/excel-import.js';
+import { arithmeticFormula, parseMoney, excelDate, detectColumns, detectHeader, workbookSheets, buildImport, detectOpeningBalance, usesSupportSidebar } from '../js/excel-import.js';
 import { initDB, replaceData, readData, appendTransactions, markExistingTransactions, validateBackup } from '../js/db.js';
 import { DEFAULT_PROFILE, cashBalanceForMonth } from '../js/finance-engine.js';
 import { renderTransactions, renderSettings } from '../js/ui.js';
@@ -162,6 +162,26 @@ test('invalid opening balance rejects the entire import before any record is wri
   const before = await readData(), record = buildImport(sample()).rows[0].transaction;
   await assert.rejects(appendTransactions([{ ...record, id: 'should-not-import' }], { openingBalance: { month: '2026-13', bank: 100000, cash: 0 } }));
   assert.deepEqual(await readData(), before);
+});
+test('sidebar support is counted in the month once and stays outside the transaction ledger', async () => {
+  const sheet = sample();
+  sheet.rows[2][7] = { v: 'TK NH:' }; sheet.rows[2][8] = { v: 300000 };
+  sheet.rows[3][7] = { v: 'Tiền mặt:' }; sheet.rows[3][8] = { v: 100000 };
+  assert.equal(usesSupportSidebar(sheet), true);
+  const month = '2026-11', when = new Date(2026, 10, 21);
+  const transactions = buildImport(sheet, { offsetReceipts: true }).rows.map((record) => record.transaction);
+  const openingBalance = { month, ...detectOpeningBalance(sheet), bankIsSupport: true };
+  await replaceData(empty());
+  await appendTransactions(transactions, { openingBalance });
+  await appendTransactions(transactions, { openingBalance });
+  const saved = await readData();
+  assert.equal(saved.transactions.length, transactions.length);
+  assert.equal(analyzeFinance(saved, when).current.income, 300000);
+  assert.equal(analyzeFinance(saved, new Date(2026, 11, 3)).history.at(-1).income, 300000);
+  assert.equal(cashBalanceForMonth(saved, month, '2026-11-21').income, 900000);
+  assert.equal(cashBalanceForMonth(saved, month, '2026-11-21').available, 1035000);
+  const backup = validateBackup({ app: 'vung-tai-chinh', version: 1, data: saved });
+  assert.equal(backup.profile.openingBalances[month].bankIsSupport, true);
 });
 test('older backups without opening balances remain compatible', () => {
   const data = empty(); delete data.profile.openingBalances; data.profile.liquidSavings = 250000;

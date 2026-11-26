@@ -271,7 +271,7 @@ async function handleAction(action, id, attrs = {}) {
           state.importHints = { debt: options.debtHint ?? null };
           state.filters = { month: options.openingBalance?.month || records.map((t) => t.date).sort().at(-1)?.slice(0, 7) || localDate().slice(0, 7), group: '', category: '', search: '' };
           state.page = 1; state.tab = 'transactions'; location.hash = 'transactions'; render();
-          toast(`${receipt.imported ? `Đã nhập ${receipt.imported} khoản` : 'Không thêm khoản trùng'}${receipt.updated ? `, cập nhật cách phân loại ${receipt.updated} khoản cũ` : ''}${options.openingBalance ? '. Đã lưu tiền đầu tháng' : ''}${options.liquidSavings !== null ? '. Đã đối chiếu quỹ để dành' : ''}.`);
+          toast(`${receipt.imported ? `Đã nhập ${receipt.imported} khoản` : 'Không thêm khoản trùng'}${receipt.updated ? `, cập nhật cách phân loại ${receipt.updated} khoản cũ` : ''}${options.openingBalance ? '. Đã lưu tiền ban đầu' : ''}${options.liquidSavings !== null ? '. Đã đối chiếu quỹ để dành' : ''}.`);
         }
         return ok;
       },
@@ -384,7 +384,7 @@ document.addEventListener('submit', async (event) => {
     if (ok) form.closest('dialog').close(); return;
   }
   if (formId === 'opening-balance-form') {
-    await mutation(() => putRecord('profile', { ...state.data.profile, openingBalances: { ...(state.data.profile.openingBalances || {}), [value('month')]: { bank: amount('bank'), cash: amount('cash') } } }), 'Đã lưu tiền có sẵn đầu tháng, tách riêng với thu nhập mới.'); return;
+    await mutation(() => putRecord('profile', { ...state.data.profile, openingBalances: { ...(state.data.profile.openingBalances || {}), [value('month')]: { bank: amount('bank'), cash: amount('cash'), bankIsSupport: values.has('bankIsSupport') } } }), 'Đã lưu tiền ban đầu và cách tính tiền ngân hàng.'); return;
   }
   if (formId === 'profile-form') {
     await mutation(() => putRecord('profile', { ...state.data.profile, liquidSavings: amount('liquidSavings'), paydayDay: amount('paydayDay'), incomeModeOverride: value('incomeModeOverride') }), 'Đã cập nhật quỹ dự phòng và kế hoạch.'); return;

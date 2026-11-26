@@ -278,6 +278,8 @@ body { font-size: 16px; }
 .category-limit-links { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:5px; }
 .category-limit-links .text-link { font-size:12px; }
 .ledger-summary-note { margin:-12px 0 18px; }
+.opening-balance-form > .checkbox-label { grid-column:1/-1; }
+.opening-balance-form > .button { justify-self:start; }
 .excel-comparison { margin:18px 0; }
 .excel-comparison h3 { margin:0 0 5px; font-size:16px; }
 .excel-comparison ul { margin:8px 0 0; padding-left:20px; color:var(--muted); font-size:13px; }

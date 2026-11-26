@@ -82,9 +82,11 @@ Thư viện đọc Excel được đóng gói trong `vendor/`, không cần gọ
 
 ## Tiền có sẵn đầu tháng và số tiền còn lại
 
-Sổ thu chi có phần **Tiền còn lại trong tháng**. Điền tiền ngân hàng và tiền mặt ở đầu tháng rồi lưu, hoặc trong phần nhập Excel chọn **Lưu cả tiền có sẵn đầu tháng** khi ứng dụng nhận được hai ô ngân hàng và tiền mặt riêng.
+Sổ thu chi có phần **Tiền còn lại trong tháng**. Điền tiền ngân hàng và tiền mặt ở đầu tháng rồi lưu, hoặc trong phần nhập Excel chọn **Lưu tiền ban đầu** khi ứng dụng nhận được hai ô ngân hàng và tiền mặt riêng.
 
-Công thức: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Dòng tiền ròng**. Dòng tiền ròng là tổng tiền vào trừ tổng tiền ra, còn thực chi ròng là phần tiền ra trừ tiền vào. Tiền bù chi, cọc và hoàn cọc vẫn tính vào dòng tiền theo ngày ghi. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, không tự coi là thu nhập và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
+Với mẫu Excel có cột tổng ngày và bảng phụ **TK NH**, Moneywall chọn sẵn **TK NH là tiền chu cấp ngoài sổ thu chi**. Thu nhập để lập kế hoạch có khoản chu cấp này, còn dòng tiền trong bảng chính lấy từ từng giao dịch. Tiền mặt trong bảng phụ là khoản dư đầu tháng. Kiểm tra lựa chọn trước khi lưu.
+
+Công thức thông thường: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Dòng tiền ròng**. Dòng tiền ròng là tổng tiền vào trừ tổng tiền ra, còn thực chi ròng là phần tiền ra trừ tiền vào. Tiền bù chi, cọc và hoàn cọc vẫn tính vào dòng tiền theo ngày ghi. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, chỉ lấy phần ngân hàng làm thu nhập khi được đánh dấu là chu cấp, và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
 
 Không thể tách chính xác số dư ngân hàng hiện tại và tiền mặt hiện tại nếu giao dịch chưa ghi phương thức thanh toán; ứng dụng chỉ hiển thị tổng hai nguồn tiền sau thu chi. Không tự chuyển số cuối tháng sang đầu tháng kế tiếp khi chưa đối chiếu; bạn có thể cập nhật riêng từng tháng. Tệp JSON cũ vẫn khôi phục được khi chưa có trường số dư đầu tháng.
 

@@ -176,7 +176,15 @@ export async function appendTransactions(records, { skipDuplicates = true, openi
   const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
   if (liquidSavings !== null) money(liquidSavings, 'Quỹ để dành từ Excel');
   const profileChanges = !!opening || liquidSavings !== null;
-  const amendProfile = (profile) => validateRecord('profile', { ...DEFAULT_PROFILE, ...profile, ...(liquidSavings !== null ? { liquidSavings } : {}), ...(opening ? { openingBalances: { ...(profile?.openingBalances || {}), [opening.month]: { bank: opening.bank, cash: opening.cash } } } : {}) });
+  const amendProfile = (profile) => {
+    const next = { ...DEFAULT_PROFILE, ...profile };
+    if (liquidSavings !== null) next.liquidSavings = liquidSavings;
+    if (opening) {
+      const { month, ...balances } = opening;
+      next.openingBalances = { ...next.openingBalances, [month]: balances };
+    }
+    return validateRecord('profile', next);
+  };
   if (new Set(clean.map((t) => t.id)).size !== clean.length) throw new Error('Có mã giao dịch trùng nhau trong tệp nhập.');
   const select = (existing) => {
     return planImport(clean, existing, { skipDuplicates, updateDetails });
@@ -235,7 +243,8 @@ function day(value) { assert(Number.isInteger(value) && value >= 1 && value <= 3
 const validMonth = (month) => typeof month === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && Number(month.slice(0, 4)) >= 1900;
 export function validateOpeningBalance(value) {
   assert(value && typeof value === 'object' && validMonth(value.month), 'Tháng của số dư đầu kỳ không hợp lệ.');
-  return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng đầu tháng'), cash: money(value.cash, 'Tiền mặt đầu tháng') };
+  const bankIsSupport = bool(value.bankIsSupport ?? false, 'Cách tính tiền ngân hàng');
+  return { month: value.month, bank: money(value.bank, 'Tiền ngân hàng'), cash: money(value.cash, 'Tiền mặt đầu tháng'), ...(bankIsSupport ? { bankIsSupport } : {}) };
 }
 function validateCategoryLimits(limits) {
   assert(limits && typeof limits === 'object' && !Array.isArray(limits) && Object.keys(limits).length <= 1200, 'Danh sách mức chi không hợp lệ.');
@@ -294,7 +303,10 @@ export function validateRecord(store, value) {
   assert(value.lastBackupAt === null || Number.isSafeInteger(value.lastBackupAt) && value.lastBackupAt >= 0, 'Ngày sao lưu không hợp lệ.');
   const openingBalances = {}, rawBalances = value.openingBalances ?? {};
   assert(rawBalances && typeof rawBalances === 'object' && !Array.isArray(rawBalances) && Object.keys(rawBalances).length <= 1200, 'Danh sách số dư đầu tháng không hợp lệ.');
-  for (const [month, amounts] of Object.entries(rawBalances)) { const entry = validateOpeningBalance({ ...amounts, month }); openingBalances[month] = { bank: entry.bank, cash: entry.cash }; }
+  for (const [key, amounts] of Object.entries(rawBalances)) {
+    const { month, ...balances } = validateOpeningBalance({ ...amounts, month: key });
+    openingBalances[month] = balances;
+  }
   return { id, liquidSavings: money(value.liquidSavings, 'Quỹ dự phòng'), paydayDay: day(value.paydayDay), incomeModeOverride: value.incomeModeOverride, theme: value.theme, lastBackupAt: value.lastBackupAt, openingBalances, categoryLimits: validateCategoryLimits(value.categoryLimits ?? {}) };
 }
 export function validateBackup(input) {

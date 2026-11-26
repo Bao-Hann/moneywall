@@ -51,6 +51,11 @@ export function heading(title, subtitle, a, primary = true) {
 export function ledgerButton(label, category = '', extra = '', cls = 'text-link') {
   return btn(E(label), 'open-ledger', cls, '', `data-category="${E(category)}" ${category ? 'data-scope="everyday"' : ''} ${extra}`);
 }
+export function balanceEquation(m, classes) {
+  const start = m.opening ? formatVND(m.opening.bank + m.opening.cash) : 'Chưa điền';
+  const sources = m.support === null ? '' : `<small class="table-secondary">Chu cấp ${formatVND(m.support)} + Tiền mặt dư ${formatVND(m.opening.cash)}</small>`;
+  return `<div class="${classes}"><span>${m.support === null ? 'Tiền đầu tháng' : 'Tiền ban đầu'}<strong>${start}</strong>${sources}</span><span>+ Tiền vào trong sổ<strong>${formatVND(m.received)}</strong></span><span>− Tiền ra trong sổ<strong>${formatVND(m.paid)}</strong></span><span>= Tiền còn lại<strong>${m.available === null ? '—' : formatVND(m.available)}</strong></span></div>`;
+}
 export const CATEGORY_COLORS = ['#247a58', '#78a98c', '#a9c5b3', '#cbd7af', '#c79651', '#8aa8bf', '#c2a6b2', '#91a575', '#8dbbb2', '#d9c28f'];
 export function categoryList(m, limit = 8) {
   return m.categories.length ? `<div class="category-breakdown">${m.categories.slice(0, limit).map((c, i) => {

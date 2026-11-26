@@ -162,6 +162,9 @@ export function detectSideBalances(sheet, multiplier = 1) {
 export function hasDailyTotals(sheet, headerRow = sheet.header.index) {
   return dailyTotalColumn(sheet, headerRow) >= 0;
 }
+export function usesSupportSidebar(sheet) {
+  return hasDailyTotals(sheet) && sheet.rows.slice(0, 40).some((row) => row.some((cell) => normalizeLabel(val(cell)) === 'tknh'));
+}
 function dailyTotalColumn(sheet, headerRow) {
   return (sheet.rows[headerRow] || []).findIndex((cell) => ['tongchingay', 'tongchitrongngay', 'tongchitheongay'].includes(normalizeLabel(val(cell))));
 }

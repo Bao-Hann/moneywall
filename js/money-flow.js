@@ -3,6 +3,7 @@ export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', offset:
 export const kindOf = (t) => t.flow?.kind || 'regular';
 export const isPlanTransaction = (t) => kindOf(t) === 'regular';
 export const isLivingExpense = (t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group);
+export const bankSupport = (opening) => opening?.bankIsSupport ? opening.bank : null;
 export function ledgerTotals(transactions) {
   let income = 0, expense = 0, offsets = 0;
   const spendingDates = new Set();
@@ -77,7 +78,7 @@ export function monthlyMoney(data, a) {
   }, 0);
   const reserved = a.unpaidFixedBills + debtDue;
   const daily = available === null ? null : Math.max(0, Math.floor((available - reserved) / a.safe.daysLeft));
-  return { rows, incoming, outgoing, opening, received, paid, net, actualSpent, available, ordinary, everyday: total(ordinary), categories, offsets, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
+  return { rows, incoming, outgoing, opening, support: bankSupport(opening), received, paid, net, actualSpent, available, ordinary, everyday: total(ordinary), categories, offsets, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
     earned: total(incoming.filter(isPlanTransaction)), deposited: total(outgoing.filter((t) => kindOf(t) === 'deposit')),
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };

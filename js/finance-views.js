@@ -1,7 +1,7 @@
 import { clamp, sum, localDate } from './finance-engine.js';
 import { ANALYSIS_VIEWS, financePlanSummary, isAnalysisView, kindOf, ledgerTotals, monthlyMoney, wellbeingPlan } from './money-flow.js';
 import { analyzeCategoryBudgets, budgetCategoryLabel, suggestedCategoryLimits } from './category-budgets.js';
-import { E, N, btn, canvas, categoryIcon, categoryList, dateText, formatMonth, formatVND, heading, icon, ledgerButton } from './ui-parts.js';
+import { E, N, btn, canvas, categoryIcon, categoryList, dateText, formatMonth, formatVND, heading, icon, ledgerButton, balanceEquation } from './ui-parts.js';
 
 const money = formatVND;
 const percent = (ratio) => Number.isFinite(ratio) ? `${N(ratio * 100)}%` : '—';
@@ -109,7 +109,7 @@ function renderIncome(a, p) {
   const i = a.income;
   return `<section class="panel finance-panel">
     ${header('Thu nhập để lập kế hoạch', incomeNames[i.mode] || 'Đang theo dõi', planning('Chỉnh cách nhận thu nhập', 'profile-form'))}
-    <div class="finance-stat-row two">${stat('Mức thu nhập làm căn cứ / tháng', p.canPlan ? money(i.yBase) : '—', `Dựa trên ${i.months} tháng đã ghi`)}${stat('Thu nhập mới đã ghi tháng này', money(a.current.income), 'Không gồm tiền có sẵn đầu tháng và tiền hoàn')}</div>
+    <div class="finance-stat-row two">${stat('Mức thu nhập làm căn cứ / tháng', p.canPlan ? money(i.yBase) : '—', `Dựa trên ${i.months} tháng đã ghi`)}${stat('Thu nhập tính cho tháng này', money(a.current.income), a.current.support ? `Gồm ${money(a.current.support)} chu cấp ghi ngoài sổ` : 'Từ các dòng thu nhập trong sổ')}</div>
     ${p.provisional ? '<p class="insight-note">Sổ còn ít tháng. Mức gợi ý có thể thay đổi nhiều khi bạn ghi thêm thu nhập hoặc chi phí.</p>' : ''}
     ${i.mode === 'IRREGULAR' && i.surplusForBuffer > 0 ? `<div class="finance-callout">${icon('shield')}<div><strong>Phần thu vượt mức căn cứ: ${money(i.surplusForBuffer)}</strong><p>Cân nhắc giữ phần dư cho những tháng ít thu hơn.</p></div>${btn('Ghi chuyển quỹ', 'reserve-in', 'secondary small')}</div>` : ''}
     ${detail('Cách chọn mức thu nhập', `<p>Ứng dụng nhìn tối đa 12 tháng: thu nhập đều dùng trung bình, thu nhập không đều dùng mức thận trọng hơn. Tháng chưa ghi trong lịch sử có thể được tính là 0. Có thể chọn cách nhận thu nhập ở cài đặt quỹ.</p><p>${i.cv === null ? 'Chưa đủ ba tháng để đo mức dao động thu nhập.' : `Mức dao động so với trung bình: ${percent(i.cv)}.`}</p>`)}
@@ -277,13 +277,13 @@ function renderCashflowAnalysis(data, a, m, p) {
     <section class="panel finance-panel">
       ${header('Thu chi tháng đang xem', 'Cộng từ từng khoản bạn đã ghi.')}
       <div class="finance-stat-row three">
-        ${stat('Thu nhập mới', money(m.earned), 'Gồm chu cấp và các dòng được chọn là thu nhập') }
+        ${stat('Thu nhập trong tháng', money(a.current.income), m.support === null ? 'Từ các dòng được chọn là thu nhập' : `Chu cấp ngoài sổ ${money(m.support)} · Thu nhập trong sổ ${money(m.earned)}`) }
         ${stat(m.offsets ? 'Chi sinh hoạt sau bù' : 'Chi sinh hoạt', money(a.current.spent), m.offsets ? `Đã trừ ${money(m.offsets)} bù chi` : 'Gồm các khoản chi thường và hóa đơn đã ghi')}
-        ${stat('Thu trừ chi sinh hoạt', money(m.earned - a.current.spent), 'Trước để dành và trả nợ', 'plan-emphasis')}
+        ${stat('Thu trừ chi sinh hoạt', money(a.current.income - a.current.spent), 'Trước để dành và trả nợ', 'plan-emphasis')}
       </div>
       ${dailyExpense === null ? '' : `<p class="helper-text">Chi sinh hoạt trung bình <strong>${money(dailyExpense)}/ngày có chi</strong> · ${spendingDays} ngày có chi sinh hoạt${m.offsets ? ' · đã trừ bù chi' : ''}.</p>`}
-      <div class="budget-equation cash-equation"><span>Tiền đầu tháng<strong>${m.opening ? money(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Tiền vào<strong>${money(m.received)}</strong></span><span>− Tiền ra<strong>${money(m.paid)}</strong></span><span>= Tiền còn dùng<strong>${m.available === null ? '—' : money(m.available)}</strong></span></div>
-      <div class="finance-action-row">${ledgerButton('Xem thu nhập mới', '', 'data-scope="earned"', 'secondary small')}${ledgerButton('Xem sổ thu chi')}${btn('Đối chiếu tiền đầu tháng', 'open-opening', 'text-link')}</div>
+      ${balanceEquation(m, 'budget-equation cash-equation')}
+      <div class="finance-action-row">${m.earned ? ledgerButton('Xem thu nhập trong sổ', '', 'data-scope="earned"', 'secondary small') : ''}${ledgerButton('Xem sổ thu chi')}${btn('Đối chiếu tiền ban đầu', 'open-opening', 'text-link')}</div>
     </section>
     ${renderForecast(a, p)}
     <section class="panel finance-panel" id="spending-section">
