@@ -51,7 +51,7 @@ test('consistent surplus needs three complete months; unentered debt stays uncon
 test('prominent health links, component explanations and milestones escape personal content', () => {
   const malicious = { ...loan, name: '<img src=x onerror=bad()>' }, d = fixture({ reserve: 500000, debts: [malicious] }), a = analyzeFinance(d, date);
   const overview = renderOverview(d, a, true), analysis = renderAnalysis(d, a, 'health'), cashflow = renderAnalysis(d, a, 'cashflow');
-  assert.ok(overview.indexOf('id="health-overview"') < overview.indexOf('class="money-cards"'));
+  assert.ok(overview.indexOf('class="money-cards"') < overview.indexOf('id="health-overview"'));
   assert.ok(overview.includes('data-action="open-health"')); assert.ok(overview.includes('data-action="pay-debt"'));
   assert.ok(analysis.includes('id="health-analysis"')); assert.ok(cashflow.includes('id="spending-section"')); assert.ok(cashflow.includes('id="income-history-section"'));
   assert.ok(analysis.includes('Chưa đối chiếu nợ') === false); assert.ok(analysis.includes('Điểm cao cho thấy nền tảng tốt hơn'));

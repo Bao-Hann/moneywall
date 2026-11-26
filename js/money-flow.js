@@ -13,7 +13,9 @@ export function ledgerTotals(transactions) {
   }
   const spendingDays = spendingDates.size;
   const netExpense = expense - offsets;
-  return { income, expense, offsets, netExpense, net: income - netExpense, spendingDays, dailyExpense: spendingDays ? netExpense / spendingDays : null };
+  const received = income + offsets;
+  const actualSpent = expense - received;
+  return { income, expense, offsets, netExpense, received, actualSpent, net: received - expense, spendingDays, dailyExpense: spendingDays ? netExpense / spendingDays : null };
 }
 export const isContribution = (t) => kindOf(t) === 'reserve-out' || t.type === 'expense' && (['reserve-in', 'debt'].includes(kindOf(t)) || kindOf(t) === 'regular' && t.group === 'savings_debt');
 export const contributionAmount = (t) => !isContribution(t) ? 0 : kindOf(t) === 'reserve-out' ? -t.amount : t.amount;
@@ -59,12 +61,12 @@ export function monthlyMoney(data, a) {
   const rows = data.transactions.filter((t) => t.date.startsWith(a.month) && t.date <= a.today);
   const incoming = rows.filter((t) => t.type === 'income'), outgoing = rows.filter((t) => t.type === 'expense');
   const opening = data.profile.openingBalances?.[a.month];
-  const received = total(incoming), paid = total(outgoing), available = opening ? opening.bank + opening.cash + received - paid : null;
+  const { received, expense: paid, net, actualSpent, offsets } = ledgerTotals(rows);
+  const available = opening ? opening.bank + opening.cash + net : null;
   const ordinary = rows.filter(isLivingExpense);
   const buckets = new Map();
   for (const t of ordinary) { const c = buckets.get(t.category) || { category: t.category, amount: 0, count: 0 }; c.amount += t.amount; c.count++; buckets.set(t.category, c); }
   const categories = [...buckets.values()].sort((x, y) => y.amount - x.amount);
-  const offsets = total(incoming.filter((t) => kindOf(t) === 'offset'));
   const refunds = total(incoming.filter((t) => kindOf(t) === 'refund'));
   const deposits = depositBalances(data.transactions, a.today);
   const unmatchedRefunds = rows.filter((t) => kindOf(t) === 'refund' && !t.flow?.targetId);
@@ -75,7 +77,7 @@ export function monthlyMoney(data, a) {
   }, 0);
   const reserved = a.unpaidFixedBills + debtDue;
   const daily = available === null ? null : Math.max(0, Math.floor((available - reserved) / a.safe.daysLeft));
-  return { rows, incoming, outgoing, opening, received, paid, available, ordinary, everyday: total(ordinary), categories, offsets, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
+  return { rows, incoming, outgoing, opening, received, paid, net, actualSpent, available, ordinary, everyday: total(ordinary), categories, offsets, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
     earned: total(incoming.filter(isPlanTransaction)), deposited: total(outgoing.filter((t) => kindOf(t) === 'deposit')),
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };

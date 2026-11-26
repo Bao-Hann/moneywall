@@ -122,7 +122,7 @@ test('daily ledger displays separate income, expense and net totals, including a
   const data = empty(); data.transactions = buildImport(sample()).rows.map((r) => r.transaction);
   const a = analyzeFinance(data, new Date(2026, 10, 21));
   const html = renderTransactions(data, a, { month: '2026-11', group: '', category: '', search: '' }, 1, 'daily');
-  assert.ok(html.includes('daily-ledger')); assert.ok(html.includes('65.000')); assert.ok(html.includes('Thu trừ chi'));
+  assert.ok(html.includes('daily-ledger')); assert.ok(html.includes('65.000')); assert.ok(html.includes('Ròng trong ngày')); assert.ok(html.includes('Thực chi ròng'));
   assert.ok(html.includes('Nhập Excel'));
   assert.ok(renderSettings(data, a, { mode: 'indexeddb' }).includes('Chọn tệp Excel'));
 });

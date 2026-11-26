@@ -160,7 +160,28 @@ export function detectSideBalances(sheet, multiplier = 1) {
   return { liquidSavings, debt };
 }
 export function hasDailyTotals(sheet, headerRow = sheet.header.index) {
-  return (sheet.rows[headerRow] || []).some((cell) => ['tongchingay', 'tongchitrongngay', 'tongchitheongay'].includes(normalizeLabel(val(cell))));
+  return dailyTotalColumn(sheet, headerRow) >= 0;
+}
+function dailyTotalColumn(sheet, headerRow) {
+  return (sheet.rows[headerRow] || []).findIndex((cell) => ['tongchingay', 'tongchitrongngay', 'tongchitheongay'].includes(normalizeLabel(val(cell))));
+}
+export function compareDailyTotals(sheet, rows, { headerRow = sheet.header.index, multiplier = 1, mode = 'signed' } = {}) {
+  const column = dailyTotalColumn(sheet, headerRow);
+  if (column < 0 || mode !== 'signed') return [];
+  const days = new Map();
+  for (const { row, transaction: t } of rows) {
+    const day = days.get(t.date) || { date: t.date, calculated: 0, excel: [] };
+    day.calculated += (t.type === 'income' ? 1 : -1) * t.amount;
+    const cell = sheet.rows[row - 1]?.[column];
+    if (!blank(val(cell)) || cell?.f) {
+      try { day.excel.push(parseMoney(cell, multiplier).amount); }
+      catch { /* Some workbooks lack a saved formula result. */ }
+    }
+    days.set(t.date, day);
+  }
+  return [...days.values()]
+    .filter(({ calculated, excel }) => excel.length === 1 && excel[0] !== calculated)
+    .map(({ date, calculated, excel }) => ({ date, calculated, saved: excel[0] }));
 }
 export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {}, offsetReceipts = false } = {}) {
   if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };

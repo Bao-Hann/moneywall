@@ -226,6 +226,7 @@ async function handleAction(action, id, attrs = {}) {
   else if (action === 'open-ledger') {
     const targetMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(attrs.month || '') && attrs.month <= localDate().slice(0, 7) ? attrs.month : state.filters.month;
     state.filters = { month: targetMonth, group: attrs.group || '', category: attrs.category || '', search: '', kind: attrs.kind || '', type: attrs.type || '', target: attrs.target || '', scope: attrs.scope || '', from: attrs.from || '', through: attrs.through || (attrs.scope || attrs.type ? localDate(dateForMonth(targetMonth)) : ''), allMonths: attrs.allMonths === 'true', billId: attrs.billId || '', billName: attrs.billName || '', returnView: state.tab === 'analysis' ? state.analysisView : 'cashflow' };
+    if (attrs.scope === 'cash') state.ledgerView = 'daily';
     state.page = 1; goTo('transactions');
   }
   else if (action === 'clear-filters') { state.filters = { month: state.filters.month, group: '', category: '', search: '' }; state.page = 1; render(); }

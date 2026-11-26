@@ -282,7 +282,7 @@ function renderCashflowAnalysis(data, a, m, p) {
         ${stat('Thu trừ chi sinh hoạt', money(m.earned - a.current.spent), 'Trước để dành và trả nợ', 'plan-emphasis')}
       </div>
       ${dailyExpense === null ? '' : `<p class="helper-text">Chi sinh hoạt trung bình <strong>${money(dailyExpense)}/ngày có chi</strong> · ${spendingDays} ngày có chi sinh hoạt${m.offsets ? ' · đã trừ bù chi' : ''}.</p>`}
-      <div class="budget-equation cash-equation"><span>Tiền đầu tháng<strong>${m.opening ? money(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Thực nhận<strong>${money(m.received)}</strong></span><span>− Thực chi<strong>${money(m.paid)}</strong></span><span>= Tiền còn dùng<strong>${m.available === null ? '—' : money(m.available)}</strong></span></div>
+      <div class="budget-equation cash-equation"><span>Tiền đầu tháng<strong>${m.opening ? money(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Tiền vào<strong>${money(m.received)}</strong></span><span>− Tiền ra<strong>${money(m.paid)}</strong></span><span>= Tiền còn dùng<strong>${m.available === null ? '—' : money(m.available)}</strong></span></div>
       <div class="finance-action-row">${ledgerButton('Xem thu nhập mới', '', 'data-scope="earned"', 'secondary small')}${ledgerButton('Xem sổ thu chi')}${btn('Đối chiếu tiền đầu tháng', 'open-opening', 'text-link')}</div>
     </section>
     ${renderForecast(a, p)}

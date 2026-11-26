@@ -8,7 +8,7 @@ Sổ quản lý chi tiêu cá nhân tiếng Việt, ưu tiên sử dụng trên 
 
 1. Mở ứng dụng trên laptop, vào **Sổ thu chi → Nhập Excel** để mang ghi chép đang dùng vào sổ.
 2. Kiểm tra cách tính cọc/tiền hoàn và chọn lưu số dư ngân hàng, tiền mặt đầu tháng nếu đúng. Có thể đối chiếu quỹ để dành riêng.
-3. Ở **Tổng quan**, xem tiền còn dùng, tiền đã chi ra và gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
+3. Ở **Tổng quan**, xem dòng tiền, thực chi ròng và tiền còn lại. Mục **Xem cách tính** có gợi ý tạm chia mỗi ngày. Phần **Bước tiếp theo** mở đúng nơi cần ghi hoặc sửa.
 4. Ở **Phân tích**, chọn một trong bốn phần: Sức khỏe tài chính, Kế hoạch chi tiêu, Dòng tiền & dự báo, Thói quen & cảnh báo. Các giá trị chính luôn hiển thị; bấm liên kết để mở đúng khoản đã ghi. Chỉ phần giải thích công thức được thu gọn.
    - Trong **Kế hoạch chi tiêu → Mức chi theo danh mục**, chọn **Dùng mức thử** cho các danh mục phù hợp hoặc tự đặt mức. Mức thường xuyên áp dụng từ tháng đang xem đến lần chỉnh kế tiếp. Mức dự trù theo lần chỉ dùng cho tháng đang xem. Bấm **Xem đã chi** hoặc **Xem khoản theo lần** để đối chiếu với sổ.
 5. Ở **Khoản cần lo**, thêm hóa đơn, nợ hoặc quỹ. Ghi thanh toán, chuyển quỹ và trả nợ tại đây sẽ cập nhật cùng sổ thu chi.
@@ -18,7 +18,7 @@ Không tự nạp dữ liệu mẫu. Mục thử mẫu trong Cài đặt luôn h
 
 ## Sức khỏe và từng bước tự chủ tài chính
 
-Sức khỏe tài chính được đặt ở đầu Tổng quan: điểm trên 100 theo mô hình hiện có, tình trạng dễ hiểu, quỹ đủ bao lâu và đúng một bước ưu tiên. Không đổi công thức hay trọng số chấm điểm. Khi chưa có thu nhập hoặc chi phí thiết yếu, chưa chấm điểm; sổ dưới ba tháng ghi rõ là đánh giá tạm.
+Sức khỏe tài chính nằm dưới phần dòng tiền trên Tổng quan: điểm trên 100 theo mô hình hiện có, tình trạng dễ hiểu, quỹ đủ bao lâu và đúng một bước ưu tiên. Không đổi công thức hay trọng số chấm điểm. Khi chưa có thu nhập hoặc chi phí thiết yếu, chưa chấm điểm; sổ dưới ba tháng ghi rõ là đánh giá tạm.
 
 Nút **Xem lộ trình và từng phần** mở Phân tích, giải thích năm phần của điểm và các mốc: thu đủ chi sinh hoạt, quỹ đệm một tháng, kiểm soát nợ lãi cao, quỹ dài hơn và thu vượt chi sinh hoạt ba tháng hoàn chỉnh. Chưa ghi nợ được hiển thị là chưa đối chiếu, không tự đánh dấu hoàn tất mốc nợ. Mỗi mốc mở đúng sổ, quỹ, nợ hoặc biểu đồ liên quan.
 
@@ -84,7 +84,7 @@ Thư viện đọc Excel được đóng gói trong `vendor/`, không cần gọ
 
 Sổ thu chi có phần **Tiền còn lại trong tháng**. Điền tiền ngân hàng và tiền mặt ở đầu tháng rồi lưu, hoặc trong phần nhập Excel chọn **Lưu cả tiền có sẵn đầu tháng** khi ứng dụng nhận được hai ô ngân hàng và tiền mặt riêng.
 
-Công thức: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Các khoản thu mới − Các khoản chi đã ghi**. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, không tự coi là thu nhập và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
+Công thức: **Tiền còn lại = Ngân hàng đầu tháng + Tiền mặt đầu tháng + Dòng tiền ròng**. Dòng tiền ròng là tổng tiền vào trừ tổng tiền ra, còn thực chi ròng là phần tiền ra trừ tiền vào. Tiền bù chi, cọc và hoàn cọc vẫn tính vào dòng tiền theo ngày ghi. Quỹ dự phòng không cộng vào số tiền này. Số dư đầu tháng được lưu theo từng tháng, không tự coi là thu nhập và không thay đổi theo bộ lọc nhóm/danh mục/ghi chú. Giao dịch tương lai chưa được cộng vào số tiền hiện tại.
 
 Không thể tách chính xác số dư ngân hàng hiện tại và tiền mặt hiện tại nếu giao dịch chưa ghi phương thức thanh toán; ứng dụng chỉ hiển thị tổng hai nguồn tiền sau thu chi. Không tự chuyển số cuối tháng sang đầu tháng kế tiếp khi chưa đối chiếu; bạn có thể cập nhật riêng từng tháng. Tệp JSON cũ vẫn khôi phục được khi chưa có trường số dư đầu tháng.
 

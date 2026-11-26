@@ -1,4 +1,4 @@
-import { isPlanTransaction, kindOf } from './money-flow.js';
+import { isPlanTransaction, kindOf, ledgerTotals } from './money-flow.js';
 /** All calculations are pure. Money is integer VND; dates are local calendar dates. */
 export const CATEGORIES = Object.freeze({
   income: ['Chu cấp', 'Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
@@ -28,9 +28,8 @@ export function monthKeys(date, count) {
 export function cashBalanceForMonth(data, month, today = localDate()) {
   const opening = data.profile.openingBalances?.[month];
   const transactions = data.transactions.filter((t) => t.date.startsWith(month) && t.date <= today);
-  const income = sum(transactions.filter((t) => t.type === 'income').map((t) => t.amount));
-  const expense = sum(transactions.filter((t) => t.type === 'expense').map((t) => t.amount));
-  return { month, configured: !!opening, bank: opening?.bank ?? null, cash: opening?.cash ?? null, opening: opening ? opening.bank + opening.cash : null, income, expense, available: opening ? opening.bank + opening.cash + income - expense : null };
+  const { received: income, expense, net } = ledgerTotals(transactions);
+  return { month, configured: !!opening, bank: opening?.bank ?? null, cash: opening?.cash ?? null, opening: opening ? opening.bank + opening.cash : null, income, expense, available: opening ? opening.bank + opening.cash + net : null };
 }
 export function aggregateMonths(transactions, date = new Date()) {
   const months = new Map();
