@@ -133,6 +133,18 @@ export function transactionFingerprint(t) {
 export function markExistingTransactions(incoming, existing) {
   return matchExistingTransactions(incoming, existing).map((i) => i !== -1);
 }
+export function compareExcelWithLedger(fileRows, ledger) {
+  const months = new Set(fileRows.map((row) => row.transaction.date.slice(0, 7)));
+  const sameMonths = ledger.filter((t) => months.has(t.date.slice(0, 7)));
+  const matched = matchExistingTransactions(fileRows.map((row) => row.transaction), sameMonths);
+  const matchedIndexes = new Set(matched);
+  return {
+    months: [...months].sort(),
+    transactions: sameMonths,
+    onlyInExcel: fileRows.filter((_, index) => matched[index] === -1),
+    onlyInLedger: sameMonths.filter((_, index) => !matchedIndexes.has(index)).sort((a, b) => b.date.localeCompare(a.date)),
+  };
+}
 export function matchExistingTransactions(incoming, existing) {
   const exact = new Map(), any = new Map(), unclassified = new Map(), used = new Set();
   const base = (t) => transactionFingerprint({ ...t, category: '' });

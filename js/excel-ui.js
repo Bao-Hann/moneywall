@@ -1,10 +1,33 @@
 import { GROUP_LABELS, localDate } from './finance-engine.js';
-import { markExistingTransactions, planImport } from './db.js';
+import { markExistingTransactions, planImport, compareExcelWithLedger } from './db.js';
 import { workbookSheets, buildImport, parseMoney, suggestedGroup, detectColumns, detectOpeningBalance, detectSideBalances, excelDate } from './excel-import.js';
-import { kindOf } from './money-flow.js';
-import { escapeHtml as E, formatVND, icon } from './ui.js';
+import { kindOf, ledgerTotals } from './money-flow.js';
+import { escapeHtml as E, formatMonth, formatVND, icon } from './ui.js';
+import { dateText } from './ui-parts.js';
 
 let libraryPromise;
+function renderComparison(fileRows, existing) {
+  if (!fileRows.length) return '';
+  const { months, transactions, onlyInExcel, onlyInLedger } = compareExcelWithLedger(fileRows, existing);
+  const records = [
+    ['Excel · các dòng đọc được', fileRows.map((row) => row.transaction)],
+    ['Sổ thu chi · cùng tháng', transactions],
+  ];
+  const differences = [
+    ['Chỉ có trong Excel', onlyInExcel.map((row) => row.transaction)],
+    ['Chỉ có trong sổ thu chi', onlyInLedger],
+  ];
+  return `<section class="excel-comparison" aria-label="Đối chiếu Excel với sổ thu chi">
+    <h3>Đối chiếu Excel với sổ thu chi</h3>
+    <p class="helper-text">${months.length <= 3 ? months.map(formatMonth).join(' · ') : `${months.length} tháng có giao dịch trong tệp`}. Các khoản đã có cũng được tính ở đây.</p>
+    <div class="table-scroll"><table><thead><tr><th>Nguồn</th><th class="align-right">Tổng thu</th><th class="align-right">Tổng chi</th><th class="align-right">Thu trừ chi</th><th class="align-right">Chi trung bình/ngày có chi</th></tr></thead><tbody>
+    ${records.map(([label, rows]) => {
+      const { income, expense, net, dailyExpense, spendingDays } = ledgerTotals(rows);
+      return `<tr><th scope="row">${label}<small class="table-secondary">${rows.length} khoản</small></th><td class="align-right money">${formatVND(income)}</td><td class="align-right money">${formatVND(expense)}</td><td class="align-right money">${formatVND(net)}</td><td class="align-right money">${dailyExpense === null ? '—' : formatVND(dailyExpense)}<small class="table-secondary">${spendingDays} ngày có chi</small></td></tr>`;
+    }).join('')}</tbody></table></div>
+    ${differences.map(([label, rows]) => rows.length ? `<details class="excel-mapping"><summary>${label} (${rows.length})</summary><ul>${rows.slice(0, 12).map((t) => `<li>${dateText(t.date)} · ${E(t.note || t.category)} · ${t.type === 'income' ? '+' : '−'}${formatVND(t.amount)}</li>`).join('')}</ul>${rows.length > 12 ? '<p class="helper-text">Đang hiển thị 12 khoản đầu.</p>' : ''}</details>` : '').join('')}
+  </section>`;
+}
 function loadExcelLibrary() {
   if (globalThis.XLSX) return Promise.resolve(globalThis.XLSX);
   if (!libraryPromise) libraryPromise = new Promise((resolve, reject) => {
@@ -59,8 +82,7 @@ export async function openExcelImporter({ getExisting, onImport }) {
     state.openingBalance = state.importOpening && foundOpening ? { month: state.options.month, ...foundOpening } : null;
     const side = detectSideBalances(currentSheet(), state.options.multiplier);
     state.liquidSavings = state.importSavings ? side.liquidSavings : null;
-    const importedIncome = state.ready.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0), importedExpense = state.ready.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    return { duplicateCount: duplicate.filter(Boolean).length, income: importedIncome, expense: importedExpense, foundOpening, side };
+    return { duplicateCount: duplicate.filter(Boolean).length, ...ledgerTotals(state.ready), foundOpening, side };
   }
   function previewView() {
     const result = state.result, totals = readiness(); if (!result || !totals) return;
@@ -71,7 +93,8 @@ export async function openExcelImporter({ getExisting, onImport }) {
       const group = state.options.categoryGroups[cat] || suggestedGroup(cat);
       return `<label>${E(cat)}<select data-excel-category="${E(cat)}" ${onlyIncome ? 'disabled' : ''}>${onlyIncome ? '<option>Thu nhập</option>' : groupList.map(([g, label]) => `<option value="${g}" ${g === group ? 'selected' : ''}>${label}</option>`).join('')}</select></label>`;
     }).join('');
-    preview.innerHTML = `<div class="excel-summary"><div><span>Sẵn sàng nhập</span><strong>${state.ready.length} khoản</strong></div><div><span>Tổng thu được chọn</span><strong class="amount-income">${formatVND(totals.income)}</strong></div><div><span>Tổng chi được chọn</span><strong>${formatVND(totals.expense)}</strong></div><div><span>Thu trừ chi</span><strong>${formatVND(totals.income - totals.expense)}</strong></div></div>
+    preview.innerHTML = `${renderComparison(result.rows, getExisting())}
+      <div class="excel-summary"><div><span>Sẵn sàng nhập</span><strong>${state.ready.length} khoản</strong></div><div><span>Tổng thu sẽ thêm</span><strong class="amount-income">${formatVND(totals.income)}</strong></div><div><span>Tổng chi sẽ thêm</span><strong>${formatVND(totals.expense)}</strong></div><div><span>Thu trừ chi sẽ thêm</span><strong>${formatVND(totals.net)}</strong></div></div>
       ${totals.foundOpening ? `<aside class="banner excel-opening-banner"><label class="checkbox-label"><input id="excel-import-opening" type="checkbox" ${state.importOpening ? 'checked' : ''}>Lưu cả tiền có sẵn đầu tháng ${E(state.options.month)}</label><p>Ngân hàng: <strong>${formatVND(totals.foundOpening.bank)}</strong> · Tiền mặt: <strong>${formatVND(totals.foundOpening.cash)}</strong>. Tổng: <strong>${formatVND(totals.foundOpening.bank + totals.foundOpening.cash)}</strong>.</p><p class="fine-print">Chỉ chọn nếu đây là số dư đầu tháng. Lưu riêng để tính tiền còn lại, không cộng vào thu nhập mới và không cộng quỹ tiết kiệm. Sẽ thay số dư đầu tháng đang lưu cho tháng này.</p></aside>` : ''}
       <details class="excel-mapping"><summary>Phân nhóm theo danh mục của bạn</summary><p class="helper-text">Giữ nguyên tên danh mục trong Excel. Kiểm tra nhóm Thiết yếu / Mong muốn trước khi xác nhận; các khoản nhận tiền luôn được ghi là thu.</p><div class="excel-column-grid">${categoryGroups}</div></details>
       ${totals.side.liquidSavings !== null ? `<aside class="banner"><label class="checkbox-label"><input id="excel-import-savings" type="checkbox" ${state.importSavings ? 'checked' : ''}>Đối chiếu quỹ để dành: ${formatVND(totals.side.liquidSavings)}</label><p class="fine-print">Thay số dư quỹ đang lưu bằng số này, không tạo khoản thu chi. Chỉ chọn nếu đây là số quỹ thực tế hiện tại.</p></aside>` : ''}

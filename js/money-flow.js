@@ -3,6 +3,16 @@ export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', deposit
 export const kindOf = (t) => t.flow?.kind || 'regular';
 export const isPlanTransaction = (t) => kindOf(t) === 'regular';
 export const isLivingExpense = (t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group);
+export function ledgerTotals(transactions) {
+  let income = 0, expense = 0;
+  const spendingDates = new Set();
+  for (const t of transactions) {
+    if (t.type === 'income') income += t.amount;
+    else if (t.type === 'expense') { expense += t.amount; spendingDates.add(t.date); }
+  }
+  const spendingDays = spendingDates.size;
+  return { income, expense, net: income - expense, spendingDays, dailyExpense: spendingDays ? expense / spendingDays : null };
+}
 export const isContribution = (t) => kindOf(t) === 'reserve-out' || t.type === 'expense' && (['reserve-in', 'debt'].includes(kindOf(t)) || kindOf(t) === 'regular' && t.group === 'savings_debt');
 export const contributionAmount = (t) => !isContribution(t) ? 0 : kindOf(t) === 'reserve-out' ? -t.amount : t.amount;
 const total = (xs) => xs.reduce((s, t) => s + t.amount, 0);

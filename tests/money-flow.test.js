@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PROFILE, analyzeFinance, cashBalanceForMonth } from '../js/finance-engine.js';
-import { kindOf, suggestFlow, monthlyMoney, depositBalances, recordedRefundsForDeposit, categoryHabits, dateForMonth, monthAfterDayChange } from '../js/money-flow.js';
-import { initDB, replaceData, readData, saveTransaction, appendTransactions, planImport, validateBackup } from '../js/db.js';
+import { kindOf, suggestFlow, monthlyMoney, depositBalances, recordedRefundsForDeposit, categoryHabits, dateForMonth, monthAfterDayChange, ledgerTotals } from '../js/money-flow.js';
+import { initDB, replaceData, readData, saveTransaction, appendTransactions, planImport, validateBackup, compareExcelWithLedger } from '../js/db.js';
 import { renderOverview, renderAnalysis, filteredTransactions } from '../js/ui.js';
 import { buildImport, detectSideBalances } from '../js/excel-import.js';
 
@@ -137,6 +137,21 @@ test('recording a refund can reuse an imported receipt without changing the cash
   assert.equal(after.transactions.length, 2);
   assert.equal(depositBalances(after.transactions)[0].remaining, 0);
   assert.equal(cashBalanceForMonth(after, '2026-11', '2026-11-25').available, before);
+});
+
+test('Excel comparison counts repeats separately and includes later dates in the same month', () => {
+  const early = row({ amount: 25000 });
+  const repeat = { ...early, id: 'repeat' };
+  const later = row({ date: '2026-11-26', amount: 75000 });
+  const received = row({ date: '2026-11-24', type: 'income', group: 'income', amount: 50000 });
+  const priorMonth = row({ date: '2026-10-30' });
+  const file = [early, repeat, received].map((transaction, index) => ({ row: index + 2, transaction }));
+  const comparison = compareExcelWithLedger(file, [priorMonth, early, received, later]);
+  assert.deepEqual(comparison.months, ['2026-11']);
+  assert.deepEqual(comparison.onlyInExcel, [file[1]]);
+  assert.deepEqual(comparison.onlyInLedger, [later]);
+  assert.deepEqual(ledgerTotals(comparison.transactions), { income: 50000, expense: 100000, net: -50000, spendingDays: 2, dailyExpense: 50000 });
+  assert.equal(ledgerTotals([received]).dailyExpense, null);
 });
 test('side balances and cash classifications are proposed without manufacturing a debt or transaction', () => {
   const rows = [['Ngày', 'Nội dung', 'VNĐ', 'Danh mục'], ['2026-11-02', 'cọc sách', -200000, 'Học tập'], ['2026-11-03', 'hoàn tiền', 200000, 'Khác'], [null, null, null, null, 'Tiết kiệm:', 750000], [null, null, null, null, 'dư nợ', 550000]];
