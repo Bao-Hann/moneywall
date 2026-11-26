@@ -159,7 +159,10 @@ export function detectSideBalances(sheet, multiplier = 1) {
   }
   return { liquidSavings, debt };
 }
-export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {} } = {}) {
+export function hasDailyTotals(sheet, headerRow = sheet.header.index) {
+  return (sheet.rows[headerRow] || []).some((cell) => ['tongchingay', 'tongchitrongngay', 'tongchitheongay'].includes(normalizeLabel(val(cell))));
+}
+export function buildImport(sheet, { headerRow = sheet.header.index, mapping = sheet.header.mapping, mode = 'signed', month = localDate().slice(0, 7), multiplier = 1, fillDates = false, categoryGroups = {}, offsetReceipts = false } = {}) {
   if (mapping.date < 0 || mapping.amount < 0) return { rows: [], errors: [{ row: headerRow + 1, message: 'Chọn cột ngày và cột số tiền trước khi nhập.' }], skipped: 0, categories: [] };
   if (mapping.date === mapping.amount) return { rows: [], errors: [{ row: headerRow + 1, message: 'Cột ngày và cột số tiền phải khác nhau.' }], skipped: 0, categories: [] };
   const records = [], errors = [], categories = new Set(); let previousDate = null, skipped = 0;
@@ -182,7 +185,7 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const parsedMoney = parseMoney(amountCell, multiplier), signed = parsedMoney.amount;
       if (signed === 0) { skipped++; continue; }
       const rawType = normalizeLabel(val(get(cells, 'type')));
-      let type = ['income', 'thu', 'khoanthu'].includes(rawType) ? 'income' : ['expense', 'chi', 'khoanchi'].includes(rawType) ? 'expense' : mode === 'income' ? 'income' : mode === 'expense' ? 'expense' : signed > 0 ? 'income' : 'expense';
+      let type = ['income', 'thu', 'khoanthu', 'buchitrongngay'].includes(rawType) ? 'income' : ['expense', 'chi', 'khoanchi'].includes(rawType) ? 'expense' : mode === 'income' ? 'income' : mode === 'expense' ? 'expense' : signed > 0 ? 'income' : 'expense';
       const rawGroup = String(val(get(cells, 'group')) ?? '').trim();
       const legacyGroups = { thunhap: 'income', thietyeu: 'needs', mongmuon: 'wants', tietkiemtrano: 'savings_debt' };
       const explicitGroup = Object.keys(GROUP_LABELS).find((g) => g === rawGroup || normalizeLabel(GROUP_LABELS[g]) === normalizeLabel(rawGroup)) || legacyGroups[normalizeLabel(rawGroup)];
@@ -194,8 +197,10 @@ export function buildImport(sheet, { headerRow = sheet.header.index, mapping = s
       const warnings = [];
       if (!rawCategory) warnings.push('Chưa có danh mục trong tệp.');
       if (parsedMoney.cachedFormula) warnings.push('Dùng kết quả công thức đã lưu trong tệp.');
-      const kind = suggestFlow({ type, note });
-      if (kind !== 'regular') warnings.push(kind === 'deposit' ? 'Gợi ý tách tiền cọc khỏi chi sinh hoạt. Có thể đổi cách tính ở cột bên phải.' : 'Gợi ý tách tiền hoàn khỏi thu nhập mới. Sau khi nhập, chọn khoản cọc liên quan.');
+      let kind = suggestFlow({ type, note });
+      const support = [label, extra, category].some((entry) => /^(tien)?(chucap|sinhhoatphi)/.test(normalizeLabel(entry)));
+      if (kind === 'regular' && type === 'income' && (rawType === 'buchitrongngay' || offsetReceipts && !support)) kind = 'offset';
+      if (kind === 'deposit' || kind === 'refund') warnings.push(kind === 'deposit' ? 'Gợi ý tách tiền cọc khỏi chi sinh hoạt. Có thể đổi cách tính ở cột bên phải.' : 'Gợi ý tách tiền hoàn khỏi thu nhập mới. Sau khi nhập, chọn khoản cọc liên quan.');
       const transaction = validateRecord('transactions', { id: uuid(), date, type, amount: Math.abs(signed), group, category, isFixedBill: kind === 'regular' && type === 'expense' && ['1', 'true', 'co', 'yes'].includes(rawFixed), note: note || category, createdAt: Date.now(), ...(kind !== 'regular' ? { flow: { kind } } : {}) });
       categories.add(rawCategory || 'Chưa phân loại');
       records.push({ row: r + 1, transaction, warnings, selected: true });

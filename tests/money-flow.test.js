@@ -4,7 +4,7 @@ import { DEFAULT_PROFILE, analyzeFinance, cashBalanceForMonth } from '../js/fina
 import { kindOf, suggestFlow, monthlyMoney, depositBalances, recordedRefundsForDeposit, categoryHabits, dateForMonth, monthAfterDayChange, ledgerTotals } from '../js/money-flow.js';
 import { initDB, replaceData, readData, saveTransaction, appendTransactions, planImport, validateBackup, compareExcelWithLedger } from '../js/db.js';
 import { renderOverview, renderAnalysis, filteredTransactions } from '../js/ui.js';
-import { buildImport, detectSideBalances } from '../js/excel-import.js';
+import { buildImport, detectSideBalances, hasDailyTotals } from '../js/excel-import.js';
 
 let n = 0;
 const row = (overrides = {}) => ({ id: `flow-${++n}`, date: '2026-11-12', type: 'expense', amount: 100000, group: 'needs', category: 'Sinh hoạt', isFixedBill: false, note: 'Ghi chép tổng hợp', createdAt: n, ...overrides });
@@ -150,8 +150,31 @@ test('Excel comparison counts repeats separately and includes later dates in the
   assert.deepEqual(comparison.months, ['2026-11']);
   assert.deepEqual(comparison.onlyInExcel, [file[1]]);
   assert.deepEqual(comparison.onlyInLedger, [later]);
-  assert.deepEqual(ledgerTotals(comparison.transactions), { income: 50000, expense: 100000, net: -50000, spendingDays: 2, dailyExpense: 50000 });
+  assert.deepEqual(ledgerTotals(comparison.transactions), { income: 50000, expense: 100000, offsets: 0, netExpense: 100000, net: -50000, spendingDays: 2, dailyExpense: 50000 });
   assert.equal(ledgerTotals([received]).dailyExpense, null);
+});
+
+test('daily offsets reduce recorded spending without raising income or changing real cash', () => {
+  const rows = [
+    ['Ngày', 'Nội dung', 'VNĐ', 'Tổng chi/ngày', 'Danh mục'],
+    ['2026-11-02', 'Chu cấp tháng 11', 500000, '', 'Chu cấp'],
+    ['2026-11-02', 'Ăn', -80000, '', 'Ăn uống'],
+    ['2026-11-02', 'Thu lẻ', 30000, '', 'Thu khác'],
+    ['2026-11-02', 'Cọc', -100000, '', 'Khác'],
+    ['2026-11-03', 'Hoàn cọc', 100000, '', 'Khác'],
+  ];
+  const sheet = { rows, merges: [], header: { index: 0, mapping: { date: 0, note: 1, amount: 2, category: 4 } } };
+  assert.equal(hasDailyTotals(sheet), true);
+  const before = buildImport(sheet).rows.map((r) => r.transaction);
+  const after = buildImport(sheet, { offsetReceipts: true }).rows.map((r) => r.transaction);
+  assert.deepEqual(after.map(kindOf), ['regular', 'regular', 'offset', 'deposit', 'refund']);
+  assert.equal(ledgerTotals(after).net, ledgerTotals(before).net);
+  assert.equal(ledgerTotals(after).dailyExpense, 150000);
+  const a = analyzeFinance(data(after), date);
+  assert.equal(a.current.income, 500000);
+  assert.equal(a.current.spent, 50000);
+  assert.equal(monthlyMoney(data(after), a).available, 1450000);
+  assert.equal(planImport(after, before).updated, 1);
 });
 test('side balances and cash classifications are proposed without manufacturing a debt or transaction', () => {
   const rows = [['Ngày', 'Nội dung', 'VNĐ', 'Danh mục'], ['2026-11-02', 'cọc sách', -200000, 'Học tập'], ['2026-11-03', 'hoàn tiền', 200000, 'Khác'], [null, null, null, null, 'Tiết kiệm:', 750000], [null, null, null, null, 'dư nợ', 550000]];

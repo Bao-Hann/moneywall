@@ -112,7 +112,7 @@ function flowFields(selectedTarget = '') {
   if (['reserve-in', 'debt'].includes(kind)) form.elements.group.value = 'savings_debt';
   if (isRefund || kind === 'reserve-out') form.elements.group.value = 'income';
   if (kind === 'deposit' && form.elements.group.value === 'savings_debt') form.elements.group.value = 'needs';
-  const copies = { regular: 'Lưu vào sổ và cập nhật số dư, tổng thu chi.', deposit: 'Tiền đã ra khỏi ví nhưng còn chờ nhận lại. Tách khỏi chi sinh hoạt.', refund: 'Tiền quay về ví, không cộng vào thu nhập mới. Chọn khoản cọc để cập nhật số còn chờ.', 'reserve-in': 'Thêm khoản chi vào sổ và tăng quỹ cùng một lần lưu.', 'reserve-out': 'Thêm tiền vào ví và giảm quỹ cùng lúc; không tính là thu nhập mới.', debt: 'Thêm khoản chi vào sổ, đồng thời trừ nợ đúng phần tiền gốc bạn nhập.' };
+  const copies = { regular: 'Lưu vào sổ và cập nhật số dư, tổng thu chi.', deposit: 'Tiền đã ra khỏi ví nhưng còn chờ nhận lại. Tách khỏi chi sinh hoạt.', offset: 'Khoản này giảm số chi của ngày đã ghi và được cộng vào số dư một lần.', refund: 'Tiền quay về ví, không cộng vào thu nhập mới. Chọn khoản cọc để cập nhật số còn chờ.', 'reserve-in': 'Thêm khoản chi vào sổ và tăng quỹ cùng một lần lưu.', 'reserve-out': 'Thêm tiền vào ví và giảm quỹ cùng lúc; không tính là thu nhập mới.', debt: 'Thêm khoản chi vào sổ, đồng thời trừ nợ đúng phần tiền gốc bạn nhập.' };
   document.getElementById('tx-flow-explanation').textContent = copies[kind];
   const regular = kind === 'regular'; form.elements.isFixedBill.disabled = !regular || form.elements.type.value === 'income';
   if (form.elements.isFixedBill.disabled) { form.elements.isFixedBill.checked = false; form.elements.billId.value = ''; }
@@ -128,7 +128,7 @@ function billFields(selected = '') {
   form.elements.budgetTiming.disabled = !canChooseTiming;
 }
 function flowOptions(form, kind = 'regular') {
-  const options = form.elements.type.value === 'income' ? [['regular', 'Thu nhập mới'], ['refund', 'Tiền được hoàn'], ['reserve-out', 'Rút từ quỹ để dành']] : [['regular', 'Chi tiêu bình thường'], ['deposit', 'Tiền cọc chờ hoàn'], ['reserve-in', 'Chuyển vào quỹ để dành'], ['debt', 'Trả nợ']];
+  const options = form.elements.type.value === 'income' ? [['regular', 'Thu nhập mới / Chu cấp'], ['offset', 'Bù chi trong ngày'], ['refund', 'Tiền được hoàn'], ['reserve-out', 'Rút từ quỹ để dành']] : [['regular', 'Chi tiêu bình thường'], ['deposit', 'Tiền cọc chờ hoàn'], ['reserve-in', 'Chuyển vào quỹ để dành'], ['debt', 'Trả nợ']];
   form.elements.flowKind.innerHTML = options.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
   form.elements.flowKind.value = options.some(([k]) => k === kind) ? kind : 'regular';
 }

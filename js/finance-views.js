@@ -1,5 +1,5 @@
 import { clamp, sum, localDate } from './finance-engine.js';
-import { ANALYSIS_VIEWS, financePlanSummary, isAnalysisView, monthlyMoney, wellbeingPlan } from './money-flow.js';
+import { ANALYSIS_VIEWS, financePlanSummary, isAnalysisView, kindOf, ledgerTotals, monthlyMoney, wellbeingPlan } from './money-flow.js';
 import { analyzeCategoryBudgets, budgetCategoryLabel, suggestedCategoryLimits } from './category-budgets.js';
 import { E, N, btn, canvas, categoryIcon, categoryList, dateText, formatMonth, formatVND, heading, icon, ledgerButton } from './ui-parts.js';
 
@@ -272,21 +272,23 @@ function renderDeposits(m, a) {
 
 function renderCashflowAnalysis(data, a, m, p) {
   const top = m.categories[0];
+  const { spendingDays, dailyExpense } = ledgerTotals([...m.ordinary, ...m.incoming.filter((t) => kindOf(t) === 'offset')]);
   return `<div class="analysis-stack">
     <section class="panel finance-panel">
       ${header('Thu chi tháng đang xem', 'Cộng từ từng khoản bạn đã ghi.')}
       <div class="finance-stat-row three">
-        ${stat('Thu nhập mới', money(m.earned), 'Không gồm số dư đầu tháng và tiền hoàn') }
-        ${stat('Chi sinh hoạt', money(m.everyday), 'Không gồm cọc, chuyển quỹ và trả nợ')}
-        ${stat('Thu trừ chi sinh hoạt', money(m.earned - m.everyday), 'Trước để dành và trả nợ', 'plan-emphasis')}
+        ${stat('Thu nhập mới', money(m.earned), 'Gồm chu cấp và các dòng được chọn là thu nhập') }
+        ${stat(m.offsets ? 'Chi sinh hoạt sau bù' : 'Chi sinh hoạt', money(a.current.spent), m.offsets ? `Đã trừ ${money(m.offsets)} bù chi` : 'Gồm các khoản chi thường và hóa đơn đã ghi')}
+        ${stat('Thu trừ chi sinh hoạt', money(m.earned - a.current.spent), 'Trước để dành và trả nợ', 'plan-emphasis')}
       </div>
+      ${dailyExpense === null ? '' : `<p class="helper-text">Chi sinh hoạt trung bình <strong>${money(dailyExpense)}/ngày có chi</strong> · ${spendingDays} ngày có chi sinh hoạt${m.offsets ? ' · đã trừ bù chi' : ''}.</p>`}
       <div class="budget-equation cash-equation"><span>Tiền đầu tháng<strong>${m.opening ? money(m.opening.bank + m.opening.cash) : 'Chưa điền'}</strong></span><span>+ Thực nhận<strong>${money(m.received)}</strong></span><span>− Thực chi<strong>${money(m.paid)}</strong></span><span>= Tiền còn dùng<strong>${m.available === null ? '—' : money(m.available)}</strong></span></div>
       <div class="finance-action-row">${ledgerButton('Xem thu nhập mới', '', 'data-scope="earned"', 'secondary small')}${ledgerButton('Xem sổ thu chi')}${btn('Đối chiếu tiền đầu tháng', 'open-opening', 'text-link')}</div>
     </section>
     ${renderForecast(a, p)}
     <section class="panel finance-panel" id="spending-section">
       ${header('Tiền đã chi vào đâu?', top ? `${E(top.category)} chiếm ${percent(top.amount / m.everyday)} tiền sinh hoạt.` : 'Bổ sung chi tiêu để xem từng danh mục.', navigation('Xem gợi ý giảm chi', 'cutbacks-section'))}
-      ${m.categories.length ? `<div class="category-analysis-layout"><div class="category-visual">${canvas('category-chart', 'Tỷ trọng chi sinh hoạt theo danh mục')}<div class="category-visual-total"><span>Tổng sinh hoạt</span><strong>${money(m.everyday)}</strong></div></div><div>${categoryList(m, m.categories.length)}</div></div><p class="fine-print">Bấm một danh mục để xem đúng các khoản tạo nên số tiền đó.</p>` : '<p class="helper-text">Chưa có khoản chi sinh hoạt trong tháng.</p>'}
+      ${m.categories.length ? `<div class="category-analysis-layout"><div class="category-visual">${canvas('category-chart', 'Tỷ trọng chi sinh hoạt theo danh mục')}<div class="category-visual-total"><span>Tổng sinh hoạt</span><strong>${money(m.everyday)}</strong></div></div><div>${categoryList(m, m.categories.length)}</div></div><p class="fine-print">Bấm một danh mục để xem các khoản đã chi. ${m.offsets ? 'Các khoản bù chi tính vào tổng theo ngày, chưa gán vào từng danh mục.' : ''}</p>` : '<p class="helper-text">Chưa có khoản chi sinh hoạt trong tháng.</p>'}
     </section>
     <section class="panel finance-panel" id="income-history-section">
       ${header('Thu chi qua các tháng', 'Đơn vị biểu đồ: triệu đồng.')}

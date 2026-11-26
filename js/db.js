@@ -162,7 +162,7 @@ export function planImport(clean, existing, { skipDuplicates = true, updateDetai
     const old = existing[matches[i]], updated = { ...old };
     if (updateDetails) {
       if (old.category === 'Chưa phân loại' && t.category !== old.category) { updated.category = t.category; updated.group = t.group; }
-      if (kindOf(old) === 'regular' && ['deposit', 'refund'].includes(kindOf(t))) { updated.flow = t.flow; updated.isFixedBill = false; }
+      if (kindOf(old) === 'regular' && ['deposit', 'refund', 'offset'].includes(kindOf(t))) { updated.flow = t.flow; updated.isFixedBill = false; }
       if (t.isFixedBill && !old.isFixedBill && kindOf(updated) === 'regular') updated.isFixedBill = true;
       if (JSON.stringify(updated) !== JSON.stringify(old)) updates.push(updated);
     }
@@ -172,7 +172,7 @@ export function planImport(clean, existing, { skipDuplicates = true, updateDetai
 export async function appendTransactions(records, { skipDuplicates = true, openingBalance = null, liquidSavings = null, updateDetails = true } = {}) {
   if (!Array.isArray(records) || records.length > 10000) throw new Error('Mỗi lần nhập tối đa 10.000 giao dịch.');
   const clean = records.map((record) => validateRecord('transactions', record));
-  if (clean.some((t) => !['regular', 'deposit', 'refund'].includes(kindOf(t)))) throw new Error('Ghi chuyển quỹ và trả nợ bằng chức năng trong sổ để cập nhật các số dư cùng lúc.');
+  if (clean.some((t) => !['regular', 'deposit', 'refund', 'offset'].includes(kindOf(t)))) throw new Error('Ghi chuyển quỹ và trả nợ bằng chức năng trong sổ để cập nhật các số dư cùng lúc.');
   const opening = openingBalance ? validateOpeningBalance(openingBalance) : null;
   if (liquidSavings !== null) money(liquidSavings, 'Quỹ để dành từ Excel');
   const profileChanges = !!opening || liquidSavings !== null;
@@ -267,7 +267,7 @@ export function validateRecord(store, value) {
     if (value.flow) {
       const kind = value.flow.kind;
       assert(Object.hasOwn(FLOW_LABELS, kind), 'Cách tính khoản tiền không hợp lệ.');
-      assert(!(['deposit', 'reserve-in', 'debt'].includes(kind) && value.type !== 'expense') && !(['refund', 'reserve-out'].includes(kind) && value.type !== 'income'), 'Cách tính không khớp khoản thu hoặc chi.');
+      assert(!(['deposit', 'reserve-in', 'debt'].includes(kind) && value.type !== 'expense') && !(['refund', 'reserve-out', 'offset'].includes(kind) && value.type !== 'income'), 'Cách tính không khớp khoản thu hoặc chi.');
       assert(!['reserve-in', 'debt'].includes(kind) || value.group === 'savings_debt', 'Chuyển quỹ và trả nợ cần thuộc nhóm Để dành & Trả nợ.');
       const flow = { kind };
       if (value.flow.targetId) flow.targetId = text(value.flow.targetId, 'Khoản liên kết', 100);
@@ -313,6 +313,6 @@ export function createBackup(data, timestamp = Date.now()) {
 }
 export function createCSV(transactions) {
   const cell = (v) => { let s = String(v ?? ''); if (/^\s*[=+\-@]|^[\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };
-  const rows = [['Ngày', 'Loại', 'Số tiền (VND)', 'Nhóm', 'Danh mục', 'Hóa đơn cố định', 'Ghi chú'], ...[...transactions].sort((a, b) => a.date.localeCompare(b.date)).map((t) => [t.date, t.type === 'income' ? 'Thu' : 'Chi', t.amount, GROUP_LABELS[t.group], t.category, t.isFixedBill ? 'Có' : 'Không', t.note])];
+  const rows = [['Ngày', 'Loại', 'Số tiền (VND)', 'Nhóm', 'Danh mục', 'Hóa đơn cố định', 'Ghi chú'], ...[...transactions].sort((a, b) => a.date.localeCompare(b.date)).map((t) => [t.date, kindOf(t) === 'offset' ? FLOW_LABELS.offset : t.type === 'income' ? 'Thu' : 'Chi', t.amount, GROUP_LABELS[t.group], t.category, t.isFixedBill ? 'Có' : 'Không', t.note])];
   return '\uFEFF' + rows.map((r) => r.map(cell).join(',')).join('\r\n');
 }

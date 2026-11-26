@@ -1,17 +1,19 @@
 // One ledger owns every cash movement. Plans use earned income and ordinary spending only.
-export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', deposit: 'Tiền cọc', refund: 'Tiền được hoàn', 'reserve-in': 'Chuyển vào quỹ', 'reserve-out': 'Rút từ quỹ', debt: 'Trả nợ' });
+export const FLOW_LABELS = Object.freeze({ regular: 'Thu chi thường', offset: 'Bù chi trong ngày', deposit: 'Tiền cọc', refund: 'Tiền được hoàn', 'reserve-in': 'Chuyển vào quỹ', 'reserve-out': 'Rút từ quỹ', debt: 'Trả nợ' });
 export const kindOf = (t) => t.flow?.kind || 'regular';
 export const isPlanTransaction = (t) => kindOf(t) === 'regular';
 export const isLivingExpense = (t) => isPlanTransaction(t) && t.type === 'expense' && ['needs', 'wants'].includes(t.group);
 export function ledgerTotals(transactions) {
-  let income = 0, expense = 0;
+  let income = 0, expense = 0, offsets = 0;
   const spendingDates = new Set();
   for (const t of transactions) {
-    if (t.type === 'income') income += t.amount;
+    if (t.type === 'income' && kindOf(t) === 'offset') offsets += t.amount;
+    else if (t.type === 'income') income += t.amount;
     else if (t.type === 'expense') { expense += t.amount; spendingDates.add(t.date); }
   }
   const spendingDays = spendingDates.size;
-  return { income, expense, net: income - expense, spendingDays, dailyExpense: spendingDays ? expense / spendingDays : null };
+  const netExpense = expense - offsets;
+  return { income, expense, offsets, netExpense, net: income - netExpense, spendingDays, dailyExpense: spendingDays ? netExpense / spendingDays : null };
 }
 export const isContribution = (t) => kindOf(t) === 'reserve-out' || t.type === 'expense' && (['reserve-in', 'debt'].includes(kindOf(t)) || kindOf(t) === 'regular' && t.group === 'savings_debt');
 export const contributionAmount = (t) => !isContribution(t) ? 0 : kindOf(t) === 'reserve-out' ? -t.amount : t.amount;
@@ -62,6 +64,7 @@ export function monthlyMoney(data, a) {
   const buckets = new Map();
   for (const t of ordinary) { const c = buckets.get(t.category) || { category: t.category, amount: 0, count: 0 }; c.amount += t.amount; c.count++; buckets.set(t.category, c); }
   const categories = [...buckets.values()].sort((x, y) => y.amount - x.amount);
+  const offsets = total(incoming.filter((t) => kindOf(t) === 'offset'));
   const refunds = total(incoming.filter((t) => kindOf(t) === 'refund'));
   const deposits = depositBalances(data.transactions, a.today);
   const unmatchedRefunds = rows.filter((t) => kindOf(t) === 'refund' && !t.flow?.targetId);
@@ -72,7 +75,7 @@ export function monthlyMoney(data, a) {
   }, 0);
   const reserved = a.unpaidFixedBills + debtDue;
   const daily = available === null ? null : Math.max(0, Math.floor((available - reserved) / a.safe.daysLeft));
-  return { rows, incoming, outgoing, opening, received, paid, available, ordinary, everyday: total(ordinary), categories, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
+  return { rows, incoming, outgoing, opening, received, paid, available, ordinary, everyday: total(ordinary), categories, offsets, refunds, deposits, unmatchedRefunds, review, debtDue, reserved, daily,
     earned: total(incoming.filter(isPlanTransaction)), deposited: total(outgoing.filter((t) => kindOf(t) === 'deposit')),
     moved: total(outgoing.filter((t) => !['regular', 'deposit'].includes(kindOf(t)) || t.group === 'savings_debt')),
     latest: [...rows].sort((x, y) => y.date.localeCompare(x.date) || y.createdAt - x.createdAt)[0]?.date || null };

@@ -1,4 +1,4 @@
-const CACHE = 'vung-tai-chinh-v9-ledger-comparison';
+const CACHE = 'vung-tai-chinh-v10-daily-spending-offsets';
 const STATIC = ['./', './index.html', './css/styles.css', './js/app.js', './js/ui.js', './js/ui-parts.js', './js/finance-views.js', './js/db.js', './js/finance-engine.js', './js/money-flow.js', './js/category-budgets.js', './js/charts.js', './js/seed-data.js', './js/excel-import.js', './js/excel-ui.js', './vendor/xlsx.full.min.js', './manifest.webmanifest', './icon.svg'];
 const CHART_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
 self.addEventListener('install', (event) => {

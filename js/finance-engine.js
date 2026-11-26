@@ -1,7 +1,7 @@
-import { isPlanTransaction } from './money-flow.js';
+import { isPlanTransaction, kindOf } from './money-flow.js';
 /** All calculations are pure. Money is integer VND; dates are local calendar dates. */
 export const CATEGORIES = Object.freeze({
-  income: ['Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
+  income: ['Chu cấp', 'Lương chính', 'Freelance / Dự án', 'Thưởng / Hoa hồng', 'Thu nhập khác'],
   needs: ['Tiền nhà / Trả góp nhà', 'Điện nước & Internet', 'Đi chợ & Nấu ăn', 'Di chuyển & Xăng xe', 'Y tế & Bảo hiểm', 'Học tập / Gia đình'],
   wants: ['Ăn ngoài & Cafe', 'Mua sắm online', 'Giải trí & Du lịch', 'Đăng ký gói dịch vụ', 'Quà tặng & Giao lưu'],
   savings_debt: ['Nạp quỹ dự phòng', 'Trả nợ gốc/lãi', 'Đầu tư dài hạn'],
@@ -35,16 +35,23 @@ export function cashBalanceForMonth(data, month, today = localDate()) {
 export function aggregateMonths(transactions, date = new Date()) {
   const months = new Map();
   for (const t of transactions) {
-    if (!isPlanTransaction(t)) continue;
+    const offset = kindOf(t) === 'offset';
+    if (!offset && !isPlanTransaction(t)) continue;
     if (t.date > localDate(date)) continue;
     const key = t.date.slice(0, 7);
     if (!months.has(key)) months.set(key, { month: key, income: 0, needs: 0, wants: 0, savings_debt: 0, spent: 0, variable: 0 });
     const m = months.get(key);
+    if (offset) { m.offsets = (m.offsets || 0) + t.amount; continue; }
     m[t.group] += t.amount;
     if (t.type === 'expense' && ['needs', 'wants'].includes(t.group)) {
       m.spent += t.amount;
       if (!t.isFixedBill) m.variable += t.amount;
     }
+  }
+  for (const m of months.values()) {
+    if (!m.offsets) continue;
+    m.spent = Math.max(0, m.spent - m.offsets);
+    m.variable = Math.max(0, m.variable - m.offsets);
   }
   return [...months.values()].sort((a, b) => a.month.localeCompare(b.month));
 }
@@ -253,9 +260,9 @@ export function simulateDebtPayoff(debts, extraMonthly = 0) {
 }
 
 export function analyzeFinance({ transactions = [], recurring_bills = [], debts = [], profile = DEFAULT_PROFILE }, date = new Date()) {
-  transactions = transactions.filter(isPlanTransaction);
   const today = localDate(date), key = today.slice(0, 7), elapsedDays = date.getDate(), daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const months = aggregateMonths(transactions, date), current = months.find((m) => m.month === key) || { month: key, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 };
+  transactions = transactions.filter(isPlanTransaction);
   const firstMonth = months[0]?.month;
   const history = firstMonth ? monthKeys(new Date(date.getFullYear(), date.getMonth() - 1, 1), 120).filter((m) => m >= firstMonth).map((m) => months.find((x) => x.month === m) || { month: m, income: 0, needs: 0, wants: 0, spent: 0, variable: 0, savings_debt: 0 }) : [];
   const incomeMonths = [...history, ...(current.income > 0 ? [current] : [])].slice(-12);
