@@ -67,6 +67,12 @@
     </form>
   </dialog>
 
+  <dialog id="refund-choice-dialog" class="form-dialog" aria-labelledby="refund-choice-title">
+    <div class="dialog-header"><div><h2 id="refund-choice-title">Tiền hoàn đã có trong sổ?</h2><p class="helper-text">Nếu đúng khoản vừa nhận lại, dùng dòng đã ghi để tránh cộng tiền hai lần.</p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
+    <div id="refund-existing-options" class="deposit-list"></div>
+    <div class="dialog-actions"><button type="button" class="button secondary" data-action="refund-new">Ghi khoản hoàn mới</button></div>
+  </dialog>
+
   <dialog id="category-limit-dialog" class="form-dialog" aria-labelledby="category-limit-title"><form id="category-limit-form" method="dialog">
     <div class="dialog-header"><div><h2 id="category-limit-title">Mức chi theo danh mục</h2><p class="helper-text" id="category-limit-month"></p></div><button type="button" class="icon-button" data-close-dialog aria-label="Đóng"><span data-icon="close"></span></button></div>
     <input name="month" type="hidden">

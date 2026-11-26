@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PROFILE, analyzeFinance, cashBalanceForMonth } from '../js/finance-engine.js';
-import { kindOf, suggestFlow, monthlyMoney, depositBalances, categoryHabits, dateForMonth, monthAfterDayChange } from '../js/money-flow.js';
+import { kindOf, suggestFlow, monthlyMoney, depositBalances, recordedRefundsForDeposit, categoryHabits, dateForMonth, monthAfterDayChange } from '../js/money-flow.js';
 import { initDB, replaceData, readData, saveTransaction, appendTransactions, planImport, validateBackup } from '../js/db.js';
 import { renderOverview, renderAnalysis, filteredTransactions } from '../js/ui.js';
 import { buildImport, detectSideBalances } from '../js/excel-import.js';
@@ -120,6 +120,23 @@ test('reimport keeps manual refund links and counts legitimately repeated purcha
   const imported = { ...t, id: 'other', flow: { kind: 'refund' } };
   assert.equal(planImport([imported], [t]).updated, 0);
   assert.equal(planImport([row({ ...t, id: 'a' }), row({ ...t, id: 'b' })], [t]).imported, 1);
+});
+
+test('recording a refund can reuse an imported receipt without changing the cash balance', async () => {
+  const deposit = row({ amount: 500000, date: '2026-11-02', flow: { kind: 'deposit' } });
+  const refund = (fields = {}) => row({ type: 'income', group: 'income', note: 'Hoàn tiền', flow: { kind: 'refund' }, ...fields });
+  const exact = refund({ amount: 500000 });
+  const partial = refund({ date: '2026-11-22' });
+  const transactions = [deposit, partial, refund({ amount: 500001 }), refund({ date: '2026-11-01' }), refund({ date: '2026-11-26' }), exact];
+  const candidates = recordedRefundsForDeposit(transactions, depositBalances(transactions)[0], '2026-11-25');
+  assert.deepEqual(candidates.map((t) => t.id), [exact.id, partial.id]);
+  await replaceData(data([deposit, exact]));
+  const before = cashBalanceForMonth(await readData(), '2026-11', '2026-11-25').available;
+  await saveTransaction({ ...exact, flow: { kind: 'refund', targetId: deposit.id } }, '', '2026-11-25');
+  const after = await readData();
+  assert.equal(after.transactions.length, 2);
+  assert.equal(depositBalances(after.transactions)[0].remaining, 0);
+  assert.equal(cashBalanceForMonth(after, '2026-11', '2026-11-25').available, before);
 });
 test('side balances and cash classifications are proposed without manufacturing a debt or transaction', () => {
   const rows = [['Ngày', 'Nội dung', 'VNĐ', 'Danh mục'], ['2026-11-02', 'cọc sách', -200000, 'Học tập'], ['2026-11-03', 'hoàn tiền', 200000, 'Khác'], [null, null, null, null, 'Tiết kiệm:', 750000], [null, null, null, null, 'dư nợ', 550000]];

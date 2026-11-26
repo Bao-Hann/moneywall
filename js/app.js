@@ -2,7 +2,7 @@ import { CATEGORIES, DEFAULT_PROFILE, GROUP_LABELS, analyzeFinance, localDate, s
 import { initDB, readData, putRecord, deleteRecord, replaceData, storageStatus, validateBackup, createBackup, createCSV, uuid, appendTransactions, saveTransaction, saveCategoryLimits } from './db.js';
 import { createSeedData } from './seed-data.js';
 import { fillIcons, icon, escapeHtml as E, categoryOptions, renderOverview, renderTransactions, renderAnalysis, renderPlanning, renderSettings, renderDebtSimulation, filteredTransactions, formatVND, formatMonth } from './ui.js';
-import { categoryHabits, depositBalances, dateForMonth, isLivingExpense, kindOf, suggestFlow, monthAfterDayChange, analysisViewForSection, isAnalysisView } from './money-flow.js';
+import { categoryHabits, depositBalances, recordedRefundsForDeposit, dateForMonth, isLivingExpense, kindOf, suggestFlow, monthAfterDayChange, analysisViewForSection, isAnalysisView } from './money-flow.js';
 import { analyzeCategoryBudgets, budgetCategoryKey, categoryLimitsForMonth, suggestedCategoryLimits } from './category-budgets.js';
 import { renderCharts, destroyCharts } from './charts.js';
 import { openExcelImporter } from './excel-ui.js';
@@ -144,6 +144,30 @@ function openTransaction(record) {
   document.getElementById('transaction-dialog-title').textContent = record?.id ? 'Sửa khoản đã ghi' : 'Ghi thu chi';
   document.getElementById('transaction-dialog').showModal(); form.elements.amount.focus();
 }
+function openRefund(depositId, action, transactionId) {
+  const today = state.analysis.today;
+  const deposit = depositBalances(state.data.transactions, today).find((d) => d.id === depositId);
+  if (!deposit?.remaining) return;
+  const dialog = document.getElementById('refund-choice-dialog');
+  const candidates = recordedRefundsForDeposit(state.data.transactions, deposit, today);
+  const flow = { kind: 'refund', targetId: deposit.id };
+  if (action === 'refund-use-existing') {
+    const transaction = candidates.find((t) => t.id === transactionId);
+    if (!transaction) throw new Error('Khoản hoàn đã thay đổi. Hãy mở lại để kiểm tra.');
+    dialog.close();
+    openTransaction({ ...transaction, flow });
+    return;
+  }
+  if (action === 'refund-deposit' && candidates.length) {
+    dialog.querySelector('[data-action="refund-new"]').dataset.id = deposit.id;
+    document.getElementById('refund-existing-options').innerHTML = candidates.map((t) =>
+      `<article class="deposit-row"><div><h3>${E(t.note || t.category)}</h3><p>${E(t.date.split('-').reverse().join('/'))} · ${formatVND(t.amount)}</p></div><button type="button" class="button primary small" data-action="refund-use-existing" data-id="${E(deposit.id)}" data-transaction="${E(t.id)}">Dùng dòng này</button></article>`).join('');
+    dialog.showModal();
+    return;
+  }
+  if (dialog.open) dialog.close();
+  openTransaction({ type: 'income', group: 'income', category: deposit.category, note: `Hoàn cọc: ${deposit.note || deposit.category}`.slice(0, 1000), amount: deposit.remaining, date: today, flow });
+}
 function openBill(record) {
   const form = document.getElementById('bill-form'); form.reset(); form.elements.id.value = '';
   if (record) form.elements.group.value = record.group;
@@ -221,7 +245,7 @@ async function handleAction(action, id, attrs = {}) {
   }
   else if (action === 'open-deposits') goTo('analysis', 'deposit-section');
   else if (action === 'new-deposit') openTransaction({ type: 'expense', group: 'needs', category: '', note: '', date: state.analysis.today, flow: { kind: 'deposit' } });
-  else if (action === 'refund-deposit') { const d = depositBalances(state.data.transactions, state.analysis.today).find((d) => d.id === id); if (d?.remaining) openTransaction({ type: 'income', group: 'income', category: d.category, note: `Hoàn cọc: ${d.note || d.category}`.slice(0, 1000), amount: d.remaining, date: state.analysis.today, flow: { kind: 'refund', targetId: d.id } }); }
+  else if (['refund-deposit', 'refund-use-existing', 'refund-new'].includes(action)) openRefund(id, action, attrs.transaction);
   else if (action === 'reserve-in' || action === 'reserve-out') openTransaction({ type: action === 'reserve-in' ? 'expense' : 'income', group: action === 'reserve-in' ? 'savings_debt' : 'income', category: 'Quỹ để dành', note: action === 'reserve-in' ? 'Chuyển vào quỹ' : 'Rút từ quỹ', date: state.analysis.today, flow: { kind: action } });
   else if (action === 'pay-debt') { const debt = find('debts'); if (debt) openTransaction({ type: 'expense', group: 'savings_debt', category: 'Trả nợ', note: `Trả nợ: ${debt.name}`, amount: Math.min(debt.principal, debt.minMonthlyPayment) || '', date: state.analysis.today, flow: { kind: 'debt', targetId: debt.id } }); }
   else if (action === 'setup-import-debt') { openDebt({ name: 'Khoản nợ từ sổ Excel', principal: state.importHints.debt }); }

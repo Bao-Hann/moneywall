@@ -29,6 +29,12 @@ export function depositBalances(transactions, through = '9999-12-31', excludingI
     return { ...t, refunded, remaining: Math.max(0, t.amount - refunded) };
   }).sort((a, b) => b.date.localeCompare(a.date));
 }
+export function recordedRefundsForDeposit(transactions, deposit, through) {
+  return transactions.filter((t) => t.type === 'income' && !t.flow?.targetId &&
+    (kindOf(t) === 'refund' || kindOf(t) === 'regular' && suggestFlow(t) === 'refund') &&
+    t.date >= deposit.date && t.date <= through && t.amount <= deposit.remaining)
+    .sort((a, b) => Number(b.amount === deposit.remaining) - Number(a.amount === deposit.remaining) || b.date.localeCompare(a.date));
+}
 export function dateForMonth(month, now = new Date()) {
   const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '') || month >= current) return now;
